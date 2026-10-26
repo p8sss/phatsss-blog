@@ -6,9 +6,9 @@ import {useBlogData} from '@/lib/blogData';
 import {getBookmarks} from '@/lib/bookmarks';
 import {PostCard} from '@/components/blog/PostCard';
 import {Bookmark01Icon} from '@/components/ui/icons';
-import {Badge} from '@/components/ui/badge';
-import {Button} from '@/components/ui/button';
-import {Card} from '@/components/ui/card';
+import {Badge} from '@/components/glass/badge';
+import {Button} from '@/components/glass/button';
+import {Card} from '@/components/glass/card';
 
 export default function Bookmarks(): JSX.Element {
   const {blogPosts} = useBlogData();

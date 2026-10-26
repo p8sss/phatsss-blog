@@ -48,7 +48,9 @@ export default function DocRootLayoutSidebar({
       <ResetOnSidebarChange>
         <div
           className={clsx(
-            'lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto',
+            // p-10/-m-10 gives the glass card's shadow room inside the
+            // scroll box, so overflow-y-auto doesn't clip it to a hard edge
+            'lg:sticky lg:top-14 lg:-m-10 lg:max-h-[calc(100vh-3.5rem)] lg:overflow-y-auto lg:p-10',
             hiddenSidebar && 'lg:hidden',
           )}>
           <DocSidebar

@@ -2,8 +2,8 @@ import React, {type JSX} from 'react';
 import Layout from '@theme/Layout';
 import {translate} from '@docusaurus/Translate';
 import {ComponentIcon} from '@/components/ui/icons';
-import {Badge} from '@/components/ui/badge';
-import {Card} from '@/components/ui/card';
+import {Badge} from '@/components/glass/badge';
+import {Card} from '@/components/glass/card';
 
 export default function Elements(): JSX.Element {
   return (

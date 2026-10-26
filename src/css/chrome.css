@@ -1,0 +1,41 @@
+/* Glass for Docusaurus/Infima-rendered chrome that has no swizzled component
+ * of ours to carry Tailwind classes. Kept separate so custom.css stays
+ * tokens-only. Imported by custom.css (needs Tailwind for @apply).
+ */
+
+/* Navbar: glass lives on a ::before layer, NOT on .navbar itself.
+ * backdrop-filter on .navbar would make it the containing block for the
+ * position:fixed mobile sidebar inside it, clipping that sidebar to the
+ * navbar's height. */
+.navbar {
+  isolation: isolate;
+}
+
+.navbar::before {
+  @apply glass-strong;
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-width: 0 0 var(--glass-border-width);
+  border-radius: 0;
+  box-shadow: none;
+  pointer-events: none;
+}
+
+.navbar-sidebar {
+  @apply glass-strong;
+  border-width: 0 var(--glass-border-width) 0 0;
+  border-radius: 0;
+}
+
+/* Infima colours every <a> with an unlayered rule, which beats Tailwind's
+ * layered text-* utilities — so a Badge/Button rendered asChild as a link
+ * got the link colour (amber on an amber pill). revert-layer drops the
+ * unlayered declarations for component-owned links only, letting the
+ * component's own utilities apply. */
+a[data-slot],
+a[data-slot]:hover {
+  color: revert-layer;
+  text-decoration: revert-layer;
+}

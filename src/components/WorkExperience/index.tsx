@@ -1,7 +1,7 @@
 import { JSX } from "react";
 import { translate } from "@docusaurus/Translate";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/glass/badge";
+import { Card } from "@/components/glass/card";
 import { Briefcase01Icon } from "@/components/ui/icons";
 import SectionHeading from "../SectionHeading";
 

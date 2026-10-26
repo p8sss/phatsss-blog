@@ -3,7 +3,7 @@ import Link from '@docusaurus/Link';
 import {translate} from '@docusaurus/Translate';
 import useGlobalData from '@docusaurus/useGlobalData';
 import {useVisibleBlogSidebarItems} from '@docusaurus/plugin-content-blog/client';
-import {Badge} from '@/components/ui/badge';
+import {Badge} from '@/components/glass/badge';
 import {
   ArrowRight01Icon,
   BookOpen01Icon,

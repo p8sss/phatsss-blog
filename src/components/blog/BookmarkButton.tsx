@@ -2,7 +2,7 @@ import {useEffect, useState} from 'react';
 import {cn} from '@/lib/utils';
 import {isBookmarked, toggleBookmark} from '@/lib/bookmarks';
 import {Bookmark01Icon, BookmarkCheck01Icon} from '@/components/ui/icons';
-import {Button} from '@/components/ui/button';
+import {Button} from '@/components/glass/button';
 
 function iconClass(size?: number) {
   if (size !== undefined && size <= 12) {

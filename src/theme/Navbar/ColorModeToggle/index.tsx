@@ -2,7 +2,7 @@ import React from "react";
 import { translate } from "@docusaurus/Translate";
 import { useColorMode } from "@docusaurus/theme-common";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/glass/button";
 import { Moon02Icon, Sun03Icon } from "@/components/ui/icons";
 
 const modes = ["system", "light", "dark"] as const;

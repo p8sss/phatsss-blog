@@ -11,9 +11,9 @@ import {translate} from '@docusaurus/Translate';
 import BlogLayout from '@theme/BlogLayout';
 import SearchMetadata from '@theme/SearchMetadata';
 
-import {Badge} from '@/components/ui/badge';
-import {Card} from '@/components/ui/card';
-import {Avatar, AvatarFallback, AvatarImage} from '@/components/ui/avatar';
+import {Badge} from '@/components/glass/badge';
+import {Card} from '@/components/glass/card';
+import {Avatar, AvatarFallback, AvatarImage} from '@/components/glass/avatar';
 
 type Author = {
   key: string;

@@ -1,13 +1,13 @@
 import { useState, JSX } from "react";
 import { translate } from "@docusaurus/Translate";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/glass/badge";
+import { Card } from "@/components/glass/card";
 import {
   Tabs,
   TabsList,
   TabsTrigger,
   TabsContent,
-} from "@/components/ui/tabs";
+} from "@/components/glass/tabs";
 import { ArrowUpRight01Icon, Folder01Icon } from "@/components/ui/icons";
 import SectionHeading from "../SectionHeading";
 

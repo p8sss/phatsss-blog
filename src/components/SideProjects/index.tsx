@@ -1,8 +1,8 @@
 import { JSX } from "react";
 import { translate } from "@docusaurus/Translate";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import { Button } from "@/components/glass/button";
+import { Badge } from "@/components/glass/badge";
+import { Card } from "@/components/glass/card";
 import {
   ArrowUpRight01Icon,
   CubeIcon,

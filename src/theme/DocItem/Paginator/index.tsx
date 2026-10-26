@@ -3,7 +3,7 @@ import Link from '@docusaurus/Link';
 import {translate} from '@docusaurus/Translate';
 import {useDoc} from '@docusaurus/plugin-content-docs/client';
 import {ArrowLeft01Icon, ArrowRight01Icon} from '@/components/ui/icons';
-import {buttonVariants} from '@/components/ui/button';
+import {buttonVariants} from '@/components/glass/button';
 
 export default function DocItemPaginator(): ReactNode {
   const {metadata} = useDoc();

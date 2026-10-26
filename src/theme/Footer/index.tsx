@@ -50,7 +50,7 @@ export default function Footer(): ReactNode {
 
   return (
     <footer className={ThemeClassNames.layout.footer.container}>
-      <div className="border-t bg-muted/40">
+      <div className="glass-subtle rounded-none border-x-0 border-b-0 [--glass-elevation:0_0_#0000]">
         <div className="mx-auto w-full max-w-[1200px] px-6 py-10">
           {sections.length > 0 && (
             <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">

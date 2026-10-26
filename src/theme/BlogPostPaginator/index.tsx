@@ -2,7 +2,7 @@ import React, {type ReactNode} from 'react';
 import Link from '@docusaurus/Link';
 import Translate, {translate} from '@docusaurus/Translate';
 import {ArrowLeft01Icon, ArrowRight01Icon} from '@/components/ui/icons';
-import {buttonVariants} from '@/components/ui/button';
+import {buttonVariants} from '@/components/glass/button';
 import type {Props} from '@theme/BlogPostPaginator';
 
 export default function BlogPostPaginator(props: Props): ReactNode {

@@ -15,9 +15,9 @@ import BlogListPageStructuredData from '@theme/BlogListPage/StructuredData';
 
 import {useBlogData, type PostSummary} from '@/lib/blogData';
 import {Search01Icon, FireIcon} from '@/components/ui/icons';
-import {Button} from '@/components/ui/button';
-import {Input} from '@/components/ui/input';
-import {Card} from '@/components/ui/card';
+import {Button} from '@/components/glass/button';
+import {Input} from '@/components/glass/input';
+import {Card} from '@/components/glass/card';
 import {PostCard} from '@/components/blog/PostCard';
 import {FeaturedPostCard} from '@/components/blog/FeaturedPostCard';
 

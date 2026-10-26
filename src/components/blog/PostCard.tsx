@@ -2,8 +2,8 @@ import Link from '@docusaurus/Link';
 import type {PostSummary} from '@/lib/blogData';
 import {formatReadingTime, useFormatDate} from '@/lib/format';
 import {Clock01Icon} from '@/components/ui/icons';
-import {Badge} from '@/components/ui/badge';
-import {Card} from '@/components/ui/card';
+import {Badge} from '@/components/glass/badge';
+import {Card} from '@/components/glass/card';
 import {CoverArt} from './covers';
 import {BookmarkButton} from './BookmarkButton';
 

@@ -1,74 +1,101 @@
 /* Global styles for phatsss-blog.
  *
  * Design-token foundation ONLY — no component styling.
- * All component styling lives in shadcn components + Tailwind utilities.
+ * All component styling lives in glasscn components + Tailwind utilities;
+ * the one exception, Infima-rendered chrome, lives in chrome.css.
  *
- *  - Google Fonts (Inter / Noto Sans Thai / Noto Sans Lao / Geist Mono)
- *  - Tailwind CSS v4 entry point
- *  - shadcn design tokens — official "Blue" theme (ui.shadcn.com/themes),
- *    used verbatim; do not customize color values
+ *  - Fonts: Nunito (self-hosted via @fontsource-variable, loaded in
+ *    src/theme/Root.tsx) with Noto Sans Thai / Lao fallbacks, Geist Mono
+ *  - Tailwind CSS v4 entry point + glasscn foundation (glass.css)
+ *  - "Galaxy" palette: shadcn core tokens + aurora colours, amber primary
+ *    from the glasscn Theme Studio export (src/css/glass-theme.json)
  *  - Variable-only sync so Docusaurus/Infima internals and
  *    docusaurus-search-local inherit the same tokens
  */
 
-/* Fonts: en uses Inter; th/lo glyphs fall through to Noto Sans Thai / Lao
- * (Inter contains no Thai/Lao glyphs, so fallback resolution is automatic) */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Noto+Sans+Lao:wght@400;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap');
+/* Nunito has no Thai/Lao glyphs, so those resolve to Noto automatically */
+@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&family=Noto+Sans+Lao:wght@400;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap');
 
 /* Tailwind v4 entry point (theme + base + utilities) */
 @import "tailwindcss/index.css";
+@import "tw-animate-css";
+
+/* glasscn foundation: glass-* / aurora-* tokens, utilities, keyframes */
+@import "./glass.css";
+
+/* Glass for Infima-rendered chrome (navbar, mobile sidebar) */
+@import "./chrome.css";
 
 /* Docusaurus toggles dark mode by setting data-theme="dark" on <html> */
 @custom-variant dark (&:is([data-theme="dark"] *));
 
 /* ─────────────────────────────────────────────────────────────
- * shadcn design tokens — official "Blue" theme (ui.shadcn.com/themes)
- * Values are used verbatim; do not customize.
+ * Galaxy palette — neutrals tinted toward violet (hue 285),
+ * amber primary as the accretion-disk glow.
+ * Every text/background pair is ≥ 4.5:1, including over the
+ * brightest aurora blob in each mode.
  * ───────────────────────────────────────────────────────────── */
 :root {
-  --radius: 0.65rem;
+  --radius: 0.75rem;
 
-  --background: hsl(0 0% 100%);
-  --foreground: hsl(222.2 47.4% 11.2%);
-  --card: hsl(0 0% 100%);
-  --card-foreground: hsl(222.2 47.4% 11.2%);
-  --popover: hsl(0 0% 100%);
-  --popover-foreground: hsl(222.2 47.4% 11.2%);
-  --primary: hsl(221.2 83.2% 53.3%);
-  --primary-foreground: hsl(210 40% 98%);
-  --secondary: hsl(210 40% 96.1%);
-  --secondary-foreground: hsl(222.2 47.4% 11.2%);
-  --muted: hsl(210 40% 96.1%);
-  --muted-foreground: hsl(215.4 16.3% 46.9%);
-  --accent: hsl(210 40% 96.1%);
-  --accent-foreground: hsl(222.2 47.4% 11.2%);
-  --destructive: hsl(0 84.2% 60.2%);
-  --destructive-foreground: hsl(210 40% 98%);
-  --border: hsl(214.3 31.8% 91.4%);
-  --input: hsl(214.3 31.8% 91.4%);
-  --ring: hsl(221.2 83.2% 53.3%);
+  --background: oklch(0.975 0.006 285);
+  --foreground: oklch(0.22 0.025 285);
+  --card: oklch(0.99 0.004 285);
+  --card-foreground: oklch(0.22 0.025 285);
+  --popover: oklch(0.99 0.004 285);
+  --popover-foreground: oklch(0.22 0.025 285);
+  /* Theme Studio primary was L 0.535; darkened to hold 4.5:1 on the
+   * lavender blob */
+  --primary: oklch(0.5 0.075 70);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.94 0.012 285);
+  --secondary-foreground: oklch(0.22 0.025 285);
+  --muted: oklch(0.94 0.012 285);
+  --muted-foreground: oklch(0.48 0.025 285);
+  --accent: oklch(0.94 0.012 285);
+  --accent-foreground: oklch(0.22 0.025 285);
+  --destructive: oklch(0.577 0.245 27.3);
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(0.9 0.012 285);
+  --input: oklch(0.9 0.012 285);
+  --ring: oklch(0.5 0.075 70);
+
+  /* Aurora — "daylight nebula": pale lavender / sky / peach */
+  --aurora-base: oklch(0.965 0.012 285);
+  --aurora-1: oklch(0.925 0.05 300);
+  --aurora-2: oklch(0.935 0.04 230);
+  --aurora-3: oklch(0.94 0.04 55);
+  --aurora-speed: 0.5;
+  --starfield-opacity: 0;
 }
 
 [data-theme="dark"] {
-  --background: hsl(222.2 84% 4.9%);
-  --foreground: hsl(210 40% 98%);
-  --card: hsl(222.2 84% 4.9%);
-  --card-foreground: hsl(210 40% 98%);
-  --popover: hsl(222.2 84% 4.9%);
-  --popover-foreground: hsl(210 40% 98%);
-  --primary: hsl(217.2 91.2% 59.8%);
-  --primary-foreground: hsl(222.2 47.4% 11.2%);
-  --secondary: hsl(217.2 32.6% 17.5%);
-  --secondary-foreground: hsl(210 40% 98%);
-  --muted: hsl(217.2 32.6% 17.5%);
-  --muted-foreground: hsl(215 20.2% 65.1%);
-  --accent: hsl(217.2 32.6% 17.5%);
-  --accent-foreground: hsl(210 40% 98%);
-  --destructive: hsl(0 62.8% 30.6%);
-  --destructive-foreground: hsl(210 40% 98%);
-  --border: hsl(217.2 32.6% 17.5%);
-  --input: hsl(217.2 32.6% 17.5%);
-  --ring: hsl(224.3 76.3% 48%);
+  --background: oklch(0.17 0.03 285);
+  --foreground: oklch(0.97 0.006 285);
+  --card: oklch(0.21 0.035 285);
+  --card-foreground: oklch(0.97 0.006 285);
+  --popover: oklch(0.21 0.035 285);
+  --popover-foreground: oklch(0.97 0.006 285);
+  --primary: oklch(0.74 0.064 70);
+  --primary-foreground: oklch(0.18 0.03 70);
+  --secondary: oklch(0.27 0.035 285);
+  --secondary-foreground: oklch(0.97 0.006 285);
+  --muted: oklch(0.27 0.035 285);
+  --muted-foreground: oklch(0.74 0.025 285);
+  --accent: oklch(0.27 0.035 285);
+  --accent-foreground: oklch(0.97 0.006 285);
+  --destructive: oklch(0.704 0.191 22.2);
+  --destructive-foreground: oklch(0.2 0.04 22);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 16%);
+  --ring: oklch(0.74 0.064 70);
+
+  /* Aurora — "deep space": violet / teal / magenta nebulae */
+  --aurora-base: oklch(0.13 0.03 285);
+  --aurora-1: oklch(0.29 0.12 300);
+  --aurora-2: oklch(0.3 0.085 235);
+  --aurora-3: oklch(0.27 0.12 345);
+  --starfield-opacity: 1;
 }
 
 /* Expose tokens as Tailwind theme colors (shadcn / Tailwind v4 pattern) */
@@ -88,13 +115,13 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  --font-sans: 'Inter', 'Noto Sans Thai', 'Noto Sans Lao', ui-sans-serif,
-    system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Nunito Variable', 'Noto Sans Thai', 'Noto Sans Lao', ui-rounded,
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-heading: var(--font-sans);
   --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas,
     'Liberation Mono', monospace;
 
@@ -103,27 +130,6 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 8px);
-
-  --animate-accordion-down: accordion-down 0.2s ease-out;
-  --animate-accordion-up: accordion-up 0.2s ease-out;
-}
-
-@keyframes accordion-down {
-  from {
-    height: 0;
-  }
-  to {
-    height: var(--radix-accordion-content-height);
-  }
-}
-
-@keyframes accordion-up {
-  from {
-    height: var(--radix-accordion-content-height);
-  }
-  to {
-    height: 0;
-  }
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -132,73 +138,69 @@
  * No selectors are styled here — variables only.
  * ───────────────────────────────────────────────────────────── */
 :root {
-  /* en -> Inter; th/lo glyphs resolve to Noto Sans Thai / Noto Sans Lao
-   * automatically (Inter has no Thai/Lao coverage) */
-  --ifm-font-family-base: 'Inter', 'Noto Sans Thai', 'Noto Sans Lao',
-    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --ifm-font-family-monospace: 'Geist Mono', ui-monospace, SFMono-Regular,
-    Menlo, Consolas, 'Liberation Mono', monospace;
+  --ifm-font-family-base: var(--font-sans);
+  --ifm-font-family-monospace: var(--font-mono);
   --ifm-code-font-size: 92%;
   --ifm-line-height-base: 1.7;
-  --ifm-heading-font-weight: 600;
+  --ifm-heading-font-weight: var(--glass-heading-weight);
 
-  /* Accent — shadcn Blue theme primary (hsl(221.2 83.2% 53.3%) = #2563eb) */
-  --ifm-color-primary: #2563eb;
-  --ifm-color-primary-dark: #1d4ed8;
-  --ifm-color-primary-darker: #1e40af;
-  --ifm-color-primary-darkest: #1e3a8a;
-  --ifm-color-primary-light: #3b82f6;
-  --ifm-color-primary-lighter: #60a5fa;
-  --ifm-color-primary-lightest: #93c5fd;
+  /* Accent — primary oklch(0.5 0.075 70) = #7f5b30 */
+  --ifm-color-primary: #7f5b30;
+  --ifm-color-primary-dark: #735025;
+  --ifm-color-primary-darker: #6d4b1f;
+  --ifm-color-primary-darkest: #5b3a0c;
+  --ifm-color-primary-light: #8b673c;
+  --ifm-color-primary-lighter: #947045;
+  --ifm-color-primary-lightest: #a78156;
 
-  /* Surfaces */
-  --ifm-background-color: #ffffff;
-  --ifm-background-surface-color: #f1f5f9;
-  --ifm-navbar-background-color: color-mix(in srgb, var(--background) 95%, transparent);
+  /* Surfaces — html paints aurora-base; the <Aurora/> layer sits on top */
+  --ifm-background-color: #f2f2fb;
+  --ifm-background-surface-color: #eaeaf3;
+  --ifm-navbar-background-color: transparent;
   --ifm-navbar-shadow: none;
-  --ifm-footer-background-color: #f1f5f9;
-  --ifm-footer-color: #64748b;
-  --ifm-footer-link-color: #475569;
-  --ifm-footer-title-color: #0f172a;
+  --ifm-footer-background-color: transparent;
+  --ifm-footer-color: #5c5c6c;
+  --ifm-footer-link-color: #3e3e4a;
+  --ifm-footer-title-color: #191926;
 
   /* Text */
-  --ifm-font-color-base: #0f172a;
-  --ifm-font-color-secondary: #64748b;
-  --ifm-heading-color: #0f172a;
+  --ifm-font-color-base: #191926;
+  --ifm-font-color-secondary: #5c5c6c;
+  --ifm-heading-color: #191926;
   --ifm-link-color: var(--ifm-color-primary);
   --ifm-link-hover-color: var(--ifm-color-primary-darker);
   --ifm-link-decoration: none;
 
-  /* Emphasis scale (slate) */
-  --ifm-color-emphasis-0: #ffffff;
-  --ifm-color-emphasis-100: #f1f5f9;
-  --ifm-color-emphasis-200: #e2e8f0;
-  --ifm-color-emphasis-300: #cbd5e1;
-  --ifm-color-emphasis-400: #94a3b8;
-  --ifm-color-emphasis-500: #64748b;
-  --ifm-color-emphasis-600: #475569;
-  --ifm-color-emphasis-700: #334155;
-  --ifm-color-emphasis-800: #1e293b;
-  --ifm-color-emphasis-900: #0f172a;
-  --ifm-color-emphasis-1000: #020817;
+  /* Emphasis scale (violet-tinted neutral) */
+  --ifm-color-emphasis-0: #fcfdff;
+  --ifm-color-emphasis-100: #f2f2ff;
+  --ifm-color-emphasis-200: #e3e3f2;
+  --ifm-color-emphasis-300: #d2d3e1;
+  --ifm-color-emphasis-400: #a0a0ae;
+  --ifm-color-emphasis-500: #70707d;
+  --ifm-color-emphasis-600: #545460;
+  --ifm-color-emphasis-700: #3e3e4a;
+  --ifm-color-emphasis-800: #282833;
+  --ifm-color-emphasis-900: #191924;
+  --ifm-color-emphasis-1000: #09090d;
 
   /* Components */
-  --ifm-menu-color-background-active: #eff6ff;
-  --ifm-menu-color-active: #1d4ed8;
-  --ifm-toc-border-color: #e2e8f0;
-  --ifm-table-border-color: #e2e8f0;
-  --ifm-hr-border-color: #e2e8f0;
-  --ifm-blockquote-border-color: #94a3b8;
-  --ifm-code-background: #f1f5f9;
-  --ifm-code-font-color: #0f172a;
-  --ifm-pre-background: #0f172a;
-  --ifm-pre-color: #f1f5f9;
+  --ifm-menu-color-background-active: color-mix(in oklch, var(--primary) 12%, transparent);
+  --ifm-menu-color-active: #6d4b1f;
+  --ifm-toc-border-color: #dddde6;
+  --ifm-table-border-color: #dddde6;
+  --ifm-hr-border-color: #dddde6;
+  --ifm-blockquote-border-color: #a0a0ae;
+  --ifm-code-background: #eaeaf3;
+  --ifm-code-font-color: #191926;
+  --ifm-pre-background: #0e0d1c;
+  --ifm-pre-color: #f4f5f9;
 
-  --docusaurus-highlighted-code-line-bg: rgba(15, 23, 42, 0.08);
+  --docusaurus-highlighted-code-line-bg: rgba(25, 25, 38, 0.08);
 
   /* docusaurus-search-local — mapped to the same tokens */
   --search-local-modal-background: var(--card);
-  --search-local-modal-shadow: var(--shadow-lg);
+  --search-local-modal-shadow: var(--shadow-glass-3);
   --search-local-border: var(--border);
   --search-local-muted-color: var(--muted-foreground);
   --search-local-text-color: var(--foreground);
@@ -217,51 +219,49 @@
 }
 
 [data-theme="dark"] {
-  /* shadcn Blue theme dark primary (hsl(217.2 91.2% 59.8%) = #3b82f6) */
-  --ifm-color-primary: #3b82f6;
-  --ifm-color-primary-dark: #1d4ed8;
-  --ifm-color-primary-darker: #1e40af;
-  --ifm-color-primary-darkest: #1e3a8a;
-  --ifm-color-primary-light: #60a5fa;
-  --ifm-color-primary-lighter: #93c5fd;
-  --ifm-color-primary-lightest: #bfdbfe;
+  /* Accent — primary oklch(0.74 0.064 70) = #c5a47f */
+  --ifm-color-primary: #c5a47f;
+  --ifm-color-primary-dark: #b99873;
+  --ifm-color-primary-darker: #b2926d;
+  --ifm-color-primary-darkest: #9f805b;
+  --ifm-color-primary-light: #d2b18b;
+  --ifm-color-primary-lighter: #dcba94;
+  --ifm-color-primary-lightest: #f0cea7;
 
-  --ifm-background-color: #020817;
-  --ifm-background-surface-color: #1e293b;
-  --ifm-footer-background-color: #1e293b;
-  --ifm-footer-color: #94a3b8;
-  --ifm-footer-link-color: #cbd5e1;
-  --ifm-footer-title-color: #f8fafc;
+  --ifm-background-color: #060613;
+  --ifm-background-surface-color: #171628;
+  --ifm-footer-color: #a9a9ba;
+  --ifm-footer-link-color: #c9c9d7;
+  --ifm-footer-title-color: #f4f5f9;
 
-  --ifm-font-color-base: #f8fafc;
-  --ifm-font-color-secondary: #94a3b8;
-  --ifm-heading-color: #f8fafc;
+  --ifm-font-color-base: #f4f5f9;
+  --ifm-font-color-secondary: #a9a9ba;
+  --ifm-heading-color: #f4f5f9;
   --ifm-link-hover-color: var(--ifm-color-primary-light);
 
-  --ifm-color-emphasis-0: #020817;
-  --ifm-color-emphasis-100: #172036;
-  --ifm-color-emphasis-200: #1e293b;
-  --ifm-color-emphasis-300: #334155;
-  --ifm-color-emphasis-400: #475569;
-  --ifm-color-emphasis-500: #64748b;
-  --ifm-color-emphasis-600: #94a3b8;
-  --ifm-color-emphasis-700: #cbd5e1;
-  --ifm-color-emphasis-800: #e2e8f0;
-  --ifm-color-emphasis-900: #f1f5f9;
-  --ifm-color-emphasis-1000: #f8fafc;
+  --ifm-color-emphasis-0: #07070b;
+  --ifm-color-emphasis-100: #13131c;
+  --ifm-color-emphasis-200: #1e1e29;
+  --ifm-color-emphasis-300: #2f2f3a;
+  --ifm-color-emphasis-400: #464652;
+  --ifm-color-emphasis-500: #70707d;
+  --ifm-color-emphasis-600: #a0a0ae;
+  --ifm-color-emphasis-700: #c9c9d7;
+  --ifm-color-emphasis-800: #dfe0ef;
+  --ifm-color-emphasis-900: #ededfc;
+  --ifm-color-emphasis-1000: #f7f8ff;
 
-  --ifm-menu-color-background-active: hsl(217.2 91.2% 59.8% / 10%);
-  --ifm-menu-color-active: #93c5fd;
-  --ifm-toc-border-color: #1e293b;
-  --ifm-table-border-color: #1e293b;
-  --ifm-hr-border-color: #1e293b;
-  --ifm-blockquote-border-color: #475569;
-  --ifm-code-background: #1e293b;
-  --ifm-code-font-color: #f8fafc;
-  --ifm-pre-background: #020817;
-  --ifm-pre-color: #f8fafc;
+  --ifm-menu-color-active: #dcba94;
+  --ifm-toc-border-color: #2f2f3a;
+  --ifm-table-border-color: #2f2f3a;
+  --ifm-hr-border-color: #2f2f3a;
+  --ifm-blockquote-border-color: #464652;
+  --ifm-code-background: #252437;
+  --ifm-code-font-color: #f4f5f9;
+  --ifm-pre-background: #0a0917;
+  --ifm-pre-color: #f4f5f9;
 
-  --docusaurus-highlighted-code-line-bg: rgba(248, 250, 252, 0.08);
+  --docusaurus-highlighted-code-line-bg: rgba(244, 245, 249, 0.08);
 }
 
 @layer base {

@@ -5,8 +5,8 @@ import {translate} from '@docusaurus/Translate';
 import {usePluralForm} from '@docusaurus/theme-common';
 import {useDateTimeFormat} from '@docusaurus/theme-common/internal';
 import {useBlogPost} from '@docusaurus/plugin-content-blog/client';
-import {Badge} from '@/components/ui/badge';
-import {Card} from '@/components/ui/card';
+import {Badge} from '@/components/glass/badge';
+import {Card} from '@/components/glass/card';
 import {
   ArrowRight01Icon,
   Calendar01Icon,

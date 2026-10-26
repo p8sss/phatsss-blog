@@ -11,7 +11,7 @@ import Link from '@docusaurus/Link';
 import BlogLayout from '@theme/BlogLayout';
 import BlogListPaginator from '@theme/BlogListPaginator';
 import SearchMetadata from '@theme/SearchMetadata';
-import {Badge} from '@/components/ui/badge';
+import {Badge} from '@/components/glass/badge';
 import {ArrowUpRight01Icon, Tag01Icon} from '@/components/ui/icons';
 import type {Props} from '@theme/BlogTagsPostsPage';
 import BlogPostItems from '@theme/BlogPostItems';

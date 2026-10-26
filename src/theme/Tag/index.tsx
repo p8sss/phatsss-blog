@@ -1,7 +1,7 @@
 import React, {type ReactNode} from 'react';
 import clsx from 'clsx';
 import Link from '@docusaurus/Link';
-import {badgeVariants} from '@/components/ui/badge';
+import {badgeVariants} from '@/components/glass/badge';
 import type {Props} from '@theme/Tag';
 
 export default function Tag({

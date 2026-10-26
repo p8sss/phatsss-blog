@@ -7,7 +7,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 const config: Config = {
   title: "phatsss",
   tagline: "phatsss is a blog about programming",
-  favicon: "img/favicon.png",
+  favicon: "img/icons/favicon.ico",
 
   // Set the production url of your site here
   url: "https://phatsss.github.io",
@@ -19,6 +19,21 @@ const config: Config = {
   // If you aren't using GitHub pages, you don't need these.
   organizationName: "phatsss", // Usually your GitHub org/user name.
   projectName: "phatsss-blog", // Usually your repo name.
+
+  future: {
+    experimental_faster: {
+      // Lightning CSS understands modern CSS (@starting-style, @property) and
+      // keeps @keyframes names intact; the default cssnano + clean-css chain
+      // renames keyframes (breaking glasscn's inline animationName) and drops
+      // @starting-style rules.
+      lightningCssMinimizer: true,
+      swcJsLoader: false,
+      swcJsMinimizer: false,
+      swcHtmlMinimizer: false,
+      mdxCrossCompilerCache: false,
+      rspackBundler: false,
+    },
+  },
 
   onBrokenLinks: "throw",
   onBrokenMarkdownLinks: "warn",
@@ -129,48 +144,59 @@ const config: Config = {
           {
             tagName: "link",
             rel: "icon",
-            href: "img/favicon.png",
+            type: "image/svg+xml",
+            href: "img/icons/blackhole.svg",
           },
           {
             tagName: "link",
             rel: "icon",
-            href: "img/favicon.png",
+            type: "image/png",
+            sizes: "192x192",
+            href: "img/icons/icon-192.png",
           },
           {
             tagName: "link",
             rel: "manifest",
             href: "manifest.json",
           },
+          // Browser UI tint follows the galaxy backdrop (aurora-base)
           {
             tagName: "meta",
             name: "theme-color",
-            content: "#090d16",
+            media: "(prefers-color-scheme: light)",
+            content: "#f2f2fb",
+          },
+          {
+            tagName: "meta",
+            name: "theme-color",
+            media: "(prefers-color-scheme: dark)",
+            content: "#060613",
           },
           {
             tagName: "meta",
             name: "apple-mobile-web-app-status-bar-style",
-            content: "#090d16",
+            content: "default",
           },
           {
             tagName: "link",
             rel: "apple-touch-icon",
-            href: "img/favicon.png",
+            href: "img/icons/apple-touch-icon.png",
           },
           {
             tagName: "link",
             rel: "mask-icon",
-            href: "img/favicon.png",
-            color: "#090d16",
+            href: "img/icons/blackhole-mask.svg",
+            color: "#c5a47f",
           },
           {
             tagName: "meta",
             name: "msapplication-TileImage",
-            content: "img/favicon.png",
+            content: "img/icons/icon-192.png",
           },
           {
             tagName: "meta",
             name: "msapplication-TileColor",
-            content: "#090d16",
+            content: "#060613",
           },
         ],
       },

@@ -8,7 +8,7 @@ import {
 } from '@docusaurus/theme-common';
 import BlogLayout from '@theme/BlogLayout';
 import TagsListByLetter from '@theme/TagsListByLetter';
-import {Badge} from '@/components/ui/badge';
+import {Badge} from '@/components/glass/badge';
 import {Tag01Icon} from '@/components/ui/icons';
 import type {Props} from '@theme/BlogTagsListPage';
 import SearchMetadata from '@theme/SearchMetadata';

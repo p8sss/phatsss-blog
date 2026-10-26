@@ -1,4 +1,9 @@
 .hero {
+    /* Title gradient stops: amber / magenta / violet, each ≥ 4.5:1 on the
+     * aurora base in its mode */
+    --hero-glow-1: oklch(0.5 0.075 70);
+    --hero-glow-2: oklch(0.52 0.2 345);
+    --hero-glow-3: oklch(0.48 0.19 295);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -22,10 +27,6 @@
         font-size: 1rem;
     }
 
-    .avatarWrapper {
-        height: 200px;
-        width: 350px;
-    }
 }
 .heroContent {
     width: 100%;
@@ -92,12 +93,18 @@
 
 /* Sunset Gradient Flow */
 .highlight.sunset {
-    background: linear-gradient(45deg, #ff6b6b, #ffa500, #ff1493, #ff69b4, #ff6347);
+    background: linear-gradient(45deg, var(--hero-glow-1), var(--hero-glow-2), var(--hero-glow-3), var(--hero-glow-2), var(--hero-glow-1));
     background-size: 300% 300%;
     background-clip: text;
     -webkit-background-clip: text;
     color: transparent;
     animation: sunset-flow 4s ease-in-out infinite;
+}
+
+:global([data-theme="dark"]) .hero {
+    --hero-glow-1: oklch(0.78 0.1 70);
+    --hero-glow-2: oklch(0.72 0.17 345);
+    --hero-glow-3: oklch(0.7 0.15 295);
 }
 
 @keyframes sunset-flow {
@@ -325,8 +332,9 @@
                                 border-radius: 1.5rem; */
     
         /* Replace fixed dimensions with responsive ones */
-        width: clamp(350px, 80vw, 449px);
-        height: clamp(200px, 45vw, 253px);
+        /* 288px min = a 320px viewport minus 16px gutters; 16:9 */
+        width: clamp(288px, 80vw, 449px);
+        height: clamp(162px, 45vw, 253px);
         position: relative;
         aspect-ratio: 16 / 9;
         /* Maintain aspect ratio */
@@ -341,8 +349,8 @@
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.2));
     box-shadow:
         0 0 20px rgba(255, 255, 255, 0.15),
-        0 0 40px 2px rgba(0, 230, 255, 0.2),
-        0 0 80px 6px rgba(200, 100, 255, 0.2);
+        0 0 40px 2px oklch(0.8 0.14 70 / 20%),
+        0 0 80px 6px oklch(0.55 0.2 295 / 22%);
     transition: transform 0.3s ease, box-shadow 0.5s ease;
 }
 
@@ -360,12 +368,11 @@
     position: absolute;
     inset: -20%;
     background: conic-gradient(from 0deg,
-            #ff00cc,
-            #6600ff,
-            #0099ff,
-            #00ffcc,
-            #ffcc00,
-            #ff00cc);
+            oklch(0.65 0.22 345),
+            oklch(0.5 0.2 290),
+            oklch(0.6 0.12 230),
+            oklch(0.8 0.14 70),
+            oklch(0.65 0.22 345));
     animation: pulseRotate 6s linear infinite;
     opacity: 0.6;
     filter: blur(65px);
@@ -395,15 +402,6 @@
     animation: float 6s ease-in-out infinite;
 }
 
-/* Hover effect */
-#card:hover .avatarWrapper {
-    transform: scale(1.05);
-    box-shadow:
-        0 0 40px rgba(255, 255, 255, 0.3),
-        0 0 80px rgba(0, 255, 255, 0.4),
-        0 0 120px rgba(255, 0, 255, 0.3);
-}
-
 @keyframes pulseRotate {
     from {
         transform: rotate(0deg);
@@ -414,11 +412,11 @@
     }
 }
 
-/* 3D transform based on tracker's hover (sample entry) */
-.tr-13:hover~#card .avatarWrapper {
-    transform: scale(1.05) translate3d(0px, 0px, 20px) rotateX(5deg) rotateY(5deg);
-}
-
-.tr-1:hover~#card .avatarWrapper {
-    transform: scale(1.05) translate3d(-8px, -8px, 20px) rotateX(10deg) rotateY(-10deg);
+/* Last in the file so it wins over the animation declarations above */
+@media (prefers-reduced-motion: reduce) {
+    .highlight.sunset,
+    .avatar,
+    .avatarWrapper::before {
+        animation: none;
+    }
 }

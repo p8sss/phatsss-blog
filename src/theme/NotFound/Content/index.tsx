@@ -3,9 +3,9 @@ import clsx from 'clsx';
 import Translate from '@docusaurus/Translate';
 import Heading from '@theme/Heading';
 
-import {Badge} from '@/components/ui/badge';
-import {Button} from '@/components/ui/button';
-import {Card} from '@/components/ui/card';
+import {Badge} from '@/components/glass/badge';
+import {Button} from '@/components/glass/button';
+import {Card} from '@/components/glass/card';
 import {Home06Icon} from '@/components/ui/icons';
 import {PROSE_CLASSES} from '@/lib/prose';
 

@@ -5,13 +5,13 @@ import { translate } from "@docusaurus/Translate";
 import { useLocation } from "@docusaurus/router";
 import Link from "@docusaurus/Link";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/glass/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/glass/dropdown-menu";
 import { CheckmarkCircle01Icon, GlobeIcon } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 

@@ -5,13 +5,13 @@ import {PageMetadata} from '@docusaurus/theme-common';
 import {useDateTimeFormat} from '@docusaurus/theme-common/internal';
 import Layout from '@theme/Layout';
 
-import {Badge} from '@/components/ui/badge';
+import {Badge} from '@/components/glass/badge';
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
+} from '@/components/glass/card';
 import {ArrowRight01Icon, Calendar01Icon} from '@/components/ui/icons';
 
 type ArchivePost = {metadata: {permalink: string; title: string; date: string}};

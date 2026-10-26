@@ -1,4 +1,4 @@
-import {Avatar, AvatarFallback, AvatarImage} from '@/components/ui/avatar';
+import {Avatar, AvatarFallback, AvatarImage} from '@/components/glass/avatar';
 import type {PostAuthor} from '@/lib/blogData';
 
 export function AuthorBadge({author}: {author?: PostAuthor}) {

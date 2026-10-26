@@ -1,6 +1,6 @@
 import { JSX } from "react";
 import { translate } from "@docusaurus/Translate";
-import { Card } from "@/components/ui/card";
+import { Card } from "@/components/glass/card";
 import {
   AppWindowIcon,
   CodeIcon,

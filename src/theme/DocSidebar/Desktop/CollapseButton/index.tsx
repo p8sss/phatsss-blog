@@ -1,7 +1,7 @@
 import React, {type ReactNode} from 'react';
 import {translate} from '@docusaurus/Translate';
 
-import {Button} from '@/components/ui/button';
+import {Button} from '@/components/glass/button';
 import {ArrowLeft01Icon} from '@/components/ui/icons';
 import type {Props} from '@theme/DocSidebar/Desktop/CollapseButton';
 
