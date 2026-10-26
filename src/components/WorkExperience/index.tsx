@@ -1,12 +1,10 @@
-import React, { JSX } from 'react';
-import styles from './styles.module.css';
-import { useColorMode } from '@docusaurus/theme-common';
+import { JSX } from "react";
 import { translate } from "@docusaurus/Translate";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { Briefcase01Icon } from "@/components/ui/icons";
+import SectionHeading from "../SectionHeading";
 
-/**
- * Work Experience data array
- * Contains professional experience information with job titles, companies, periods, and descriptions
- */
 const experiences = [
   {
     title: "Full-Time Front-End Developer",
@@ -34,51 +32,37 @@ const experiences = [
   },
 ];
 
-/**
- * WorkExperience Component
- * Displays professional experience in a timeline format
- * Supports both light and dark mode
- */
 export default function WorkExperience(): JSX.Element {
-  const { colorMode } = useColorMode();
-
   return (
-    <section
-      className={`${styles.section} ${
-        colorMode === "dark" ? styles.sectionDark : styles.sectionLight
-      }`}
-    >
-      <div className={styles.sectionHeader}>
-        <h2 className={styles.sectionTitle}>
-          {translate({ id: "workExperience.title" })}
-        </h2>
-        <p className={styles.sectionDescription}>
-          {translate({ id: "workExperience.description" })}
-        </p>
-      </div>
+    <section className="mx-auto w-full max-w-5xl px-6 py-20">
+      <SectionHeading
+        eyebrow={
+          <>
+            <Briefcase01Icon size={14} /> {translate({ id: "workExperience.title" })}
+          </>
+        }
+        title={translate({ id: "workExperience.title" })}
+        description={translate({ id: "workExperience.description" })}
+      />
 
-      <div className={styles.timeline}>
+      <div className="relative ml-4 space-y-8 border-l border-border pl-8">
         {experiences.map((exp, index) => (
-          <div
-            key={index}
-            className={`${styles.timelineItem} ${
-              index % 2 === 0 ? styles.left : styles.right
-            }`}
-          >
-            <div
-              className={`${styles.timelineContent} ${
-                colorMode === "dark" ? styles.cardDark : styles.cardLight
-              }`}
-            >
-              <div className={styles.timelineDot}></div>
-              <h3 className={styles.experienceTitle}>{exp.title}</h3>
-              <div className={styles.experienceMetadata}>
-                <span className={styles.companyName}>{exp.company}</span>
-                {/* <span className={styles.metadataSeparator}>•</span> */}
-                <span className={styles.period}>{exp.period}</span>
+          <div key={index} className="relative">
+            <span className="absolute -left-[41px] top-6 size-2.5 rounded-full border-2 border-background bg-muted-foreground/50" />
+            <Card className="gap-0 p-6 transition-colors hover:border-muted-foreground/30">
+              <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-2">
+                <h3 className="!text-lg !font-semibold !mb-0 tracking-tight">
+                  {exp.title}
+                </h3>
+                <Badge variant="secondary">{exp.period}</Badge>
               </div>
-              <p className={styles.experienceDescription}>{exp.description}</p>
-            </div>
+              <p className="!mb-3 text-sm font-medium text-muted-foreground">
+                {exp.company}
+              </p>
+              <p className="!mb-0 text-[0.95rem] leading-relaxed text-foreground/80">
+                {exp.description}
+              </p>
+            </Card>
           </div>
         ))}
       </div>

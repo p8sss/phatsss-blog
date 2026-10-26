@@ -14,8 +14,12 @@
 
 @media (prefers-color-scheme: dark) {
   .logoloop {
-    --logoloop-fadeColorAuto: #000000;
+    --logoloop-fadeColorAuto: #09090b;
   }
+}
+
+[data-theme="dark"] .logoloop {
+  --logoloop-fadeColorAuto: #09090b;
 }
 
 .logoloop__track {
@@ -28,9 +32,9 @@
 .logoloop__list {
   display: flex;
   align-items: center;
-  list-style-type: none; /* Add this line */
-  margin: 0;           /* Optional: Resets browser default margin */
-  padding: 0;          /* Optional: Resets browser default padding */
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
 }
 
 .logoloop__item {
@@ -47,6 +51,12 @@
 .logoloop__node {
   display: inline-flex;
   align-items: center;
+  color: var(--ifm-color-emphasis-400);
+  transition:
+    color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.3s ease,
+    filter 0.3s ease;
 }
 
 .logoloop__item img {
@@ -57,22 +67,25 @@
   image-rendering: -webkit-optimize-contrast;
   -webkit-user-drag: none;
   pointer-events: none;
-  /* Links handle interaction */
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.3s ease,
+    filter 0.3s ease;
 }
 
 .logoloop--scale-hover .logoloop__item {
   overflow: visible;
 }
 
-.logoloop--scale-hover .logoloop__item:hover img,
-.logoloop--scale-hover .logoloop__item:hover .logoloop__node {
-  transform: scale(1.2);
-  transform-origin: center center;
+.logoloop--scale-hover .logoloop__item:hover .logoloop__node,
+.logoloop--scale-hover .logoloop__item:hover img {
+  transform: scale(1.18);
+  opacity: 1;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.18));
 }
 
-.logoloop--scale-hover .logoloop__node {
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+.logoloop--scale-hover .logoloop__item:hover .logoloop__node {
+  color: var(--ifm-color-emphasis-800);
 }
 
 .logoloop__link {
@@ -81,10 +94,6 @@
   text-decoration: none;
   border-radius: 4px;
   transition: opacity 0.2s ease;
-}
-
-.logoloop__link:hover {
-  opacity: 0.8;
 }
 
 .logoloop__link:focus-visible {
@@ -105,16 +114,20 @@
 
 .logoloop--fade::before {
   left: 0;
-  background: linear-gradient(to right,
-      var(--logoloop-fadeColor, var(--logoloop-fadeColorAuto)) 0%,
-      rgba(0, 0, 0, 0) 100%);
+  background: linear-gradient(
+    to right,
+    var(--logoloop-fadeColor, var(--logoloop-fadeColorAuto)) 0%,
+    rgba(0, 0, 0, 0) 100%
+  );
 }
 
 .logoloop--fade::after {
   right: 0;
-  background: linear-gradient(to left,
-      var(--logoloop-fadeColor, var(--logoloop-fadeColorAuto)) 0%,
-      rgba(0, 0, 0, 0) 100%);
+  background: linear-gradient(
+    to left,
+    var(--logoloop-fadeColor, var(--logoloop-fadeColorAuto)) 0%,
+    rgba(0, 0, 0, 0) 100%
+  );
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -126,8 +139,4 @@
   .logoloop__node {
     transition: none !important;
   }
-}
-
-.logoloop_icon:hover {
-  color: brown !important;
 }

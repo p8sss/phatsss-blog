@@ -31,7 +31,7 @@ const config: Config = {
   // may want to replace "en" with "zh-Hans".
   i18n: {
     defaultLocale: "en",
-    locales: ["en", "lo"],
+    locales: ["en", "th", "lo"],
   },
 
   presets: [
@@ -77,6 +77,8 @@ const config: Config = {
   // ──────────────────────────────────────────────────
   // Local search plugin (no Algolia, 100% client-side)
   plugins: [
+    require.resolve("./plugins/tailwindcss"),
+    require.resolve("./plugins/blog-tags"),
     [
       require.resolve("@easyops-cn/docusaurus-search-local"),
       {
@@ -142,12 +144,12 @@ const config: Config = {
           {
             tagName: "meta",
             name: "theme-color",
-            content: "#00ccff",
+            content: "#090d16",
           },
           {
             tagName: "meta",
             name: "apple-mobile-web-app-status-bar-style",
-            content: "#00ccff",
+            content: "#090d16",
           },
           {
             tagName: "link",
@@ -158,7 +160,7 @@ const config: Config = {
             tagName: "link",
             rel: "mask-icon",
             href: "img/favicon.png",
-            color: "#00ccff",
+            color: "#090d16",
           },
           {
             tagName: "meta",
@@ -168,7 +170,7 @@ const config: Config = {
           {
             tagName: "meta",
             name: "msapplication-TileColor",
-            content: "#00ccff",
+            content: "#090d16",
           },
         ],
       },
@@ -200,6 +202,8 @@ const config: Config = {
           label: "Tutorial",
         },
         { to: "/blog", label: "Blog", position: "left" },
+        { to: "/bookmarks", label: "Bookmarks", position: "left" },
+        { to: "/elements", label: "Elements", position: "left" },
         { type: "search", position: "right" },
         {
           type: "localeDropdown",

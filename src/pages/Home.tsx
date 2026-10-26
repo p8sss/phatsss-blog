@@ -1,15 +1,13 @@
 import React, { JSX } from 'react';
 import Layout from '@theme/Layout';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
-import styles from './Home.module.css';
 import Hero from '../components/Hero';
 import WorkExperience from "../components/WorkExperience";
 import SideProjects from "../components/SideProjects";
 import Services from "../components/Services";
 import Portfolio from "../components/Portfolio";
 import {LogoLoopComponent} from "../components/LogoLoop";
-// import ProfileCard from '../components/ProfileCard';
-// import Contact from "../components/Contact";
+import FactorySection from "../components/FactorySection";
 
 export default function Home(): JSX.Element {
   const { siteConfig } = useDocusaurusContext();
@@ -19,15 +17,14 @@ export default function Home(): JSX.Element {
       title={`${siteConfig.title}`}
       description="Full Stack Developer Portfolio"
     >
-      <main className={styles.container}>
+      <main className="mx-auto w-full max-w-6xl px-4 sm:px-6">
         <Hero />
         <LogoLoopComponent />
-        {/* <ProfileCard /> */}
+        <FactorySection />
         <WorkExperience />
         <Services />
         <Portfolio />
         <SideProjects />
-        {/* <Contact /> */}
       </main>
     </Layout>
   );

@@ -1,0 +1,22 @@
+{
+  "title": {
+    "message": "หน้าแรก",
+    "description": "The title in the navbar"
+  },
+  "item.label.Tutorial": {
+    "message": "บทเรียน",
+    "description": "Navbar item with label Tutorial"
+  },
+  "item.label.Blog": {
+    "message": "บล็อก",
+    "description": "Navbar item with label Blog"
+  },
+  "item.label.Bookmarks": {
+    "message": "บุ๊กมาร์ก",
+    "description": "Navbar item with label Bookmarks"
+  },
+  "item.label.Elements": {
+    "message": "องค์ประกอบ",
+    "description": "Navbar item with label Elements"
+  }
+}

@@ -1,13 +1,16 @@
-import React, { useState, JSX } from 'react';
-import styles from './styles.module.css';
-import { useColorMode } from '@docusaurus/theme-common';
+import { useState, JSX } from "react";
 import { translate } from "@docusaurus/Translate";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "@/components/ui/tabs";
+import { ArrowUpRight01Icon, Folder01Icon } from "@/components/ui/icons";
+import SectionHeading from "../SectionHeading";
 
-/**
- * Portfolio project data array
- * Contains information about completed projects
- * Each project includes title, description, technologies used, category, and image
- */
 const projects = [
   {
     title: "E-Wallet System",
@@ -118,9 +121,6 @@ const projects = [
   },
 ];
 
-/**
- * Categories for filtering projects
- */
 const categories = [
   "All",
   "Financial Technology",
@@ -130,83 +130,93 @@ const categories = [
   "Education",
 ];
 
-/**
- * Portfolio Component
- * Displays professional projects with filtering capability
- * Supports both light and dark mode
- */
 export default function Portfolio(): JSX.Element {
-  const { colorMode } = useColorMode();
   const [activeCategory, setActiveCategory] = useState("All");
 
-  // Filter projects based on selected category
   const filteredProjects =
     activeCategory === "All"
       ? projects
       : projects.filter((project) => project.category === activeCategory);
 
   return (
-    <section
-      className={`${styles.section} ${
-        colorMode === "dark" ? styles.sectionDark : styles.sectionLight
-      }`}
-    >
-      <div className={styles.sectionHeader}>
-        <h2 className={styles.sectionTitle}>
-          {translate({ id: "portfolio.title" })}
-        </h2>
-        <p className={styles.sectionDescription}>
-          {translate({ id: "portfolio.description" })}
-        </p>
-      </div>
+    <section className="mx-auto w-full max-w-5xl px-6 py-20">
+      <SectionHeading
+        eyebrow={
+          <>
+            <Folder01Icon size={14} /> {translate({ id: "portfolio.title" })}
+          </>
+        }
+        title={translate({ id: "portfolio.title" })}
+        description={translate({ id: "portfolio.description" })}
+      />
 
-      <div className={styles.filterContainer}>
-        {categories.map((category, index) => (
-          <button
-            key={index}
-            className={`${styles.filterButton} ${
-              activeCategory === category ? styles.active : ""
-            } ${colorMode === "dark" ? styles.buttonDark : styles.buttonLight}`}
-            onClick={() => setActiveCategory(category)}
-          >
-            {category}
-          </button>
-        ))}
-      </div>
-
-      <div className={styles.portfolioGrid}>
-        {filteredProjects.map((project, index) => (
-          <div
-            key={index}
-            className={`${styles.portfolioCard} ${
-              colorMode === "dark" ? styles.cardDark : styles.cardLight
-            }`}
-          >
-            <div className={styles.portfolioImageContainer}>
-              <img
-                src={project.image}
-                alt={project.title}
-                className={styles.portfolioImage}
-              />
-              {/* <div className={styles.portfolioOverlay}>
-                <a href={project.link} className={styles.viewProjectButton}>View Project</a>
-              </div> */}
+      <div className="mb-10 flex justify-center">
+        <Tabs
+          value={activeCategory}
+          onValueChange={setActiveCategory}
+          className="flex flex-col items-center gap-4"
+        >
+          <TabsList className="flex-wrap justify-center h-auto">
+            {categories.map((category) => (
+              <TabsTrigger key={category} value={category} className="h-8">
+                {category}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          <TabsContent value={activeCategory} className="w-full">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {filteredProjects.map((project, index) => (
+              <Card
+                asChild
+                key={index}
+                className="group gap-0 overflow-hidden py-0 transition-all hover:border-muted-foreground/30 hover:shadow-md"
+              >
+                <article>
+                  <div className="relative aspect-[16/10] overflow-hidden bg-muted">
+                    <img
+                      src={project.image}
+                      alt={project.title}
+                      loading="lazy"
+                      className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  </div>
+                  <div className="flex flex-1 flex-col gap-3 p-5">
+                    <div className="flex items-center justify-between gap-2">
+                      <Badge variant="outline">{project.category}</Badge>
+                      {project.link && project.link !== "#" && (
+                        <a
+                          href={project.link}
+                          aria-label={`Open ${project.title}`}
+                          className="text-muted-foreground transition-colors hover:text-foreground"
+                        >
+                          <ArrowUpRight01Icon size={18} />
+                        </a>
+                      )}
+                    </div>
+                    <h3 className="!mb-0 !text-base !font-semibold tracking-tight">
+                      {project.title}
+                    </h3>
+                    <p className="!mb-0 text-sm leading-relaxed text-muted-foreground">
+                      {project.description}
+                    </p>
+                    <div className="mt-auto flex flex-wrap gap-1.5 pt-2">
+                      {project.technologies.map((tech, techIndex) => (
+                        <Badge
+                          key={techIndex}
+                          variant="outline"
+                          className="bg-muted/50 text-[11px] font-medium text-muted-foreground"
+                        >
+                          {tech}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </article>
+              </Card>
+              ))}
             </div>
-            <div className={styles.portfolioContent}>
-              <h3 className={styles.portfolioTitle}>{project.title}</h3>
-              <p className={styles.portfolioDescription}>
-                {project.description}
-              </p>
-              <div className={styles.technologiesContainer}>
-                {project.technologies.map((tech, techIndex) => (
-                  <span key={techIndex} className={styles.technologyTag}>
-                    {tech}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        ))}
+          </TabsContent>
+        </Tabs>
       </div>
     </section>
   );

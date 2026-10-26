@@ -167,16 +167,16 @@
     "description": "ປ້າຍກຳກັບເຕືອນ"
   },
   "theme.CodeBlock.copied": {
-    "message": "ຄັດລອກແລ້ວ",
-    "description": "ປ້າຍກຳກັບຄັດລອກແລ້ວ"
+    "message": "ສຳເນົາແລ້ວ",
+    "description": "The copied button label on code blocks"
   },
   "theme.CodeBlock.copyButtonAriaLabel": {
-    "message": "ຄັດລອກລະຫັດ",
-    "description": "ປ້າຍກຳກັບ ARIA ປຸ່ມຄັດລອກ"
+    "message": "ສຳເນົາໂຄດໄປໃສ່ຄລິບບອດ",
+    "description": "The ARIA label for copy code blocks button"
   },
   "theme.CodeBlock.copy": {
-    "message": "ຄັດລອກ",
-    "description": "ປ້າຍກຳກັບຄັດລອກ"
+    "message": "ສຳເນົາ",
+    "description": "The copy button label on code blocks"
   },
   "theme.CodeBlock.wordWrapToggle": {
     "message": "ສະຫຼັບການຫຸ້ມຄຳ",
@@ -211,8 +211,8 @@
     "description": "The label used by the button on the collapsible TOC component"
   },
   "theme.blog.post.readMore": {
-    "message": "ອ່ານເພີ່ມເຕີມ",
-    "description": "The label used in blog post item excerpts to link to full blog posts"
+    "message": "ອ່ານເພີ່ມ",
+    "description": "Label of the read-more link on truncated blog posts"
   },
   "theme.blog.post.readMoreLabel": {
     "message": "ອ່ານເພີ່ມເຕີມກ່ຽວກັບ {title}",
@@ -389,5 +389,37 @@
   },
   "sideProject.description": {
     "message": "ນີ້ແມ່ນໂປຣເຈັກນ້ອຍໆທີ່ສ້າງຂຶ້ນມາເປັນ open source ເພື່ອທົດລອງ stack ໃໝ່ໆ."
+  },
+  "theme.blog.sidebar.categories": {
+    "message": "ໝວດໝູ່",
+    "description": "Heading of the blog categories list"
+  },
+  "theme.blog.sidebar.recentPosts": {
+    "message": "ບົດຄວາມຫຼ້າສຸດ",
+    "description": "Heading of the blog recent posts list"
+  },
+  "blog.list.searchPlaceholder": {
+    "message": "ຄົ້ນຫາບົດຄວາມ…",
+    "description": "Placeholder of the blog search input"
+  },
+  "blog.list.noResults": {
+    "message": "ບໍ່ພົບບົດຄວາມ",
+    "description": "Empty state title when no articles match"
+  },
+  "blog.list.tryAdjusting": {
+    "message": "ລອງປັບຄຳຄົ້ນຫາ ຫຼື ຕົວກັ່ນຕອງຂອງທ່ານ",
+    "description": "Empty state hint"
+  },
+  "blog.list.loadMore": {
+    "message": "ໂຫຼດບົດຄວາມເພີ່ມ",
+    "description": "Label of the load-more button"
+  },
+  "factory.title": {
+    "message": "ບ່ອນທີ່ໄອເດຍຖືກຜະລິດ",
+    "description": "Factory section title"
+  },
+  "factory.description": {
+    "message": "ມຸມມອງ 3D ສົດຂອງກົນໄກເບື້ອງຫຼັງບລັອກ — ສາຍພານລຳລຽງ ແຂນຫຸ່ນຍົນ ແລະ ເຊັນເຊີເລເຊີ",
+    "description": "Factory section description"
   }
 }

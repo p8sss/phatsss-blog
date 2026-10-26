@@ -198,6 +198,75 @@ docker-compose down
 - `POST /roles/:id/permissions` - Assign permissions to a role
 - `DELETE /roles/:id/permissions/:permissionId` - Remove a permission from a role
 
+### Example Controller
+
+```typescript
+// src/auth/auth.controller.ts
+import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
+import { AuthService } from './auth.service';
+import { SignUpDto, LoginDto, RefreshTokenDto } from './dto';
+
+@Controller('auth')
+@ApiTags('auth')
+export class AuthController {
+  constructor(private readonly authService: AuthService) {}
+
+  @Post('signup')
+  signup(@Body() dto: SignUpDto) {
+    return this.authService.signup(dto);
+  }
+
+  @Post('login')
+  @HttpCode(HttpStatus.OK)
+  login(@Body() dto: LoginDto) {
+    return this.authService.login(dto);
+  }
+
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  refresh(@Body() dto: RefreshTokenDto) {
+    return this.authService.refreshTokens(dto.refreshToken);
+  }
+}
+```
+
+### Route Protection Example
+
+```typescript
+// Protect a route with RBAC decorators + guards
+@Roles('admin')
+@Permissions('users:delete')
+@UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
+@Delete('users/:id')
+remove(@Param('id') id: string) {
+  return this.usersService.remove(id);
+}
+```
+
+### Standardized Responses
+
+```typescript
+// src/common/interceptors/transform.interceptor.ts
+@Injectable()
+export class TransformInterceptor<T>
+  implements NestInterceptor<T, ApiResponse<T>>
+{
+  intercept(
+    context: ExecutionContext,
+    next: CallHandler,
+  ): Observable<ApiResponse<T>> {
+    return next.handle().pipe(
+      map((data) => ({
+        success: true,
+        data,
+        timestamp: new Date().toISOString(),
+      })),
+    );
+  }
+}
+```
+
 ## Environment Variables
 
 | Variable | Description | Default |
@@ -222,6 +291,23 @@ docker-compose down
 | `TIKTOK_CLIENT_SECRET` | TikTok OAuth client secret | - |
 | `TIKTOK_CALLBACK_URL` | TikTok OAuth callback URL | - |
 
+```bash
+# .env.example
+PORT=3000
+NODE_ENV=development
+DATABASE_URL=postgresql://user:password@localhost:5432/nest_app
+
+JWT_ACCESS_SECRET=change-me
+JWT_REFRESH_SECRET=change-me-too
+JWT_ACCESS_TTL=15m
+JWT_REFRESH_TTL=7d
+
+ENABLE_GOOGLE_OAUTH=false
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_CALLBACK_URL=http://localhost:3000/auth/google/callback
+```
+
 ## Security Best Practices
 
 - **Password Storage**: Passwords are hashed using Argon2, a secure password-hashing function
@@ -233,6 +319,24 @@ docker-compose down
 - **Environment Variables**: Sensitive information stored in environment variables
 - **Error Handling**: Custom error handling to prevent information leakage
 
+```typescript
+import * as argon2 from 'argon2';
+import { JwtService } from '@nestjs/jwt';
+
+// Argon2 password hashing (memory-hard, resistant to GPU attacks)
+const hash = await argon2.hash(password, { type: argon2.argon2id });
+const isValid = await argon2.verify(hash, attempt);
+
+// Short-lived access token signed with the JwtService
+const accessToken = await this.jwtService.signAsync(
+  { sub: user.id, email: user.email },
+  {
+    secret: this.config.get('JWT_ACCESS_SECRET'),
+    expiresIn: this.config.get('JWT_ACCESS_TTL'), // e.g. "15m"
+  },
+);
+```
+
 ## Performance Optimizations
 
 - **Database Indexing**: Strategic indexes on frequently queried fields
@@ -240,4 +344,18 @@ docker-compose down
 - **Pagination**: All list endpoints support pagination
 - **Caching**: Response caching for frequently accessed data
 - **Docker Optimization**: Multi-stage builds for smaller images
+
+```typescript
+// Paginated, projected Prisma query — select only the columns you need
+const [users, total] = await this.prisma.$transaction([
+  this.prisma.user.findMany({
+    select: { id: true, email: true, createdAt: true },
+    where: { isActive: true },
+    skip,
+    take,
+    orderBy: { createdAt: 'desc' },
+  }),
+  this.prisma.user.count({ where: { isActive: true } }),
+]);
+```
 

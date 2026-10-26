@@ -1,4 +1,3 @@
-import { useColorMode } from "@docusaurus/theme-common";
 import {
   SiReact,
   SiNextdotjs,
@@ -22,150 +21,118 @@ import {
 } from "react-icons/si";
 import LogoLoop from "./LogoLoop";
 
-const techLogos = (logoColor: string) => [
+const techLogos = [
   {
-    node: <SiReact color={logoColor} className="tech-logo logo-react"/>,
+    node: <SiReact />,
     title: "React",
     href: "https://react.dev",
   },
   {
-    node: <SiNextdotjs color={logoColor} className="tech-logo logo-nextjs"/>,
+    node: <SiNextdotjs />,
     title: "Next.js",
     href: "https://nextjs.org",
   },
   {
-    node: <SiTypescript color={logoColor} className="tech-logo logo-typescript"/>,
+    node: <SiTypescript />,
     title: "TypeScript",
     href: "https://www.typescriptlang.org",
   },
   {
-    node: <SiTailwindcss color={logoColor} className="tech-logo logo-tailwindcss"/>,
+    node: <SiTailwindcss />,
     title: "Tailwind CSS",
     href: "https://tailwindcss.com",
   },
   {
-    node: <SiNodedotjs color={logoColor} className="tech-logo logo-nodejs"/>,
+    node: <SiNodedotjs />,
     title: "Node.js",
     href: "https://nodejs.org/",
   },
   {
-    node: <SiLaravel color={logoColor} className="tech-logo logo-laravel"/>,
+    node: <SiLaravel />,
     title: "Laravel",
     href: "https://laravel.com/",
   },
   {
-    node: <SiPhp color={logoColor} className="tech-logo logo-php"/>,
+    node: <SiPhp />,
     title: "PHP",
     href: "https://www.php.net/",
   },
   {
-    node: <SiNestjs color={logoColor} className="tech-logo logo-nestjs"/>,
+    node: <SiNestjs />,
     title: "NestJS",
     href: "https://nestjs.com/",
   },
   {
-    node: <SiPrisma color={logoColor} className="tech-logo logo-prisma"/>,
+    node: <SiPrisma />,
     title: "Prisma",
     href: "https://www.prisma.io/",
   },
   {
-    node: <SiGithub color={logoColor} className="tech-logo logo-github"/>,
+    node: <SiGithub />,
     title: "Github",
     href: "https://github.com/",
   },
   {
-    node: <SiGit color={logoColor} className="tech-logo logo-git"/>,
+    node: <SiGit />,
     title: "Git",
     href: "https://git-scm.com/",
   },
   {
-    node: <SiDocker color={logoColor} className="tech-logo logo-docker"/>,
+    node: <SiDocker />,
     title: "Docker",
     href: "https://www.docker.com/",
   },
   {
-    node: <SiPostgresql color={logoColor} className="tech-logo logo-postgresql"/>,
+    node: <SiPostgresql />,
     title: "PostgreSQL",
     href: "https://www.postgresql.org/",
   },
   {
-    node: <SiMysql color={logoColor} className="tech-logo logo-mysql"/>,
+    node: <SiMysql />,
     title: "MySQL",
     href: "https://www.mysql.com/",
   },
   {
-    node: <SiSupabase color={logoColor} className="tech-logo logo-supabase"/>,
+    node: <SiSupabase />,
     title: "Supabase",
     href: "https://www.supabase.com/",
   },
   {
-    node: <SiWebpack color={logoColor} className="tech-logo logo-webpack"/>,
+    node: <SiWebpack />,
     title: "Webpack",
     href: "https://webpack.js.org/",
   },
   {
-    node: <SiBabel color={logoColor} className="tech-logo logo-babel"/>,
+    node: <SiBabel />,
     title: "Babel",
     href: "https://babeljs.io/",
   },
   {
-    node: <SiGooglecloud color={logoColor} className="tech-logo logo-googlecloud"/>,
+    node: <SiGooglecloud />,
     title: "Google Cloud",
     href: "https://cloud.google.com/",
   },
   {
-    node: <SiDigitalocean color={logoColor} className="tech-logo logo-digitalocean"/>,
+    node: <SiDigitalocean />,
     title: "Digital Ocean",
     href: "https://www.digitalocean.com/",
   },
 ];
 
-// Alternative with image sources
-const imageLogos = [
-  {
-    src: "/logos/company1.png",
-    alt: "Company 1",
-    href: "https://company1.com",
-  },
-  {
-    src: "/logos/company2.png",
-    alt: "Company 2",
-    href: "https://company2.com",
-  },
-  {
-    src: "/logos/company3.png",
-    alt: "Company 3",
-    href: "https://company3.com",
-  },
-];
-
 export function LogoLoopComponent() {
-  const { colorMode } = useColorMode();
-  const isDarkMode = colorMode === "dark";
-  const logoColor = isDarkMode ? "lightgray" : "darkgray";
-
   return (
-    <div
-      style={{
-        height: "250px",
-        position: "relative",
-        overflow: "hidden",
-        display: "flex",
-        alignItems: "center",
-      }}
-    >
+    <section className="relative mx-auto flex h-56 w-full max-w-5xl items-center overflow-hidden px-6">
       <LogoLoop
-        logos={techLogos(logoColor)}
+        logos={techLogos}
         speed={120}
         direction="left"
-        logoHeight={48}
-        gap={40}
+        logoHeight={44}
+        gap={48}
         pauseOnHover
         scaleOnHover
         fadeOut
-        fadeOutColor={"rgba(0, 0, 0, 0.1)"}
-        ariaLabel="Technology"
+        ariaLabel="Technology stack"
       />
-    </div>
+    </section>
   );
 }

@@ -1,114 +1,281 @@
-/**
- * Any CSS included here will be global. The classic template
- * bundles Infima by default. Infima is a CSS framework designed to
- * work well for content-centric websites.
+/* Global styles for phatsss-blog.
+ *
+ * Design-token foundation ONLY — no component styling.
+ * All component styling lives in shadcn components + Tailwind utilities.
+ *
+ *  - Google Fonts (Inter / Noto Sans Thai / Noto Sans Lao / Geist Mono)
+ *  - Tailwind CSS v4 entry point
+ *  - shadcn design tokens — official "Blue" theme (ui.shadcn.com/themes),
+ *    used verbatim; do not customize color values
+ *  - Variable-only sync so Docusaurus/Infima internals and
+ *    docusaurus-search-local inherit the same tokens
  */
-/* Import the Google Font */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;700&display=swap');
 
-/* You can override the default Infima variables here. */
+/* Fonts: en uses Inter; th/lo glyphs fall through to Noto Sans Thai / Lao
+ * (Inter contains no Thai/Lao glyphs, so fallback resolution is automatic) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Noto+Sans+Lao:wght@400;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap');
+
+/* Tailwind v4 entry point (theme + base + utilities) */
+@import "tailwindcss/index.css";
+
+/* Docusaurus toggles dark mode by setting data-theme="dark" on <html> */
+@custom-variant dark (&:is([data-theme="dark"] *));
+
+/* ─────────────────────────────────────────────────────────────
+ * shadcn design tokens — official "Blue" theme (ui.shadcn.com/themes)
+ * Values are used verbatim; do not customize.
+ * ───────────────────────────────────────────────────────────── */
 :root {
-  --ifm-font-family-base: 'Noto Sans Lao', sans-serif;
-  --ifm-color-primary: #00ccff;
-  /* Cyan Blue from logo cat */
-  --ifm-color-primary-dark: #00b8e6;
-  --ifm-color-primary-darker: #00a6d9;
-  --ifm-color-primary-darkest: #008ab3;
-  --ifm-color-primary-light: #1ad2ff;
-  --ifm-color-primary-lighter: #33d6ff;
-  --ifm-color-primary-lightest: #66e0ff;
-  --ifm-code-font-size: 95%;
-  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+  --radius: 0.65rem;
 
-  /* Additional custom colors based on logo */
-  --phatss-pink: #ff0099;
-  --phatss-yellow: #ffcc00;
-  --phatss-black: #000000;
-  --phatss-white: #ffffff;
+  --background: hsl(0 0% 100%);
+  --foreground: hsl(222.2 47.4% 11.2%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(222.2 47.4% 11.2%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(222.2 47.4% 11.2%);
+  --primary: hsl(221.2 83.2% 53.3%);
+  --primary-foreground: hsl(210 40% 98%);
+  --secondary: hsl(210 40% 96.1%);
+  --secondary-foreground: hsl(222.2 47.4% 11.2%);
+  --muted: hsl(210 40% 96.1%);
+  --muted-foreground: hsl(215.4 16.3% 46.9%);
+  --accent: hsl(210 40% 96.1%);
+  --accent-foreground: hsl(222.2 47.4% 11.2%);
+  --destructive: hsl(0 84.2% 60.2%);
+  --destructive-foreground: hsl(210 40% 98%);
+  --border: hsl(214.3 31.8% 91.4%);
+  --input: hsl(214.3 31.8% 91.4%);
+  --ring: hsl(221.2 83.2% 53.3%);
 }
 
-/* For readability concerns, you should choose a lighter palette in dark mode. */
 [data-theme="dark"] {
-  --ifm-color-primary: #33d6ff;
-  /* Lighter blue for dark mode */
-  --ifm-color-primary-dark: #1ad2ff;
-  --ifm-color-primary-darker: #00ccff;
-  --ifm-color-primary-darkest: #00a6d9;
-  --ifm-color-primary-light: #4ddbff;
-  --ifm-color-primary-lighter: #66e0ff;
-  --ifm-color-primary-lightest: #99eaff;
-  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+  --background: hsl(222.2 84% 4.9%);
+  --foreground: hsl(210 40% 98%);
+  --card: hsl(222.2 84% 4.9%);
+  --card-foreground: hsl(210 40% 98%);
+  --popover: hsl(222.2 84% 4.9%);
+  --popover-foreground: hsl(210 40% 98%);
+  --primary: hsl(217.2 91.2% 59.8%);
+  --primary-foreground: hsl(222.2 47.4% 11.2%);
+  --secondary: hsl(217.2 32.6% 17.5%);
+  --secondary-foreground: hsl(210 40% 98%);
+  --muted: hsl(217.2 32.6% 17.5%);
+  --muted-foreground: hsl(215 20.2% 65.1%);
+  --accent: hsl(217.2 32.6% 17.5%);
+  --accent-foreground: hsl(210 40% 98%);
+  --destructive: hsl(0 62.8% 30.6%);
+  --destructive-foreground: hsl(210 40% 98%);
+  --border: hsl(217.2 32.6% 17.5%);
+  --input: hsl(217.2 32.6% 17.5%);
+  --ring: hsl(224.3 76.3% 48%);
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: 'Noto Sans Lao', sans-serif;
-}
-/* force set z-index to navbar */
-.navbar {
-  z-index: 1000;
-}
-/* ========== Sidebar link height & radius ========== */
-.menu {
-  padding: 0.5rem !important;
+/* Expose tokens as Tailwind theme colors (shadcn / Tailwind v4 pattern) */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --font-sans: 'Inter', 'Noto Sans Thai', 'Noto Sans Lao', ui-sans-serif,
+    system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas,
+    'Liberation Mono', monospace;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
 }
 
-/* Make every sidebar link exactly 48px tall, vertically centered */
-.menu__list-item>a.menu__link {
-  display: flex;
-  /* ensure we can center by flex */
-  align-items: center;
-  /* vertically center the text/icon */
-  min-height: 48px;
-  /* enforce at least 48px */
-  height: 48px;
-  /* enforce exactly 48px */
-  padding-top: 0;
-  /* remove extra top/bottom padding */
-  padding-bottom: 0;
-  border-radius: 8px;
-  padding-right: 4px;
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
 }
 
-/* If you have nested items and want them the same: */
-.menu__list .menu__list-item .menu__link {
-  min-height: 48px;
-  height: 48px;
-  border-radius: 8px;
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
 }
 
-/* If you have nested items and want them the same: */
-.menu__list .menu__list-item>.menu__list-item-collapsible {
-  min-height: 48px;
-  height: 48px;
-  border-radius: 8px;
-}
-/* Fix for navbar-sidebar__backdrop overflow */
-.navbar-sidebar__backdrop {
-  width: 100% !important;
-  max-width: 100% !important;
-  position: fixed !important;
-  left: 0 !important;
-  right: 0 !important;
-  box-sizing: border-box !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  overflow-x: hidden !important;
+/* ─────────────────────────────────────────────────────────────
+ * Variable-only sync: Docusaurus/Infima applies build-time color
+ * math, so it needs plain hex values derived 1:1 from the tokens.
+ * No selectors are styled here — variables only.
+ * ───────────────────────────────────────────────────────────── */
+:root {
+  /* en -> Inter; th/lo glyphs resolve to Noto Sans Thai / Noto Sans Lao
+   * automatically (Inter has no Thai/Lao coverage) */
+  --ifm-font-family-base: 'Inter', 'Noto Sans Thai', 'Noto Sans Lao',
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --ifm-font-family-monospace: 'Geist Mono', ui-monospace, SFMono-Regular,
+    Menlo, Consolas, 'Liberation Mono', monospace;
+  --ifm-code-font-size: 92%;
+  --ifm-line-height-base: 1.7;
+  --ifm-heading-font-weight: 600;
+
+  /* Accent — shadcn Blue theme primary (hsl(221.2 83.2% 53.3%) = #2563eb) */
+  --ifm-color-primary: #2563eb;
+  --ifm-color-primary-dark: #1d4ed8;
+  --ifm-color-primary-darker: #1e40af;
+  --ifm-color-primary-darkest: #1e3a8a;
+  --ifm-color-primary-light: #3b82f6;
+  --ifm-color-primary-lighter: #60a5fa;
+  --ifm-color-primary-lightest: #93c5fd;
+
+  /* Surfaces */
+  --ifm-background-color: #ffffff;
+  --ifm-background-surface-color: #f1f5f9;
+  --ifm-navbar-background-color: color-mix(in srgb, var(--background) 95%, transparent);
+  --ifm-navbar-shadow: none;
+  --ifm-footer-background-color: #f1f5f9;
+  --ifm-footer-color: #64748b;
+  --ifm-footer-link-color: #475569;
+  --ifm-footer-title-color: #0f172a;
+
+  /* Text */
+  --ifm-font-color-base: #0f172a;
+  --ifm-font-color-secondary: #64748b;
+  --ifm-heading-color: #0f172a;
+  --ifm-link-color: var(--ifm-color-primary);
+  --ifm-link-hover-color: var(--ifm-color-primary-darker);
+  --ifm-link-decoration: none;
+
+  /* Emphasis scale (slate) */
+  --ifm-color-emphasis-0: #ffffff;
+  --ifm-color-emphasis-100: #f1f5f9;
+  --ifm-color-emphasis-200: #e2e8f0;
+  --ifm-color-emphasis-300: #cbd5e1;
+  --ifm-color-emphasis-400: #94a3b8;
+  --ifm-color-emphasis-500: #64748b;
+  --ifm-color-emphasis-600: #475569;
+  --ifm-color-emphasis-700: #334155;
+  --ifm-color-emphasis-800: #1e293b;
+  --ifm-color-emphasis-900: #0f172a;
+  --ifm-color-emphasis-1000: #020817;
+
+  /* Components */
+  --ifm-menu-color-background-active: #eff6ff;
+  --ifm-menu-color-active: #1d4ed8;
+  --ifm-toc-border-color: #e2e8f0;
+  --ifm-table-border-color: #e2e8f0;
+  --ifm-hr-border-color: #e2e8f0;
+  --ifm-blockquote-border-color: #94a3b8;
+  --ifm-code-background: #f1f5f9;
+  --ifm-code-font-color: #0f172a;
+  --ifm-pre-background: #0f172a;
+  --ifm-pre-color: #f1f5f9;
+
+  --docusaurus-highlighted-code-line-bg: rgba(15, 23, 42, 0.08);
+
+  /* docusaurus-search-local — mapped to the same tokens */
+  --search-local-modal-background: var(--card);
+  --search-local-modal-shadow: var(--shadow-lg);
+  --search-local-border: var(--border);
+  --search-local-muted-color: var(--muted-foreground);
+  --search-local-text-color: var(--foreground);
+  --search-local-selected-background: color-mix(
+    in srgb,
+    var(--primary) 10%,
+    transparent
+  );
+  --search-local-highlight-color: var(--primary);
+  --search-local-hit-color: var(--foreground);
+  --search-local-hit-active-color: var(--foreground);
+  --search-local-footer-border-color: var(--border);
+  --search-local-footer-info-color: var(--muted-foreground);
+  --search-local-key-border: var(--border);
+  --search-local-primary-color: var(--primary);
 }
 
-/* Fix for navbar with sidebar show class */
-.navbar.navbar--fixed-top.navbar-sidebar--show {
-  overflow-x: hidden !important;
+[data-theme="dark"] {
+  /* shadcn Blue theme dark primary (hsl(217.2 91.2% 59.8%) = #3b82f6) */
+  --ifm-color-primary: #3b82f6;
+  --ifm-color-primary-dark: #1d4ed8;
+  --ifm-color-primary-darker: #1e40af;
+  --ifm-color-primary-darkest: #1e3a8a;
+  --ifm-color-primary-light: #60a5fa;
+  --ifm-color-primary-lighter: #93c5fd;
+  --ifm-color-primary-lightest: #bfdbfe;
+
+  --ifm-background-color: #020817;
+  --ifm-background-surface-color: #1e293b;
+  --ifm-footer-background-color: #1e293b;
+  --ifm-footer-color: #94a3b8;
+  --ifm-footer-link-color: #cbd5e1;
+  --ifm-footer-title-color: #f8fafc;
+
+  --ifm-font-color-base: #f8fafc;
+  --ifm-font-color-secondary: #94a3b8;
+  --ifm-heading-color: #f8fafc;
+  --ifm-link-hover-color: var(--ifm-color-primary-light);
+
+  --ifm-color-emphasis-0: #020817;
+  --ifm-color-emphasis-100: #172036;
+  --ifm-color-emphasis-200: #1e293b;
+  --ifm-color-emphasis-300: #334155;
+  --ifm-color-emphasis-400: #475569;
+  --ifm-color-emphasis-500: #64748b;
+  --ifm-color-emphasis-600: #94a3b8;
+  --ifm-color-emphasis-700: #cbd5e1;
+  --ifm-color-emphasis-800: #e2e8f0;
+  --ifm-color-emphasis-900: #f1f5f9;
+  --ifm-color-emphasis-1000: #f8fafc;
+
+  --ifm-menu-color-background-active: hsl(217.2 91.2% 59.8% / 10%);
+  --ifm-menu-color-active: #93c5fd;
+  --ifm-toc-border-color: #1e293b;
+  --ifm-table-border-color: #1e293b;
+  --ifm-hr-border-color: #1e293b;
+  --ifm-blockquote-border-color: #475569;
+  --ifm-code-background: #1e293b;
+  --ifm-code-font-color: #f8fafc;
+  --ifm-pre-background: #020817;
+  --ifm-pre-color: #f8fafc;
+
+  --docusaurus-highlighted-code-line-bg: rgba(248, 250, 252, 0.08);
 }
 
-/* Ensure the body doesn't overflow when mobile sidebar is open */
-html,
-body {
-  overflow-x: hidden !important;
-  max-width: 100% !important;
-  box-sizing: border-box !important;
+@layer base {
+  /* Tailwind preflight strips list markers globally; restore them inside
+   * Docusaurus-rendered markdown containers only. */
+  .markdown ul,
+  .theme-doc-markdown ul,
+  article ul {
+    list-style-type: revert;
+  }
+
+  .markdown ol,
+  .theme-doc-markdown ol,
+  article ol {
+    list-style-type: revert;
+  }
 }

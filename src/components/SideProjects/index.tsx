@@ -1,13 +1,15 @@
-import { useColorMode } from "@docusaurus/theme-common";
-import { translate } from "@docusaurus/Translate";
 import { JSX } from "react";
-import styles from "./styles.module.css";
+import { translate } from "@docusaurus/Translate";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import {
+  ArrowUpRight01Icon,
+  CubeIcon,
+  GithubIcon,
+} from "@/components/ui/icons";
+import SectionHeading from "../SectionHeading";
 
-/**
- * Portfolio project data array
- * Contains information about completed projects
- * Each project includes title, description, technologies used, category, and image
- */
 const projects = [
   {
     title: "Covid-19 Tracker",
@@ -35,74 +37,72 @@ const projects = [
   },
 ];
 
-/**
- * SideProjects Component
- * Displays professional projects with filtering capability
- * Supports both light and dark mode
- */
 export default function SideProjects(): JSX.Element {
-  const { colorMode } = useColorMode();
-
   return (
-    <section
-      className={`${styles.section} ${
-        colorMode === "dark" ? styles.sectionDark : styles.sectionLight
-      }`}
-    >
-      <div className={styles.sectionHeader}>
-        <h2 className={styles.sectionTitle}>
-          {translate({ id: "sideProject.title" })}
-        </h2>
-        <p className={styles.sectionDescription}>
-          {translate({ id: "sideProject.description" })}
-        </p>
-      </div>
+    <section className="mx-auto w-full max-w-5xl px-6 py-20">
+      <SectionHeading
+        eyebrow={
+          <>
+            <CubeIcon size={14} /> {translate({ id: "sideProject.title" })}
+          </>
+        }
+        title={translate({ id: "sideProject.title" })}
+        description={translate({ id: "sideProject.description" })}
+      />
 
-      <div className={styles.portfolioGrid}>
+      <div className="grid gap-6 sm:grid-cols-2">
         {projects.map((project, index) => (
-          <div
+          <Card
+            asChild
             key={index}
-            className={`${styles.portfolioCard} ${
-              colorMode === "dark" ? styles.cardDark : styles.cardLight
-            }`}
+            className="group gap-0 overflow-hidden py-0 transition-all hover:border-muted-foreground/30 hover:shadow-md"
           >
-            <div className={styles.portfolioImageContainer}>
-              <img
-                src={project.image}
-                alt={project.title}
-                className={styles.portfolioImage}
-              />
-              <div className={styles.portfolioOverlay}>
-                <a
-                  href={project.link}
-                  target="_blank"
-                  className={styles.viewProjectButton}
-                >
-                  Demo
-                </a>
-                <a
-                  href={project.projectLink}
-                  target="_blank"
-                  className={styles.viewProjectButton}
-                >
-                  View Project
-                </a>
+            <article>
+              <div className="relative aspect-[16/10] overflow-hidden bg-muted">
+                <img
+                  src={project.image}
+                  alt={project.title}
+                  loading="lazy"
+                  className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 flex items-center justify-center gap-3 bg-background/80 opacity-0 backdrop-blur-[2px] transition-opacity duration-300 group-hover:opacity-100">
+                  <Button asChild size="sm" variant="secondary">
+                    <a href={project.link} target="_blank" rel="noreferrer noopener">
+                      Demo <ArrowUpRight01Icon size={16} />
+                    </a>
+                  </Button>
+                  <Button asChild size="sm" variant="outline">
+                    <a
+                      href={project.projectLink}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                    >
+                      <GithubIcon size={16} /> Code
+                    </a>
+                  </Button>
+                </div>
               </div>
-            </div>
-            <div className={styles.portfolioContent}>
-              <h3 className={styles.portfolioTitle}>{project.title}</h3>
-              <p className={styles.portfolioDescription}>
-                {project.description}
-              </p>
-              <div className={styles.technologiesContainer}>
-                {project.technologies.map((tech, techIndex) => (
-                  <span key={techIndex} className={styles.technologyTag}>
-                    {tech}
-                  </span>
-                ))}
+              <div className="flex flex-1 flex-col gap-3 p-5">
+                <h3 className="!mb-0 !text-lg !font-semibold tracking-tight">
+                  {project.title}
+                </h3>
+                <p className="!mb-0 text-sm leading-relaxed text-muted-foreground">
+                  {project.description}
+                </p>
+                <div className="mt-auto flex flex-wrap gap-1.5 pt-2">
+                  {project.technologies.map((tech, techIndex) => (
+                    <Badge
+                      key={techIndex}
+                      variant="outline"
+                      className="bg-muted/50 text-[11px] font-medium text-muted-foreground"
+                    >
+                      {tech}
+                    </Badge>
+                  ))}
+                </div>
               </div>
-            </div>
-          </div>
+            </article>
+          </Card>
         ))}
       </div>
     </section>
