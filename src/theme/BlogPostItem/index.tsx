@@ -5,6 +5,9 @@ import {translate} from '@docusaurus/Translate';
 import {usePluralForm} from '@docusaurus/theme-common';
 import {useDateTimeFormat} from '@docusaurus/theme-common/internal';
 import {useBlogPost} from '@docusaurus/plugin-content-blog/client';
+import {blogPostContainerID} from '@docusaurus/utils-common';
+import {MDXProvider} from '@mdx-js/react';
+import MDXContent from '@theme/MDXContent';
 import {Badge} from '@/components/glass/badge';
 import {Card} from '@/components/glass/card';
 import {
@@ -13,11 +16,16 @@ import {
   Clock01Icon,
 } from '@/components/ui/icons';
 import {formatReadingTime, useFormatDate} from '@/lib/format';
+import {htmlToText} from '@/lib/html-text';
 import {PROSE_CLASSES} from '@/lib/prose';
 import {CoverArt} from '@/components/blog/covers';
 import {AuthorBadge} from '@/components/blog/AuthorBadge';
 import {BookmarkButton} from '@/components/blog/BookmarkButton';
+import {TaskCheckbox} from '@/components/blog/TaskCheckbox';
 import type {Props} from '@theme/BlogPostItem';
+
+// merged over the theme's MDXComponents (this provider sits inside MDXContent)
+const POST_MDX_COMPONENTS = {input: TaskCheckbox};
 
 function useReadingTimeLabel() {
   const {selectMessage} = usePluralForm();
@@ -66,15 +74,10 @@ export default function BlogPostItem({children, className}: Props): ReactNode {
   if (isBlogPostPage) {
     return (
       <article className={clsx('max-w-none', className)}>
-        <header className="mb-6 space-y-2 border-b pb-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {tags[0]?.label ??
-                translate({
-                  id: 'theme.blog.post.uncategorized',
-                  message: 'Article',
-                })}
-            </p>
-            <h1 className="!mb-0 !text-xl !font-semibold tracking-tight">
+        {/* No category eyebrow: the breadcrumb above and the tag chips below
+            already name it */}
+        <header className="mb-6 space-y-3 border-b border-border pb-5">
+            <h1 className="!mb-0 !text-[clamp(2rem,1.6rem+1.6vw,2.5rem)] !leading-tight !font-bold tracking-tight text-balance">
               {title}
             </h1>
 
@@ -108,7 +111,11 @@ export default function BlogPostItem({children, className}: Props): ReactNode {
             {tags.length > 0 && (
               <div className="flex flex-wrap gap-2 pt-1">
                 {tags.map((tag) => (
-                  <Badge key={tag.permalink} asChild variant="outline">
+                  <Badge
+                    key={tag.permalink}
+                    asChild
+                    variant="outline"
+                    className="h-7 px-2.5">
                     <Link to={tag.permalink}>{tag.label}</Link>
                   </Badge>
                 ))}
@@ -133,16 +140,24 @@ export default function BlogPostItem({children, className}: Props): ReactNode {
                     to={`#${item.id}`}
                     data-noBrokenLinkCheck
                     className="shrink-0 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground">
-                    {item.value}
+                    {/* TOC values are HTML strings ("Install <code>uv</code>") */}
+                    {htmlToText(item.value)}
                   </Link>
                 ))}
               </div>
             </div>
           )}
 
-          <article className={clsx('max-w-none', PROSE_CLASSES, className)}>
-            {children}
-          </article>
+          {/* the RSS/Atom feed extracts post HTML by this id */}
+          <div
+            id={blogPostContainerID}
+            className={clsx(PROSE_CLASSES, 'lg:text-[1.0625rem] lg:leading-[1.8]')}>
+            <MDXContent>
+              <MDXProvider components={POST_MDX_COMPONENTS}>
+                {children}
+              </MDXProvider>
+            </MDXContent>
+          </div>
       </article>
     );
   }
@@ -156,25 +171,25 @@ export default function BlogPostItem({children, className}: Props): ReactNode {
         className,
       )}>
       <article>
-        <Link to={permalink} className="block">
-          <CoverArt permalink={permalink} className="aspect-[16/9]">
-            <span className="absolute top-3 left-3 rounded-md bg-black/25 px-2 py-0.5 text-[11px] font-medium text-white backdrop-blur-sm">
-              {formatDate(date)}
-            </span>
-          </CoverArt>
-        </Link>
+        {/* Whole card is one link target: the title link below stretches over
+            it (after:absolute after:inset-0); tags and bookmark sit above it */}
+        <CoverArt permalink={permalink} className="aspect-[16/9]">
+          <span className="absolute top-3 left-3 rounded-md bg-black/25 px-2 py-0.5 text-xs font-medium text-white backdrop-blur-sm">
+            {formatDate(date)}
+          </span>
+        </CoverArt>
 
         <div className="flex flex-1 flex-col gap-2.5 p-5">
           <h2 className="!mb-0 !text-base !font-semibold leading-snug tracking-tight">
             <Link
               to={permalink}
-              className="!text-foreground transition-colors group-hover:!text-primary">
+              className="!text-foreground outline-none transition-colors after:absolute after:inset-0 after:rounded-surface group-hover:!text-primary focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-inset">
               {title}
             </Link>
           </h2>
 
-          <div className="line-clamp-3 text-sm leading-relaxed text-muted-foreground markdown">
-            {children}
+          <div className="line-clamp-3 text-sm leading-relaxed text-muted-foreground markdown [&_a]:relative [&_a]:z-10">
+            <MDXContent>{children}</MDXContent>
           </div>
 
           <div className="mt-auto flex items-center justify-between gap-2 pt-3">
@@ -184,21 +199,22 @@ export default function BlogPostItem({children, className}: Props): ReactNode {
                   key={tag.permalink}
                   asChild
                   variant="outline"
-                  className="bg-muted/50 text-[11px] font-medium text-muted-foreground">
+                  className="relative z-10 bg-muted/50 text-xs font-medium text-muted-foreground">
                   <Link to={tag.permalink}>{tag.label}</Link>
                 </Badge>
               ))}
             </div>
-            <span className="flex shrink-0 items-center gap-1 text-[11px] text-muted-foreground">
+            <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
               <Clock01Icon size={13} />
               {formatReadingTime(readingTime ?? 1)}
             </span>
           </div>
 
+          {/* Visual cue only — the stretched title link already covers the card */}
           {truncatedPost && (
-            <Link
-              to={permalink}
-              className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-foreground transition-colors hover:!text-primary">
+            <span
+              aria-hidden="true"
+              className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-foreground transition-colors group-hover:text-primary">
               {translate({
                 id: 'theme.blog.post.readMore',
                 message: 'Read more',
@@ -207,14 +223,14 @@ export default function BlogPostItem({children, className}: Props): ReactNode {
                 size={16}
                 className="transition-transform group-hover:translate-x-0.5"
               />
-            </Link>
+            </span>
           )}
         </div>
 
         <BookmarkButton
           permalink={permalink}
           size={14}
-          className="absolute top-2.5 right-2.5 border-0 bg-black/25 px-2 py-1 text-white backdrop-blur-sm hover:bg-black/25 hover:text-white"
+          className="absolute top-2.5 right-2.5 z-10 border-0 bg-black/25 px-2 py-1 text-white backdrop-blur-sm hover:bg-black/25 hover:text-white"
           label={undefined}
         />
       </article>

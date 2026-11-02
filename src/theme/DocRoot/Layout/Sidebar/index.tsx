@@ -42,16 +42,16 @@ export default function DocRootLayoutSidebar({
   return (
     <aside
       className={clsx(
-        'hidden shrink-0 lg:block lg:w-64',
-        hiddenSidebarContainer && 'lg:hidden',
+        'hidden shrink-0 min-[997px]:block min-[997px]:w-64',
+        hiddenSidebarContainer && 'min-[997px]:hidden',
       )}>
       <ResetOnSidebarChange>
         <div
           className={clsx(
             // p-10/-m-10 gives the glass card's shadow room inside the
             // scroll box, so overflow-y-auto doesn't clip it to a hard edge
-            'lg:sticky lg:top-14 lg:-m-10 lg:max-h-[calc(100vh-3.5rem)] lg:overflow-y-auto lg:p-10',
-            hiddenSidebar && 'lg:hidden',
+            'min-[997px]:sticky min-[997px]:top-14 min-[997px]:-m-10 min-[997px]:max-h-[calc(100vh-3.5rem)] min-[997px]:overflow-y-auto min-[997px]:p-10',
+            hiddenSidebar && 'min-[997px]:hidden',
           )}>
           <DocSidebar
             sidebar={sidebar}

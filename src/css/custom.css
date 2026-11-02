@@ -2,7 +2,7 @@
  *
  * Design-token foundation ONLY — no component styling.
  * All component styling lives in glasscn components + Tailwind utilities;
- * the one exception, Infima-rendered chrome, lives in chrome.css.
+ * the one exception, Infima/plugin-rendered markup, lives in chrome.css.
  *
  *  - Fonts: Nunito (self-hosted via @fontsource-variable, loaded in
  *    src/theme/Root.tsx) with Noto Sans Thai / Lao fallbacks, Geist Mono
@@ -23,8 +23,11 @@
 /* glasscn foundation: glass-* / aurora-* tokens, utilities, keyframes */
 @import "./glass.css";
 
-/* Glass for Infima-rendered chrome (navbar, mobile sidebar) */
+/* Fixes for Infima/plugin markup we don't own (search input, links) */
 @import "./chrome.css";
+
+/* The slow-moving accretion light and the shine it casts on glass */
+@import "./galaxy-light.css";
 
 /* Docusaurus toggles dark mode by setting data-theme="dark" on <html> */
 @custom-variant dark (&:is([data-theme="dark"] *));
@@ -60,13 +63,32 @@
   --input: oklch(0.9 0.012 285);
   --ring: oklch(0.5 0.075 70);
 
-  /* Aurora — "daylight nebula": pale lavender / sky / peach */
-  --aurora-base: oklch(0.965 0.012 285);
-  --aurora-1: oklch(0.925 0.05 300);
-  --aurora-2: oklch(0.935 0.04 230);
-  --aurora-3: oklch(0.94 0.04 55);
-  --aurora-speed: 0.5;
+  /* Aurora — "daylight accretion": warm ivory ground, pale teal / apricot /
+   * rose nebulae. Blobs stay at L ≥ 0.925 so text tokens hold 4.5:1. */
+  --aurora-base: oklch(0.968 0.01 80);
+  --aurora-1: oklch(0.93 0.055 205);
+  --aurora-2: oklch(0.93 0.07 60);
+  --aurora-3: oklch(0.925 0.065 330);
   --starfield-opacity: 0;
+
+  /* Glass rims: a soft warm hairline instead of glasscn's near-opaque white */
+  --glass-border-color: oklch(0.8 0.03 60);
+  --glass-border-opacity: 45%;
+  --glass-highlight-opacity: 55%;
+
+  /* Galaxy accents — the accretion-disk tones, used for highlights (brand
+   * rim, hero title, footer rule). Light-mode stops hold 3:1 as large text. */
+  --galaxy-amber: oklch(0.6 0.14 62);
+  --galaxy-ember: oklch(0.6 0.17 45);
+  --galaxy-rose: oklch(0.6 0.22 355);
+  --galaxy-violet: oklch(0.57 0.2 295);
+  --galaxy-teal: oklch(0.58 0.11 215);
+
+  /* The moving light (src/css/galaxy-light.css): its glow in the backdrop
+   * (peak kept at L 0.925 for text contrast) and the shine it casts on glass */
+  --galaxy-glow: oklch(0.925 0.055 65);
+  --galaxy-shine: oklch(0.86 0.11 65);
+  --galaxy-shine-strength: 30%;
 }
 
 [data-theme="dark"] {
@@ -90,12 +112,28 @@
   --input: oklch(1 0 0 / 16%);
   --ring: oklch(0.74 0.064 70);
 
-  /* Aurora — "deep space": violet / teal / magenta nebulae */
-  --aurora-base: oklch(0.13 0.03 285);
-  --aurora-1: oklch(0.29 0.12 300);
-  --aurora-2: oklch(0.3 0.085 235);
-  --aurora-3: oklch(0.27 0.12 345);
+  /* Aurora — "event horizon": deep teal space, ember / rose nebulae */
+  --aurora-base: oklch(0.14 0.03 235);
+  --aurora-1: oklch(0.28 0.065 205);
+  --aurora-2: oklch(0.31 0.1 45);
+  --aurora-3: oklch(0.27 0.1 330);
   --starfield-opacity: 1;
+
+  /* restated: the :root overrides above outrank glass.css's dark block */
+  --glass-border-color: oklch(0.85 0.04 60);
+  --glass-border-opacity: 10%;
+  --glass-highlight-opacity: 10%;
+
+  --galaxy-amber: oklch(0.88 0.14 75);
+  --galaxy-ember: oklch(0.78 0.16 48);
+  --galaxy-rose: oklch(0.8 0.17 355);
+  --galaxy-violet: oklch(0.8 0.14 295);
+  --galaxy-teal: oklch(0.86 0.11 200);
+
+  /* glow peak capped at L 0.36: muted text and links keep 4.8:1 over it */
+  --galaxy-glow: oklch(0.36 0.11 48);
+  --galaxy-shine: oklch(0.78 0.14 58);
+  --galaxy-shine-strength: 22%;
 }
 
 /* Expose tokens as Tailwind theme colors (shadcn / Tailwind v4 pattern) */
@@ -143,6 +181,8 @@
   --ifm-code-font-size: 92%;
   --ifm-line-height-base: 1.7;
   --ifm-heading-font-weight: var(--glass-heading-weight);
+  /* src/theme/Navbar/Layout: pt-3 + h-14; drives anchor scroll offsets */
+  --ifm-navbar-height: 4.25rem;
 
   /* Accent — primary oklch(0.5 0.075 70) = #7f5b30 */
   --ifm-color-primary: #7f5b30;
@@ -154,7 +194,7 @@
   --ifm-color-primary-lightest: #a78156;
 
   /* Surfaces — html paints aurora-base; the <Aurora/> layer sits on top */
-  --ifm-background-color: #f2f2fb;
+  --ifm-background-color: #f8f4ed;
   --ifm-background-surface-color: #eaeaf3;
   --ifm-navbar-background-color: transparent;
   --ifm-navbar-shadow: none;
@@ -218,7 +258,9 @@
   --search-local-primary-color: var(--primary);
 }
 
-[data-theme="dark"] {
+/* html[...] matches Infima's own dark selector; a bare [data-theme="dark"]
+ * is less specific and lost to Infima for every variable both define. */
+html[data-theme="dark"] {
   /* Accent — primary oklch(0.74 0.064 70) = #c5a47f */
   --ifm-color-primary: #c5a47f;
   --ifm-color-primary-dark: #b99873;
@@ -228,7 +270,7 @@
   --ifm-color-primary-lighter: #dcba94;
   --ifm-color-primary-lightest: #f0cea7;
 
-  --ifm-background-color: #060613;
+  --ifm-background-color: #000b14;
   --ifm-background-surface-color: #171628;
   --ifm-footer-color: #a9a9ba;
   --ifm-footer-link-color: #c9c9d7;
@@ -278,4 +320,85 @@
   article ol {
     list-style-type: revert;
   }
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * Touch targets & code blocks
+ * ───────────────────────────────────────────────────────────── */
+
+/* Heading "#" anchors: ≥24×24 hit area without a bigger glyph */
+.hash-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  min-height: 1.5rem;
+  padding-inline: 0.25rem;
+  margin-left: 0.25rem;
+  vertical-align: middle;
+}
+
+/* Code-block buttons (.code-buttons from src/theme/CodeBlock/Buttons): stock
+ * Docusaurus shows them only on hover — keep them on touch screens (no hover)
+ * and whenever the block holds keyboard focus */
+@media (hover: none) {
+  .code-buttons button {
+    opacity: 1 !important;
+  }
+}
+.theme-code-block:focus-within .code-buttons button {
+  opacity: 1 !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+ * Search page (docusaurus-search-local; src/theme/SearchPage puts it in
+ * <main data-search-page>). Its classes are hashed CSS modules, so only
+ * structure and attributes are targeted here.
+ * ───────────────────────────────────────────────────────────── */
+[data-search-page] > .container {
+  max-width: none;
+  padding: 0;
+  margin: 0 !important;
+}
+[data-search-page] .row {
+  margin: 0;
+}
+[data-search-page] .row > .col {
+  padding: 0;
+}
+[data-search-page] h1 {
+  @apply mb-6 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl;
+}
+
+/* the look of src/components/glass/input.tsx (size lg) */
+[data-search-page] input[type="search"] {
+  @apply glass-focus mb-6 h-control-lg w-full rounded-control border-0 bg-fill px-pad text-base text-foreground caret-primary inset-ring inset-ring-glass-border transition-[box-shadow,background-color] duration-(--glass-duration) ease-out placeholder:text-glass-label-tertiary selection:bg-primary/25 focus-visible:bg-fill-strong;
+}
+[data-search-page] input[type="search"]::-webkit-search-cancel-button {
+  appearance: none;
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+  background-color: var(--muted-foreground);
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M18 6 6 18M6 6l12 12'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+}
+[data-search-page] input[type="search"]::-webkit-search-cancel-button:hover {
+  background-color: var(--foreground);
+}
+
+[data-search-page] article[class*="searchResultItem"] {
+  @apply border-b border-border py-5;
+}
+[data-search-page] article[class*="searchResultItem"] h2 {
+  @apply mb-0 text-lg font-semibold;
+}
+[data-search-page] article[class*="searchResultItem"] mark {
+  @apply rounded-sm bg-primary/20 px-0.5 text-foreground;
+}
+[data-search-page] [class*="searchResultItemPath"] {
+  @apply mt-1 text-xs text-muted-foreground;
+}
+[data-search-page] [class*="searchResultItemSummary"] {
+  @apply mt-2 text-sm text-muted-foreground not-italic;
 }

@@ -1,8 +1,8 @@
 {
   "name": "Phatsss Blog",
   "short_name": "Phatsss",
-  "theme_color": "#060613",
-  "background_color": "#060613",
+  "theme_color": "#000b14",
+  "background_color": "#000b14",
   "display": "standalone",
   "scope": "/phatsss-blog/",
   "start_url": "/phatsss-blog/",

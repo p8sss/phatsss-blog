@@ -1,0 +1,86 @@
+/* NavbarBrand's highlight, echoing the hero card's rotating halo while staying
+ * glass: a soft galaxy swirl inside the pane and a light that circles its rim.
+ * Both spin an oversized square with `rotate` (compositor-only); the parent
+ * clips it to the pill. */
+
+.aura,
+.rim {
+  position: absolute;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* above the glass fill, below the logo and title */
+.aura {
+  inset: 0;
+  z-index: -1;
+  opacity: var(--brand-aura-opacity, 0.32);
+  transition: opacity var(--glass-duration) ease-out;
+}
+
+/* only the 1.5px border band shows */
+.rim {
+  inset: calc(var(--glass-border-width) * -1);
+  padding: 1.5px;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+
+.swirl,
+.comet {
+  position: absolute;
+  top: 50%;
+  left: -100%;
+  width: 300%;
+  aspect-ratio: 1;
+  translate: 0 -50%;
+  will-change: rotate;
+  animation: brand-spin linear infinite;
+}
+
+.swirl {
+  background: conic-gradient(
+    from 0deg,
+    var(--galaxy-rose),
+    var(--galaxy-violet),
+    var(--galaxy-teal),
+    var(--galaxy-amber),
+    var(--galaxy-rose)
+  );
+  filter: blur(14px);
+  animation-duration: 9s;
+}
+
+.comet {
+  background: conic-gradient(
+    from 0deg,
+    transparent 0 62%,
+    var(--galaxy-violet) 74%,
+    var(--galaxy-rose) 84%,
+    var(--galaxy-amber) 93%,
+    oklch(0.98 0.03 80) 98%,
+    transparent 100%
+  );
+  animation-duration: 5s;
+}
+
+.brand:hover,
+.brand:focus-visible {
+  --brand-aura-opacity: 0.5;
+}
+
+@keyframes brand-spin {
+  to {
+    rotate: 360deg;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .swirl,
+  .comet {
+    animation: none;
+    will-change: auto;
+  }
+}

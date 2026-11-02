@@ -108,6 +108,8 @@ export default function CardPreview({
           <div id={styles.prompt} className={styles.avatarContainer}>
             <img
               src="./img/phatsss-logo.png"
+              width={677}
+              height={314}
               alt="Developer Avatar"
               className={styles.avatar}
             />

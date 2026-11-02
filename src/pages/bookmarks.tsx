@@ -52,22 +52,24 @@ export default function Bookmarks(): JSX.Element {
             ))}
           </div>
         ) : (
-          <Card className="items-center border-dashed py-24 text-center shadow-none">
+          // one spacing scale (gap-3, then mt-3 before the action); !mb-0
+          // drops Infima's paragraph margins that made the gaps uneven
+          <Card className="items-center gap-3 border-dashed border-foreground/25 px-6 py-20 text-center shadow-none">
             <Bookmark01Icon size={28} className="text-muted-foreground" />
-            <p className="font-medium text-foreground">
+            <p className="!mb-0 font-medium text-foreground">
               {translate({
                 id: 'bookmarks.empty',
                 message: 'No bookmarks yet',
               })}
             </p>
-            <p className="max-w-sm text-sm text-muted-foreground">
+            <p className="!mb-0 max-w-sm text-sm text-muted-foreground">
               {translate({
                 id: 'bookmarks.emptyHint',
                 message:
                   'Tap the bookmark icon on any article to save it here for later reading.',
               })}
             </p>
-            <Button asChild className="mt-2">
+            <Button asChild className="mt-3">
               <Link to="/blog">
                 {translate({id: 'bookmarks.browse', message: 'Browse articles'})}
               </Link>

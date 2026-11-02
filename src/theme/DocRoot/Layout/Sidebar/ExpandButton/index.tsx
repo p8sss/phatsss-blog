@@ -26,7 +26,7 @@ export default function DocRootLayoutSidebarExpandButton({
       tabIndex={0}
       onKeyDown={toggleSidebar}
       onClick={toggleSidebar}
-      className="doc-sidebar-expand-button absolute inset-0 z-10 hidden h-auto w-full rounded-none text-muted-foreground hover:bg-accent lg:flex">
+      className="doc-sidebar-expand-button absolute inset-0 z-10 hidden h-auto w-full rounded-none text-muted-foreground hover:bg-accent min-[997px]:flex">
       <ArrowRight01Icon size={16} className="rtl:-scale-x-100" />
     </Button>
   );

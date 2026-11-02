@@ -42,36 +42,41 @@ function BlogPostPageContent({
       }>
       <ContentVisibility metadata={metadata} />
 
-      <div className="mb-8 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-        <nav
-          aria-label="Breadcrumb"
-          className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
-          <Link
-            to={blogBasePath}
-            className="shrink-0 font-medium transition-colors hover:!text-primary">
-            Blog
-          </Link>
-          {firstTag && (
-            <>
-              <ChevronRightIcon size={14} className="shrink-0" />
-              <Link
-                to={firstTag.permalink}
-                className="shrink-0 font-medium transition-colors hover:!text-primary">
-                {firstTag.label}
-              </Link>
-            </>
-          )}
-          <ChevronRightIcon size={14} className="shrink-0" />
-          <span className="truncate text-foreground/80">{metadata.title}</span>
-        </nav>
-        <LanguageSwitcher />
+      {/* one reading column: header, body, code and pager share the same edges */}
+      <div className="max-w-[42rem]">
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+          <nav
+            aria-label="Breadcrumb"
+            className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
+            <Link
+              to={blogBasePath}
+              className="inline-flex min-h-6 shrink-0 items-center font-medium transition-colors hover:!text-primary">
+              Blog
+            </Link>
+            {firstTag && (
+              <>
+                <ChevronRightIcon size={14} className="shrink-0" />
+                <Link
+                  to={firstTag.permalink}
+                  className="inline-flex min-h-6 shrink-0 items-center font-medium transition-colors hover:!text-primary">
+                  {firstTag.label}
+                </Link>
+              </>
+            )}
+            <ChevronRightIcon size={14} className="shrink-0" />
+            <span className="truncate text-foreground/80">
+              {metadata.title}
+            </span>
+          </nav>
+          <LanguageSwitcher />
+        </div>
+
+        <BlogPostItem>{children}</BlogPostItem>
+
+        {(nextItem || prevItem) && (
+          <BlogPostPaginator nextItem={nextItem} prevItem={prevItem} />
+        )}
       </div>
-
-      <BlogPostItem>{children}</BlogPostItem>
-
-      {(nextItem || prevItem) && (
-        <BlogPostPaginator nextItem={nextItem} prevItem={prevItem} />
-      )}
     </BlogLayout>
   );
 }

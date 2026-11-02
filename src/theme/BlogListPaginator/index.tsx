@@ -9,6 +9,11 @@ export default function BlogListPaginator(props: Props): ReactNode {
   const {metadata} = props;
   const {previousPage, nextPage} = metadata;
 
+  // postsPerPage is "ALL", so lists are a single page — render no empty nav
+  if (!previousPage && !nextPage) {
+    return null;
+  }
+
   return (
     <nav
       className="mt-12 flex flex-wrap items-center justify-between gap-4"

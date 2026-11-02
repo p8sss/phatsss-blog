@@ -2,6 +2,10 @@ import React, {type ReactNode} from 'react';
 import Link from '@docusaurus/Link';
 import {useThemeConfig} from '@docusaurus/theme-common';
 import {ThemeClassNames} from '@docusaurus/theme-common';
+import {useToday} from '@/hooks/use-today';
+
+/** "© 2025": a year baked into a translation file by write-translations. */
+const COPYRIGHT_YEAR = /(©\s*)\d{4}/;
 
 type FooterLinkItem = {label: string; to?: string; href?: string};
 type FooterLinkSection = {title?: string; items: FooterLinkItem[]};
@@ -14,7 +18,8 @@ function FooterColumn({section}: {section: FooterLinkSection}): ReactNode {
           {section.title}
         </p>
       )}
-      <ul className="space-y-2">
+      {/* data-slot: chrome.css lets these links keep their own colours over Infima's */}
+      <ul className="space-y-1">
         {section.items.map((item) => (
           <li key={item.label}>
             {item.href ? (
@@ -22,13 +27,15 @@ function FooterColumn({section}: {section: FooterLinkSection}): ReactNode {
                 href={item.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-muted-foreground transition-colors hover:text-primary">
+                data-slot="footer-link"
+                className="inline-flex min-h-7 items-center text-sm text-muted-foreground transition-colors hover:text-primary">
                 {item.label}
               </a>
             ) : (
               <Link
                 to={item.to ?? '/'}
-                className="text-sm text-muted-foreground transition-colors hover:text-primary">
+                data-slot="footer-link"
+                className="inline-flex min-h-7 items-center text-sm text-muted-foreground transition-colors hover:text-primary">
                 {item.label}
               </Link>
             )}
@@ -41,12 +48,18 @@ function FooterColumn({section}: {section: FooterLinkSection}): ReactNode {
 
 export default function Footer(): ReactNode {
   const {footer} = useThemeConfig();
+  const year = useToday().getFullYear();
   if (!footer) {
     return null;
   }
 
   const sections = (footer.links ?? []) as unknown as FooterLinkSection[];
-  const copyright = 'copyright' in footer ? footer.copyright : undefined;
+  // config computes the year at build time, but a footer.json translation
+  // would freeze it — always show the current one
+  const copyright =
+    'copyright' in footer
+      ? footer.copyright?.replace(COPYRIGHT_YEAR, `$1${year}`)
+      : undefined;
 
   return (
     <footer className={ThemeClassNames.layout.footer.container}>
@@ -60,7 +73,12 @@ export default function Footer(): ReactNode {
             </div>
           )}
           {copyright && (
-            <div className="mt-8 border-t pt-6 text-center text-xs text-muted-foreground">
+            <div className="mt-8 text-center text-xs text-muted-foreground">
+              {/* the galaxy accents fading out at both ends, in place of a flat rule */}
+              <div
+                aria-hidden="true"
+                className="mb-6 h-0.5 rounded-full bg-[linear-gradient(90deg,transparent,var(--galaxy-amber)_20%,var(--galaxy-rose)_45%,var(--galaxy-violet)_65%,var(--galaxy-teal)_82%,transparent)]"
+              />
               {copyright}
             </div>
           )}

@@ -1,0 +1,166 @@
+/* The accretion light: a warm, disk-shaped glow drifting slowly across the
+ * backdrop (rendered by src/components/Galaxy), and the shine it casts on
+ * every glass surface it passes behind.
+ *
+ * Both follow the same orbit. The glow moves with `translate` (compositor
+ * only). The shine is an extra background layer pinned to the viewport
+ * (background-attachment: fixed) and moved with background-position, so each
+ * pane lights up exactly where the glow is behind it — and as the page
+ * scrolls, panes slide through the light. Galaxy keeps late-mounted panes in
+ * phase with the glow (see syncShine there).
+ *
+ * Plain CSS (not a module) so the keyframe names stay global for that sync.
+ */
+
+:root {
+  --galaxy-orbit: 72s;
+  --galaxy-glow-w: 110vmax;
+  --galaxy-glow-h: 64vmax;
+  --galaxy-shine-d: 72vmax;
+  /* the shine layer, shared with components that restyle a glass background */
+  --galaxy-shine-layer: radial-gradient(
+    closest-side,
+    color-mix(in oklch, var(--galaxy-shine) var(--galaxy-shine-strength), transparent),
+    color-mix(in oklch, var(--galaxy-shine) calc(var(--galaxy-shine-strength) * 0.35), transparent) 55%,
+    transparent
+  );
+}
+
+/* Orbit stops (viewport %): upper right → lower right → lower left → upper left */
+@keyframes galaxy-glow-orbit {
+  0%,
+  100% {
+    translate: calc(72vw - var(--galaxy-glow-w) / 2) calc(26vh - var(--galaxy-glow-h) / 2);
+  }
+  25% {
+    translate: calc(60vw - var(--galaxy-glow-w) / 2) calc(70vh - var(--galaxy-glow-h) / 2);
+  }
+  50% {
+    translate: calc(24vw - var(--galaxy-glow-w) / 2) calc(76vh - var(--galaxy-glow-h) / 2);
+  }
+  75% {
+    translate: calc(30vw - var(--galaxy-glow-w) / 2) calc(28vh - var(--galaxy-glow-h) / 2);
+  }
+}
+
+@keyframes galaxy-shine-orbit {
+  0%,
+  100% {
+    background-position: calc(72vw - var(--galaxy-shine-d) / 2) calc(26vh - var(--galaxy-shine-d) / 2), 0 0, 0 0;
+  }
+  25% {
+    background-position: calc(60vw - var(--galaxy-shine-d) / 2) calc(70vh - var(--galaxy-shine-d) / 2), 0 0, 0 0;
+  }
+  50% {
+    background-position: calc(24vw - var(--galaxy-shine-d) / 2) calc(76vh - var(--galaxy-shine-d) / 2), 0 0, 0 0;
+  }
+  75% {
+    background-position: calc(30vw - var(--galaxy-shine-d) / 2) calc(28vh - var(--galaxy-shine-d) / 2), 0 0, 0 0;
+  }
+}
+
+/* Nebula drift. glasscn's aurora sways its blobs 4–6%, too little to read
+ * as motion; these replace its keyframes (same names, declared later) with a
+ * wide, slow wander. The blobs span ~1.1 viewports, so 20% ≈ a fifth of the
+ * screen per leg. Still transform-only; reduced motion stills them in glass.css. */
+@keyframes glass-aurora-1 {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(18%, 10%, 0) scale(1.12);
+  }
+  66% {
+    transform: translate3d(6%, 22%, 0) scale(0.94);
+  }
+}
+
+@keyframes glass-aurora-2 {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(-20%, 14%, 0) scale(0.92);
+  }
+  66% {
+    transform: translate3d(-8%, -10%, 0) scale(1.1);
+  }
+}
+
+@keyframes glass-aurora-3 {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1.04);
+  }
+  33% {
+    transform: translate3d(14%, -18%, 0) scale(0.95);
+  }
+  66% {
+    transform: translate3d(24%, -4%, 0) scale(1.12);
+  }
+}
+
+.galaxy-glow {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: -10;
+  width: var(--galaxy-glow-w);
+  height: var(--galaxy-glow-h);
+  pointer-events: none;
+  /* a tilted disk: hot inner band inside a wide halo */
+  rotate: -14deg;
+  background:
+    radial-gradient(ellipse 46% 13% at 50% 50%, var(--galaxy-glow), transparent),
+    radial-gradient(
+      ellipse closest-side,
+      color-mix(in oklch, var(--galaxy-glow) 85%, transparent),
+      color-mix(in oklch, var(--galaxy-glow) 40%, transparent) 45%,
+      transparent
+    );
+  translate: calc(72vw - var(--galaxy-glow-w) / 2) calc(26vh - var(--galaxy-glow-h) / 2);
+  will-change: translate;
+  animation: galaxy-glow-orbit var(--galaxy-orbit) ease-in-out infinite;
+}
+
+/* The shine on glass. Unlayered so it can extend the glass utilities'
+ * background-image (sheen + texture, copied from glass.css); the animation
+ * lives in the base layer so components' own enter/exit animations win. */
+:is(.glass, .glass-strong, .glass-subtle, .glass-liquid, .glass-prominent) {
+  background-image:
+    var(--galaxy-shine-layer),
+    linear-gradient(var(--glass-sheen-angle), color-mix(in oklch, oklch(1 0 0) var(--glass-sheen), transparent), transparent 55%),
+    var(--glass-texture);
+  background-size: var(--galaxy-shine-d) var(--galaxy-shine-d), auto, auto;
+  background-repeat: no-repeat, repeat, repeat;
+  background-attachment: fixed, scroll, scroll;
+  background-position: calc(72vw - var(--galaxy-shine-d) / 2) calc(26vh - var(--galaxy-shine-d) / 2), 0 0, 0 0;
+}
+
+@layer base {
+  :is(.glass, .glass-strong, .glass-subtle, .glass-liquid, .glass-prominent) {
+    animation: galaxy-shine-orbit var(--galaxy-orbit) ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :is(.glass, .glass-strong, .glass-subtle, .glass-liquid, .glass-prominent) {
+      animation: none;
+    }
+  }
+}
+
+/* Stills at the first orbit stop, where the static shine already sits */
+@media (prefers-reduced-motion: reduce) {
+  .galaxy-glow {
+    animation: none;
+    will-change: auto;
+  }
+}
+
+@media (forced-colors: active) {
+  .galaxy-glow {
+    display: none;
+  }
+}

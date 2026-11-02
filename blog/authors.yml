@@ -6,10 +6,3 @@ phatsss:
   page: true
   socials:
     github: phatsss
-
-anonymous:
-  name: Anonymous
-  title: Software Engineer
-  url: "#"
-  image_url: /img/favicon.png
-  page: true

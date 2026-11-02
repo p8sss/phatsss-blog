@@ -12,7 +12,7 @@ Middleware function ແມ່ນຟັງຊັ່ນທີ່ສາມາດເ
 
 ![[https://expressjs.com](https://expressjs.com/)](https://cdn-images-1.medium.com/max/2486/1*wOuV8q4fumAb1tgOxzmm5w.png)*[https://expressjs.com](https://expressjs.com/)*
 
-### ໜ້າທີ່ຂອງ middleware ໃນ express ມີດັ່ງນີ້:
+## ໜ້າທີ່ຂອງ middleware ໃນ express ມີດັ່ງນີ້:
 
 * ຣັນຄຳສັ່ງຕ່າງໆທີ່ຢູ່ໃນ middleware ທີ່ກຳນົດ.
 

@@ -1,9 +1,4 @@
 .hero {
-    /* Title gradient stops: amber / magenta / violet, each ≥ 4.5:1 on the
-     * aurora base in its mode */
-    --hero-glow-1: oklch(0.5 0.075 70);
-    --hero-glow-2: oklch(0.52 0.2 345);
-    --hero-glow-3: oklch(0.48 0.19 295);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -14,9 +9,8 @@
 
 @media (max-width: 480px) {
     .hero {
-        padding: 2rem 0;
+        padding: 2rem 0 1rem;
         min-height: auto;
-        margin-bottom: 56px;
     }
 
     .heroTitle {
@@ -91,20 +85,48 @@
     }
 }
 
-/* Sunset Gradient Flow */
+/* Sunset Gradient Flow — the galaxy accents (custom.css), amber → ember →
+ * rose → violet → teal; each stop ≥ 3:1 as large text over the brightest
+ * backdrop in its mode. A matching glow lifts it in dark mode. */
 .highlight.sunset {
-    background: linear-gradient(45deg, var(--hero-glow-1), var(--hero-glow-2), var(--hero-glow-3), var(--hero-glow-2), var(--hero-glow-1));
-    background-size: 300% 300%;
+    background: linear-gradient(
+        100deg,
+        var(--galaxy-amber),
+        var(--galaxy-ember),
+        var(--galaxy-rose),
+        var(--galaxy-violet),
+        var(--galaxy-teal),
+        var(--galaxy-rose),
+        var(--galaxy-amber)
+    );
+    background-size: 300% 100%;
     background-clip: text;
     -webkit-background-clip: text;
     color: transparent;
-    animation: sunset-flow 4s ease-in-out infinite;
+    animation: sunset-flow 6s ease-in-out infinite;
 }
 
-:global([data-theme="dark"]) .hero {
-    --hero-glow-1: oklch(0.78 0.1 70);
-    --hero-glow-2: oklch(0.72 0.17 345);
-    --hero-glow-3: oklch(0.7 0.15 295);
+:global([data-theme="dark"]) .highlight.sunset {
+    filter: drop-shadow(0 0 18px color-mix(in oklch, var(--galaxy-rose) 40%, transparent));
+}
+
+/* "Read the blog": the accretion disk as a button — amber → ember → rose
+ * under the shared glass shine, dark label (≥ 6.8:1 on every stop). Doubled
+ * class so it outranks the unlayered shine rule in galaxy-light.css. */
+.ctaPrimary.ctaPrimary {
+    --cta-amber: oklch(0.86 0.14 75);
+    --cta-ember: oklch(0.76 0.16 48);
+    --cta-rose: oklch(0.72 0.17 20);
+    color: oklch(0.2 0.04 40);
+    background-color: var(--cta-ember);
+    background-image:
+        var(--galaxy-shine-layer),
+        linear-gradient(110deg, var(--cta-amber), var(--cta-ember) 50%, var(--cta-rose));
+    background-size: var(--galaxy-shine-d) var(--galaxy-shine-d), 100% 100%;
+    background-repeat: no-repeat;
+    background-attachment: fixed, scroll;
+    --glass-elevation: 0 10px 28px -8px color-mix(in oklch, var(--cta-ember) 60%, transparent),
+        0 0 0 1px color-mix(in oklch, var(--cta-amber) 45%, transparent);
 }
 
 @keyframes sunset-flow {
@@ -295,9 +317,25 @@
 }
 
 /* Media queries for responsive design */
+/* Tablets keep the single column (card centred under the text): side by
+ * side, the 449px card doesn't fit next to the copy until ~1024px. */
+@media (min-width: 481px) and (max-width: 1023px) {
+    .hero {
+        padding: 3rem 0 1rem;
+        min-height: auto;
+    }
+}
+
 @media (min-width: 768px) {
+    .heroTitle {
+        font-size: 3rem;
+    }
+}
+
+@media (min-width: 1024px) {
     .hero {
         flex-direction: row;
+        gap: 2rem;
     }
 
     .heroContent {

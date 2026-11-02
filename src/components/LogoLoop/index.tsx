@@ -121,7 +121,7 @@ const techLogos = [
 
 export function LogoLoopComponent() {
   return (
-    <section className="relative mx-auto flex h-56 w-full max-w-5xl items-center overflow-hidden px-6">
+    <section className="relative mx-auto flex h-28 w-full max-w-5xl items-center overflow-hidden px-6 sm:h-40 lg:h-56">
       <LogoLoop
         logos={techLogos}
         speed={120}

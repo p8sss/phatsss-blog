@@ -1,40 +1,21 @@
-import { JSX } from "react";
+import React, { type JSX } from "react";
 import { translate } from "@docusaurus/Translate";
-import { Badge } from "@/components/glass/badge";
-import { Card } from "@/components/glass/card";
-import { Briefcase01Icon } from "@/components/ui/icons";
-import SectionHeading from "../SectionHeading";
+import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 
-const experiences = [
-  {
-    title: "Full-Time Front-End Developer",
-    company: "Lao IT Dev Co., Ltd.",
-    period: "10/2019 – Present",
-    description: translate({ id: "workExperience.content1Description" }),
-  },
-  {
-    title: "Outsource Software Developer",
-    company: "FreeLance",
-    period: "12/2019 – Present",
-    description: translate({ id: "workExperience.content4Description" }),
-  },
-  {
-    title: "Part-Time Software Engineer",
-    company: "Lao IT Dev Co., Ltd.",
-    period: "07/2019 – 10/2019",
-    description: translate({ id: "workExperience.content2Description" }),
-  },
-  {
-    title: "Web Development Student",
-    company: "National University of Laos (NUOL)",
-    period: "10/2016 - 10/2020",
-    description: translate({ id: "workExperience.content3Description" }),
-  },
-];
+import { Briefcase01Icon } from "@/components/ui/icons";
+import { useToday } from "@/hooks/use-today";
+import { toYearMonth } from "@/lib/month-range";
+import SectionHeading from "../SectionHeading";
+import { getOrganisations, yearsOfExperience } from "./experience";
+import { TimelineEntry } from "./TimelineEntry";
 
 export default function WorkExperience(): JSX.Element {
+  const { i18n } = useDocusaurusContext();
+  const today = toYearMonth(useToday());
+  const organisations = getOrganisations();
+
   return (
-    <section className="mx-auto w-full max-w-5xl px-6 py-20">
+    <section className="mx-auto w-full max-w-5xl px-0 py-14 sm:px-6 sm:py-20">
       <SectionHeading
         eyebrow={
           <>
@@ -42,29 +23,27 @@ export default function WorkExperience(): JSX.Element {
           </>
         }
         title={translate({ id: "workExperience.title" })}
-        description={translate({ id: "workExperience.description" })}
+        description={translate(
+          {
+            id: "workExperience.description",
+            message:
+              "{years}+ years of experience in front-end development creating intuitive, modern, and user-friendly web applications.",
+          },
+          { years: yearsOfExperience(organisations, today) }
+        )}
       />
 
-      <div className="relative ml-4 space-y-8 border-l border-border pl-8">
-        {experiences.map((exp, index) => (
-          <div key={index} className="relative">
-            <span className="absolute -left-[41px] top-6 size-2.5 rounded-full border-2 border-background bg-muted-foreground/50" />
-            <Card className="gap-0 p-6 transition-colors hover:border-muted-foreground/30">
-              <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-2">
-                <h3 className="!text-lg !font-semibold !mb-0 tracking-tight">
-                  {exp.title}
-                </h3>
-                <Badge variant="secondary">{exp.period}</Badge>
-              </div>
-              <p className="!mb-3 text-sm font-medium text-muted-foreground">
-                {exp.company}
-              </p>
-              <p className="!mb-0 text-[0.95rem] leading-relaxed text-foreground/80">
-                {exp.description}
-              </p>
-            </Card>
-          </div>
-        ))}
+      <div className="relative [--rail-x:0.75rem] md:[--rail-x:12.5rem]">
+        {/* the rail, running through every node, in the galaxy accents */}
+        <span
+          aria-hidden="true"
+          className="absolute bottom-8 left-(--rail-x) top-8 hidden w-px sm:block -translate-x-1/2 bg-[linear-gradient(to_bottom,var(--galaxy-amber),var(--galaxy-rose)_45%,var(--galaxy-violet)_75%,var(--galaxy-teal))] opacity-60"
+        />
+        <ol className="!m-0 list-none space-y-8 !p-0">
+          {organisations.map((organisation) => (
+            <TimelineEntry key={organisation.id} organisation={organisation} today={today} locale={i18n.currentLocale} />
+          ))}
+        </ol>
       </div>
     </section>
   );

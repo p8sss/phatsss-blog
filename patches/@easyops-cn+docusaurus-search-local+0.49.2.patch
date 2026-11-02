@@ -1,0 +1,14 @@
+diff --git a/node_modules/@easyops-cn/docusaurus-search-local/dist/client/client/theme/SearchBar/SearchBar.jsx b/node_modules/@easyops-cn/docusaurus-search-local/dist/client/client/theme/SearchBar/SearchBar.jsx
+index fbb9fa8..15c594d 100644
+--- a/node_modules/@easyops-cn/docusaurus-search-local/dist/client/client/theme/SearchBar/SearchBar.jsx
++++ b/node_modules/@easyops-cn/docusaurus-search-local/dist/client/client/theme/SearchBar/SearchBar.jsx
+@@ -278,6 +278,9 @@ export default function SearchBar({ handleSearchBarToggle, }) {
+         handleSearchBarToggle?.(true);
+     }, [handleSearchBarToggle, loadIndex]);
+     const onInputBlur = useCallback(() => {
++        // Don't steal focus back when the index finishes loading after the
++        // user has already moved on (e.g. tabbed past the search box).
++        focusAfterIndexLoaded.current = false;
+         setFocused(false);
+         handleSearchBarToggle?.(false);
+     }, [handleSearchBarToggle]);

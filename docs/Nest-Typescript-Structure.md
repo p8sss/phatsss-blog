@@ -3,7 +3,7 @@ sidebar_position: 2
 title: NestJS Project Structure
 ---
 
-# NestJS Authentication & RBAC API
+# NestJS Project Structure
 [**Nest-App-TS-Structure on Github**](https://github.com/phatsss/nest-app-ts-structure.git) - A secure, production-ready NestJS API with JWT authentication, role-based access control (RBAC), and OAuth integration.
 
 

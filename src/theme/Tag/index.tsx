@@ -13,6 +13,8 @@ export default function Tag({
   return (
     <Link
       rel="tag"
+      // data-slot opts the link out of Infima's link colour (see chrome.css).
+      data-slot="badge"
       href={permalink}
       title={description}
       className={clsx(

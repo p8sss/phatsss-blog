@@ -32,7 +32,8 @@ export default function DocBreadcrumbs(): ReactNode {
           message: 'Breadcrumbs',
           description: 'The ARIA label for the breadcrumbs',
         })}>
-        <BreadcrumbList>
+        {/* !pl-0/list-none: the article's prose classes indent every <ol> */}
+        <BreadcrumbList className="!my-0 list-none !pl-0">
           {homePageRoute && <HomeBreadcrumbItem />}
           {breadcrumbs.map((item, idx) => {
             const isLast = idx === breadcrumbs.length - 1;

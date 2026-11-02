@@ -12,7 +12,7 @@ This guide will walk you through the process of setting up and using GitHub Spec
 <!-- truncate -->
 ---
 
-### Prerequisites
+## Prerequisites
 
 Before you begin, ensure your Mac with Apple silicon has the following:
 
@@ -24,7 +24,7 @@ Before you begin, ensure your Mac with Apple silicon has the following:
 
 ---
 
-### Step 1: Install `uv` and Spec Kit
+## Step 1: Install `uv` and Spec Kit
 
 First, you need to install `uv`, which is a prerequisite for Spec Kit. Then, use `uv` to initialize a new project with Spec Kit.
 
@@ -32,17 +32,17 @@ Open your **Terminal** and run the following commands:
 
 1.  **Install uv (if you don't have it):**
     ```bash
-    curl -LsSf [https://astral.sh/uv/install.sh](https://astral.sh/uv/install.sh) | sh
+    curl -LsSf https://astral.sh/uv/install.sh | sh
     ```
 2.  **Initialize a new project with Spec Kit:**
     ```bash
-    uvx --from git+[https://github.com/github/spec-kit.git](https://github.com/github/spec-kit.git) specify init <PROJECT_NAME>
+    uvx --from git+https://github.com/github/spec-kit.git specify init <PROJECT_NAME>
     ```
     Replace `<PROJECT_NAME>` with the name of your project. This command automatically sets up the project structure with the necessary templates.
 
 ---
 
-### Step 2: Create a Specification (`/specify`)
+## Step 2: Create a Specification (`/specify`)
 
 The core of SDD is the specification. This is where you describe what you want to build in a clear and detailed manner. Use the `/specify` command with your AI coding agent (e.g., in a code editor like VS Code or a supported chat interface).
 
@@ -53,7 +53,7 @@ The AI will then ask clarifying questions and generate a detailed `spec.md` file
 
 ---
 
-### Step 3: Generate a Technical Plan (`/plan`)
+## Step 3: Generate a Technical Plan (`/plan`)
 
 Once the specification is clear, you use the `/plan` command to create a technical implementation plan. This is where you provide details about the technology stack and architecture.
 
@@ -64,7 +64,7 @@ The AI will use your input and the existing spec to generate a detailed `plan.md
 
 ---
 
-### Step 4: Break Down into Tasks (`/tasks`)
+## Step 4: Break Down into Tasks (`/tasks`)
 
 The next step is to break down the plan into smaller, actionable tasks. Use the `/tasks` command to generate a checklist of to-dos.
 
@@ -82,7 +82,7 @@ The AI will analyze the `plan.md` and generate a `tasks.md` file with a checklis
 
 ---
 
-### Step 5: Implement the Code (`/code`)
+## Step 5: Implement the Code (`/code`)
 
 With the tasks defined, you can now use the `/code` command to start implementing the code for each task.
 

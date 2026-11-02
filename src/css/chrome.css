@@ -1,32 +1,29 @@
-/* Glass for Docusaurus/Infima-rendered chrome that has no swizzled component
- * of ours to carry Tailwind classes. Kept separate so custom.css stays
- * tokens-only. Imported by custom.css (needs Tailwind for @apply).
+/* Adjustments for markup rendered by Docusaurus/Infima or plugins that we
+ * don't own as components. Kept separate so custom.css stays tokens-only.
+ * Imported by custom.css (needs Tailwind for @apply).
  */
 
-/* Navbar: glass lives on a ::before layer, NOT on .navbar itself.
- * backdrop-filter on .navbar would make it the containing block for the
- * position:fixed mobile sidebar inside it, clipping that sidebar to the
- * navbar's height. */
-.navbar {
-  isolation: isolate;
+/* docusaurus-search-local's input, seated flat in the navbar's glass capsule
+ * (src/theme/Navbar/Content: .navbar-actions). Infima's magnifier background
+ * image is kept; only the fill is cleared so the shared glass shows through.
+ * The plugin's container brings a 16px left margin; the capsule's padding
+ * already spaces it, like every other item in the group. */
+.navbar-actions .navbar__search {
+  margin: 0;
 }
 
-.navbar::before {
-  @apply glass-strong;
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-width: 0 0 var(--glass-border-width);
-  border-radius: 0;
-  box-shadow: none;
-  pointer-events: none;
+.navbar-actions .navbar__search-input {
+  @apply h-control w-44 rounded-button border-0 bg-transparent text-sm text-foreground transition-colors duration-(--glass-duration) placeholder:text-muted-foreground hover:bg-fill focus:bg-fill;
 }
 
-.navbar-sidebar {
-  @apply glass-strong;
-  border-width: 0 var(--glass-border-width) 0 0;
-  border-radius: 0;
+@media (min-width: 1200px) {
+  .navbar-actions .navbar__search-input {
+    @apply w-52;
+  }
+}
+
+.navbar-actions .navbar__search kbd {
+  @apply border-glass-border bg-transparent text-glass-label-secondary;
 }
 
 /* Infima colours every <a> with an unlayered rule, which beats Tailwind's
@@ -38,4 +35,21 @@ a[data-slot],
 a[data-slot]:hover {
   color: revert-layer;
   text-decoration: revert-layer;
+}
+
+/* Infima indents every <ul> (unlayered, so Tailwind's pl-0 can't win). Lists
+ * we lay out ourselves — the docs sidebar tree and the footer columns — set
+ * their own item padding, so drop the list indent. */
+.theme-doc-sidebar-menu,
+.theme-doc-sidebar-menu ul,
+.theme-layout-footer ul {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+/* Same fight for markers: Infima's nested-list rules (ol ol → lower-roman)
+ * outrank the list-none utility, so restate it unlayered. */
+:is(ul, ol).list-none {
+  list-style: none;
 }

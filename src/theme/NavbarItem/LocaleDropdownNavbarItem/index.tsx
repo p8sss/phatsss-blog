@@ -5,7 +5,7 @@ import { translate } from "@docusaurus/Translate";
 import { useLocation } from "@docusaurus/router";
 import Link from "@docusaurus/Link";
 
-import { Button } from "@/components/glass/button";
+import { GlassGroupItem } from "@/components/glass/glass-group";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,7 +26,7 @@ export default function LocaleDropdownNavbarItem({
   dropdownItemsBefore?: React.ReactNode[];
   dropdownItemsAfter?: React.ReactNode[];
   queryString?: string;
-} & Omit<React.ComponentProps<typeof Button>, "children">) {
+} & Omit<React.ComponentProps<typeof GlassGroupItem>, "children">) {
   const {
     i18n: { currentLocale, locales, localeConfigs },
   } = useDocusaurusContext();
@@ -51,7 +51,7 @@ export default function LocaleDropdownNavbarItem({
     return (
       <div className={cn("space-y-2", props.className)}>
         {dropdownItemsBefore}
-        <div className="text-xs font-medium text-muted-foreground">
+        <div className="px-1 text-xs font-medium text-muted-foreground">
           {translate({
             message: "Languages",
             id: "theme.navbar.mobileLanguageDropdown.label",
@@ -59,25 +59,27 @@ export default function LocaleDropdownNavbarItem({
               "The label for the mobile language switcher dropdown",
           })}
         </div>
-        {localeItems.map((item) => (
-          <Link
-            key={item.locale}
-            to={item.to}
-            hrefLang={item.lang}
-            autoAddBaseUrl={false}
-            className={cn(
-              "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
-              item.locale === currentLocale &&
-                "bg-primary/10 font-medium text-primary"
-            )}
-          >
-            <GlobeIcon size={16} />
-            {item.label}
-            {item.locale === currentLocale && (
-              <CheckmarkCircle01Icon size={14} className="ml-auto" />
-            )}
-          </Link>
-        ))}
+        {/* plain items: this list sits inside the glass sheet */}
+        <div className="flex flex-col gap-0.5">
+          {localeItems.map((item) => {
+            const current = item.locale === currentLocale;
+            return (
+              <GlassGroupItem key={item.locale} asChild selected={current}>
+                <Link
+                  to={item.to}
+                  hrefLang={item.lang}
+                  autoAddBaseUrl={false}
+                  aria-current={current ? "true" : undefined}
+                  className="w-full justify-start"
+                >
+                  <GlobeIcon size={16} />
+                  {item.label}
+                  {current && <CheckmarkCircle01Icon size={14} className="ml-auto" />}
+                </Link>
+              </GlassGroupItem>
+            );
+          })}
+        </div>
         {dropdownItemsAfter}
       </div>
     );
@@ -86,14 +88,9 @@ export default function LocaleDropdownNavbarItem({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
+        <GlassGroupItem
           {...props}
-          className={cn(
-            "gap-1.5 px-2.5 text-sm font-medium text-muted-foreground hover:text-foreground",
-            props.className
-          )}
+          className={cn("text-muted-foreground hover:text-foreground", props.className)}
           aria-label={translate({
             message: "Languages",
             id: "theme.navbar.mobileLanguageDropdown.label",
@@ -101,9 +98,10 @@ export default function LocaleDropdownNavbarItem({
               "The label for the mobile language switcher dropdown",
           })}
         >
-          <GlobeIcon size={15} />
-          {localeConfigs[currentLocale].label}
-        </Button>
+          <GlobeIcon size={16} />
+          {/* label only where there's room; the aria-label covers the icon-only state */}
+          <span className="hidden xl:inline">{localeConfigs[currentLocale].label}</span>
+        </GlassGroupItem>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         {dropdownItemsBefore}

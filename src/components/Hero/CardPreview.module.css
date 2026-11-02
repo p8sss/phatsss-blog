@@ -435,6 +435,26 @@
 .smallText {
     font-size: 1.5rem;
 }
+
+/* Narrow cards (down to 288px): smaller quote, and room above the logo
+ * badge in the bottom-left corner so long quotes don't run under it. */
+@media (max-width: 480px) {
+    .content {
+        padding: 12px 16px 52px;
+    }
+
+    .largeText {
+        font-size: 1.5rem;
+    }
+
+    .mediumText {
+        font-size: 1.3rem;
+    }
+
+    .smallText {
+        font-size: 1.05rem;
+    }
+}
 /* test */
 /* Top row */
 .tr-1:hover~#card .avatar {

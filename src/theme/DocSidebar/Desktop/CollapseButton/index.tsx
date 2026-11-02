@@ -21,7 +21,7 @@ export default function CollapseButton({onClick}: Props): ReactNode {
         description: 'The title attribute for collapse button of doc sidebar',
       })}
       onClick={onClick}
-      className="hidden h-10 w-full shrink-0 rounded-none border-t text-muted-foreground shadow-none hover:bg-accent hover:text-foreground lg:flex">
+      className="hidden h-10 w-full shrink-0 rounded-none border-t text-muted-foreground shadow-none hover:bg-accent hover:text-foreground min-[997px]:flex">
       <ArrowLeft01Icon size={16} className="rtl:-scale-x-100" />
     </Button>
   );

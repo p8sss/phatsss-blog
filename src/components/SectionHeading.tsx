@@ -14,7 +14,7 @@ export default function SectionHeading({
   className?: string;
 }) {
   return (
-    <div className={cn("mx-auto mb-12 max-w-2xl text-center", className)}>
+    <div className={cn("mx-auto mb-8 max-w-2xl text-center sm:mb-12", className)}>
       {eyebrow && (
         <Badge
           variant="outline"

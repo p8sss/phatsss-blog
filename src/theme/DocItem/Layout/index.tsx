@@ -1,5 +1,6 @@
 import React, {type ReactNode} from 'react';
 import clsx from 'clsx';
+import {MDXProvider} from '@mdx-js/react';
 import {useWindowSize} from '@docusaurus/theme-common';
 import {useDoc} from '@docusaurus/plugin-content-docs/client';
 import DocItemPaginator from '@theme/DocItem/Paginator';
@@ -13,6 +14,10 @@ import DocBreadcrumbs from '@theme/DocBreadcrumbs';
 import ContentVisibility from '@theme/ContentVisibility';
 import {PROSE_CLASSES} from '@/lib/prose';
 import type {Props} from '@theme/DocItem/Layout';
+import {ScrollableTable} from './ScrollableTable';
+
+/** Merged under the theme's MDXComponents (which has no `table`). */
+const DOC_MDX_COMPONENTS = {table: ScrollableTable};
 
 /**
  * Decide if the toc should be rendered, on mobile or desktop viewports
@@ -42,7 +47,9 @@ export default function DocItemLayout({children}: Props): ReactNode {
   const docTOC = useDocTOC();
   const {metadata} = useDoc();
   return (
-    <div className="flex flex-col gap-10 lg:flex-row lg:items-start">
+    // The right TOC only joins at 1200px: beside the docs sidebar any earlier
+    // it squeezes the article below ~600px; until then the chip TOC shows
+    <div className="flex flex-col gap-8 min-[1200px]:flex-row min-[1200px]:items-start">
       <div className={clsx('min-w-0 flex-1')}>
         <ContentVisibility metadata={metadata} />
         <DocVersionBanner />
@@ -51,14 +58,16 @@ export default function DocItemLayout({children}: Props): ReactNode {
             <DocBreadcrumbs />
             <DocVersionBadge />
             {docTOC.mobile}
-            <DocItemContent>{children}</DocItemContent>
+            <MDXProvider components={DOC_MDX_COMPONENTS}>
+              <DocItemContent>{children}</DocItemContent>
+            </MDXProvider>
             <DocItemFooter />
           </article>
           <DocItemPaginator />
         </div>
       </div>
       {docTOC.desktop && (
-        <div className="hidden w-64 shrink-0 lg:block">{docTOC.desktop}</div>
+        <div className="hidden w-56 shrink-0 min-[1200px]:block">{docTOC.desktop}</div>
       )}
     </div>
   );

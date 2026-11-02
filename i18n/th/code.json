@@ -82,5 +82,43 @@
   "theme.tags.tagsPageLink": {
     "message": "ดูแท็กทั้งหมด",
     "description": "The label of the link targeting the tag list page"
+  },
+  "hero.cta.blog": {
+    "message": "อ่านบล็อก",
+    "description": "Hero call-to-action button"
+  },
+  "hero.cta.work": {
+    "message": "ดูผลงาน",
+    "description": "Hero call-to-action button"
+  },
+  "workExperience.type.fullTime": {
+    "message": "งานประจำ"
+  },
+  "workExperience.type.partTime": {
+    "message": "พาร์ทไทม์"
+  },
+  "workExperience.type.freelance": {
+    "message": "ฟรีแลนซ์"
+  },
+  "workExperience.type.education": {
+    "message": "การศึกษา"
+  },
+  "workExperience.present": {
+    "message": "ปัจจุบัน"
+  },
+  "workExperience.showMore": {
+    "message": "ดูเพิ่มเติม"
+  },
+  "workExperience.showLess": {
+    "message": "ย่อลง"
+  },
+  "workExperience.stack": {
+    "message": "เทคโนโลยี"
+  },
+  "theme.colorToggle.switchToLight": {
+    "message": "เปลี่ยนเป็นโหมดสว่าง"
+  },
+  "theme.colorToggle.switchToDark": {
+    "message": "เปลี่ยนเป็นโหมดมืด"
   }
 }

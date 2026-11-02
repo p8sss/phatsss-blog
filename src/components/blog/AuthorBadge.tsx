@@ -9,7 +9,7 @@ export function AuthorBadge({author}: {author?: PostAuthor}) {
     <div className="flex items-center gap-2.5">
       <Avatar className="size-8">
         {author.imageURL ? (
-          <AvatarImage src={author.imageURL} alt={author.name ?? ''} />
+          <AvatarImage src={author.imageURL} alt={author.name ?? ''} width={32} height={32} />
         ) : null}
         <AvatarFallback>{(author.name?.[0] ?? 'P').toUpperCase()}</AvatarFallback>
       </Avatar>

@@ -23,9 +23,9 @@
     "message": "Dev.to",
     "description": "The label of footer link with label=Dev.to linking to https://dev.to/phatsss"
   },
-  "link.item.label.LinkIn": {
-    "message": "LinkIn",
-    "description": "The label of footer link with label=LinkIn linking to https://www.linkedin.com/in/phatsss"
+  "link.item.label.LinkedIn": {
+    "message": "LinkedIn",
+    "description": "The label of footer link with label=LinkedIn linking to https://www.linkedin.com/in/phatsss"
   },
   "link.item.label.Blog": {
     "message": "Blog",
@@ -34,9 +34,5 @@
   "link.item.label.GitHub": {
     "message": "GitHub",
     "description": "The label of footer link with label=GitHub linking to https://github.com/phatsss"
-  },
-  "copyright": {
-    "message": "Copyright © 2025 Phatsss👾.",
-    "description": "The footer copyright"
   }
 }

@@ -1,4 +1,4 @@
-import {themes as prismThemes} from 'prism-react-renderer';
+import {galaxyDark, galaxyLight} from './src/lib/prism-galaxy';
 import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
@@ -33,6 +33,12 @@ const config: Config = {
       mdxCrossCompilerCache: false,
       rspackBundler: false,
     },
+  },
+
+  customFields: {
+    // "today" for SSR and the first client render (src/hooks/use-today.ts),
+    // so durations of ongoing roles hydrate without a text mismatch
+    buildDate: new Date().toISOString(),
   },
 
   onBrokenLinks: "throw",
@@ -74,6 +80,10 @@ const config: Config = {
           onInlineTags: "warn",
           onInlineAuthors: "warn",
           onUntruncatedBlogPosts: "warn",
+          // One list page: /blog filters and "loads more" client-side over all
+          // posts, so /blog/page/N (and /blog/tags/x/page/N) would only be
+          // duplicate URLs of the same view
+          postsPerPage: "ALL",
           blogSidebarCount: "ALL",
           blogSidebarTitle: "All posts",
         },
@@ -164,13 +174,13 @@ const config: Config = {
             tagName: "meta",
             name: "theme-color",
             media: "(prefers-color-scheme: light)",
-            content: "#f2f2fb",
+            content: "#f8f4ed",
           },
           {
             tagName: "meta",
             name: "theme-color",
             media: "(prefers-color-scheme: dark)",
-            content: "#060613",
+            content: "#000b14",
           },
           {
             tagName: "meta",
@@ -196,7 +206,7 @@ const config: Config = {
           {
             tagName: "meta",
             name: "msapplication-TileColor",
-            content: "#060613",
+            content: "#000b14",
           },
         ],
       },
@@ -266,7 +276,7 @@ const config: Config = {
               href: "https://dev.to/phatsss",
             },
             {
-              label: "LinkIn",
+              label: "LinkedIn",
               href: "https://www.linkedin.com/in/phatsss",
             },
           ],
@@ -288,8 +298,9 @@ const config: Config = {
       copyright: `Copyright © ${new Date().getFullYear()} Phatsss👾.`,
     },
     prism: {
-      theme: prismThemes.github,
-      darkTheme: prismThemes.dracula,
+      // galaxy palette, every token ≥ 4.5:1 on its background
+      theme: galaxyLight,
+      darkTheme: galaxyDark,
     },
     headTags: [
       {

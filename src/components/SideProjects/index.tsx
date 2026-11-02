@@ -9,6 +9,8 @@ import {
   GithubIcon,
 } from "@/components/ui/icons";
 import SectionHeading from "../SectionHeading";
+import { LandingPicture } from "@/components/LandingPicture";
+import type { LandingImageName } from "@/lib/landing-images";
 
 const projects = [
   {
@@ -17,12 +19,12 @@ const projects = [
     technologies: [
       "Vite",
       "React",
-      "Typescript",
+      "TypeScript",
       "Redux-saga",
       "Antd-design",
       "MapBox",
     ],
-    image: "./img/landing/covid-la-img.jpeg",
+    image: "covid-la-img",
     link: "https://covid19-la.netlify.app/",
     projectLink: "https://github.com/phatsss/covid19-la",
   },
@@ -30,16 +32,16 @@ const projects = [
     title: "Bento Grid Layout",
     description:
       "Responsive layout grid with various components and animations.",
-    technologies: ["Vite", "React", "Typescript", "tailwindcss"],
-    image: "./img/landing/bento-grid-img.png",
+    technologies: ["Vite", "React", "TypeScript", "Tailwind CSS"],
+    image: "bento-grid-img",
     link: "https://phatsss.github.io/valentine-dev/",
     projectLink: "https://github.com/phatsss/valentine-dev",
   },
-];
+] satisfies Array<Record<string, unknown> & { image: LandingImageName }>;
 
 export default function SideProjects(): JSX.Element {
   return (
-    <section className="mx-auto w-full max-w-5xl px-6 py-20">
+    <section className="mx-auto w-full max-w-5xl px-0 py-14 sm:px-6 sm:py-20">
       <SectionHeading
         eyebrow={
           <>
@@ -52,26 +54,19 @@ export default function SideProjects(): JSX.Element {
 
       <div className="grid gap-6 sm:grid-cols-2">
         {projects.map((project, index) => (
-          <Card
-            asChild
-            key={index}
-            className="group gap-0 overflow-hidden py-0 transition-all hover:border-muted-foreground/30 hover:shadow-md"
-          >
-            <article>
+          // the card isn't a link (its Demo/Code buttons are), so no asChild press state
+          <article key={index} className="flex">
+            <Card className="group w-full gap-0 overflow-hidden py-0 transition-all hover:border-muted-foreground/30 hover:shadow-md">
               <div className="relative aspect-[16/10] overflow-hidden bg-muted">
-                <img
-                  src={project.image}
-                  alt={project.title}
-                  loading="lazy"
-                  className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 flex items-center justify-center gap-3 bg-background/80 opacity-0 backdrop-blur-[2px] transition-opacity duration-300 group-hover:opacity-100">
-                  <Button asChild size="sm" variant="secondary">
+                <LandingPicture name={project.image} alt={project.title} className="size-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                <div className="absolute inset-0 flex items-center justify-center gap-3 bg-background/80 opacity-0 backdrop-blur-[2px] transition-opacity duration-300 group-focus-within:opacity-100 group-hover:opacity-100 [@media(hover:none)]:bg-transparent [@media(hover:none)]:items-end [@media(hover:none)]:justify-end [@media(hover:none)]:p-3 [@media(hover:none)]:opacity-100 [@media(hover:none)]:backdrop-blur-none">
+                  {/* glass: legible both on the hover scrim and straight over the screenshot (touch) */}
+                  <Button asChild size="sm" variant="glass">
                     <a href={project.link} target="_blank" rel="noreferrer noopener">
                       Demo <ArrowUpRight01Icon size={16} />
                     </a>
                   </Button>
-                  <Button asChild size="sm" variant="outline">
+                  <Button asChild size="sm" variant="glass">
                     <a
                       href={project.projectLink}
                       target="_blank"
@@ -86,7 +81,7 @@ export default function SideProjects(): JSX.Element {
                 <h3 className="!mb-0 !text-lg !font-semibold tracking-tight">
                   {project.title}
                 </h3>
-                <p className="!mb-0 text-sm leading-relaxed text-muted-foreground">
+                <p className="!mb-0 text-[0.9375rem] leading-relaxed text-muted-foreground sm:text-sm">
                   {project.description}
                 </p>
                 <div className="mt-auto flex flex-wrap gap-1.5 pt-2">
@@ -94,15 +89,15 @@ export default function SideProjects(): JSX.Element {
                     <Badge
                       key={techIndex}
                       variant="outline"
-                      className="bg-muted/50 text-[11px] font-medium text-muted-foreground"
+                      className="bg-muted/50 text-xs font-medium text-muted-foreground"
                     >
                       {tech}
                     </Badge>
                   ))}
                 </div>
               </div>
-            </article>
-          </Card>
+            </Card>
+          </article>
         ))}
       </div>
     </section>

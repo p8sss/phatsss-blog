@@ -10,8 +10,8 @@ export default function DocRootLayoutMain({
   const sidebar = useDocsSidebar();
   const enhanced = hiddenSidebarContainer || !sidebar;
   return (
-    <main className={clsx('min-w-0 flex-1', enhanced && 'lg:mx-auto lg:max-w-4xl')}>
-      <div className="py-8 lg:py-12">{children}</div>
+    <main className={clsx('min-w-0 flex-1', enhanced && 'min-[997px]:mx-auto min-[997px]:max-w-4xl')}>
+      <div className="py-8 min-[997px]:py-12">{children}</div>
     </main>
   );
 }

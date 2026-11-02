@@ -2,6 +2,7 @@ import {useEffect, useState} from 'react';
 import Link from '@docusaurus/Link';
 import {translate} from '@docusaurus/Translate';
 import {cn} from '@/lib/utils';
+import { htmlToText } from "@/lib/html-text";
 
 type TocItem = {
   readonly id: string;
@@ -97,7 +98,7 @@ export function TableOfContents({
                     ? 'border-primary bg-primary/10 font-medium text-primary'
                     : 'border-dashed border-border text-muted-foreground hover:bg-muted/40',
                 )}>
-                {item.value}
+                {htmlToText(item.value)}
               </Link>
             </li>
           );

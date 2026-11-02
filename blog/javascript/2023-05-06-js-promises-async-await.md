@@ -29,7 +29,7 @@ language: lo
 
 ---
 
-###Promise Syntax
+## Promise Syntax
 ຖ້າໃຜເຄີຍໄດ້ອ່ານບົດຄວາມ ຫຼື ເອກະສານໃດໆກໍ່ຕາມທີ່ອະທິບາຍກ່ຽວກັບ Promises ກໍ່ອາດຈະຄຸ້ນຕາກັບນິຍາມ ຫຼື ຄຳອະທິບາຍ Promises ປະມານວ່າ:
 
 > "A promise is a placeholder for a value that can either resolve or reject at some time in the future"
@@ -97,7 +97,7 @@ result ຂອງ `.then` ເອງກໍ່ແມ່ນ promise value ເຊັ�
 ![then chain in getImage example](https://res.cloudinary.com/practicaldev/image/fetch/s--e1nVrqe1--/c_limit%2Cf_auto%2Cfl_progressive%2Cq_auto%2Cw_880/https://dev-to-uploads.s3.amazonaws.com/i/u9l3lxwxlxgv2edv79xh.png)
 
 ---
-###Microtasks and (Macro)tasks
+## Microtasks and (Macro)tasks
 ມາຮອດບ່ອນນີ້ເຮົາກໍ່ໄດ້ຮູ້ວິທີສ້າງ promise ແລະ ວິທີຈັດການກັບ values ທີ່ໄດ້ຈາກ promise ກັນໄປແລ້ວ, ເຮົາລອງເພີ່ມ script ອີກໜ້ອຍໜຶ່ງແລ້ວທຳການ run ລອງເບິ່ງອີກຄັ້ງລອງເບິ່ງ.
 ![microtask queue](https://res.cloudinary.com/practicaldev/image/fetch/s--uNG7sXon--/c_limit%2Cf_auto%2Cfl_progressive%2Cq_66%2Cw_880/https://dev-to-uploads.s3.amazonaws.com/i/ey4ubnv5yjgi6hbh97xq.gif)
 ເຫັນຫຍັງບໍ່?🤯 ນັ້ນມັນແບ້ຫຍັງຫັ້ນ?
@@ -144,7 +144,7 @@ call stack ເຫັນວ່າຄິວວ່າງພໍດີມັນເລ
 ຈາກຕົວຢ່າງດ້ານເທິງກໍ່ນັບວ່າຈົບບໍລິບູນສຳລັບຕົວຢ່າງນີ້.
 
 ---
-### Async/Await
+## Async/Await
 ES7 ໄດ້ແນະນຳວິທີໃໝ່ໃນການເພີ່ມ async behavior ໃນ JavaScript ແລະ ເຮັດໃຫ້ມັນເຮັດວຽກຮ່ວມກັບ promises ແບບງ່າຍໆ. ເຊິ່ງໃນນັ້ນຈະໃຊ້ `async` ແລະ `await` keyword ໃນການສ້າງ `async` functions ທີ່ສາມາດ return promise ອອກມາໄດ້, ສ່ວນວິທີການຈະເປັນແນວໃດນັ້ນ ໄປເບິ່ງນຳກັນເລີຍ.
 ກ່ອນໜ້ານີ້ເຮົາໄດ້ເຫັນແລ້ວວ່າເຮົາສາມາດສ້າງ Promise ໄດ້ໂດຍໃຊ້ `Promise` object, ເຊິ່ງມັນກໍ່ຍັງມີອີກແບບອື່ນໆເຊັ່ນ: `new Promise(() => {})`, `Promise.resolve`, ຫຼື `Promise.reject`.
 ແທນທີ່ຈະໃຊ້ `Promise` object ເຮົາສາມາດສ້າງ asynchronous functions ທີ່ return object ອອກມາໄດ້ເລີຍໂດຍທີ່ເຮົາບໍ່ຈຳເປັນຕ້ອງໄປຂຽນ `Promise` object ດ້ວຍຕົວເອງ.

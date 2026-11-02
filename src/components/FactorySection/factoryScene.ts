@@ -1,546 +1,453 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import {
+  BEAM_LOW_Y,
+  BEAM_REST_Y,
+  CAMERA_POSES,
+  FINGER_CLOSED,
+  FINGER_OPEN,
+  STAGE_COLOR,
+  buildBelt,
+  buildBlock,
+  buildBlockMaterials,
+  buildChain,
+  buildFloor,
+  buildGate,
+  buildPallet,
+  buildRobot,
+  disposeTree,
+} from "./factoryModels";
+import {
+  JOB_DURATION,
+  LASER_POLISH_AT,
+  LAYOUT,
+  PALLET_TOP,
+  ROBOT_RELEASE_AT,
+  STACK_CAPACITY,
+  STAGE_ORDER,
+  armPose,
+  beltSpeed,
+  blockBeltX,
+  laserSweep,
+  solveArm,
+  stackSlotOffset,
+  stageAt,
+  stageMidpoint,
+  type StageId,
+} from "./factoryTimeline";
 
 export function isWebGLAvailable(): boolean {
   try {
     const canvas = document.createElement("canvas");
-    return !!(
-      window.WebGLRenderingContext &&
-      (canvas.getContext("webgl2") || canvas.getContext("webgl"))
-    );
+    return !!(window.WebGLRenderingContext && (canvas.getContext("webgl2") || canvas.getContext("webgl")));
   } catch {
     return false;
   }
 }
 
-type FactoryHandle = { dispose: () => void };
-
-const CYCLE = 9; // seconds for one full robot pick-and-place loop
-const GATE_X = 0;
-const BELT_HALF = 5.5;
-const BELT_Y = 0.55;
-
-function easeInOutCubic(t: number): number {
-  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+export interface FactoryEvents {
+  /** Fires when a new station takes the block; `shipped` counts finished jobs. */
+  onStage?: (stage: StageId, shipped: number) => void;
+  /** Per frame while playing: progress (0→1) of the active stage. */
+  onProgress?: (stage: StageId, progress: number) => void;
 }
 
-function createBeltTexture(): THREE.CanvasTexture {
-  const size = 128;
-  const canvas = document.createElement("canvas");
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext("2d")!;
-  ctx.fillStyle = "#182136";
-  ctx.fillRect(0, 0, size, size);
-  ctx.fillStyle = "#232f4d";
-  for (let x = 0; x < size; x += 16) {
-    ctx.fillRect(x, 0, 8, size);
-  }
-  ctx.strokeStyle = "#31405f";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(0, size * 0.5);
-  ctx.lineTo(size, size * 0.5);
-  ctx.stroke();
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.wrapS = THREE.RepeatWrapping;
-  texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(6, 1);
-  return texture;
+export interface FactoryHandle {
+  setPaused(paused: boolean): void;
+  /** Glide the camera to a station, or back to the overview with `null`. */
+  focus(stage: StageId | null): void;
+  dispose(): void;
 }
+
+const MAX_DT = 0.05;
+const BELT_SCROLL = 0.18;
+const FOCUS_EASE = 3.2;
+/** Below this aspect the frame is too narrow for the poses; pull back proportionally. */
+const NARROW_ASPECT = 1.4;
+const NARROW_ZOOM_BOOST = 1.05;
 
 export function buildFactoryScene(
   container: HTMLDivElement,
+  events: FactoryEvents,
   options: { reducedMotion?: boolean } = {},
 ): FactoryHandle {
   const reduced = options.reducedMotion ?? false;
 
-  const renderer = new THREE.WebGLRenderer({
-    antialias: true,
-    alpha: true,
-    powerPreference: "high-performance",
-  });
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.setSize(container.clientWidth, container.clientHeight);
+  renderer.domElement.style.touchAction = "pan-y"; // vertical swipes still scroll the page on touch
   container.appendChild(renderer.domElement);
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x0a0e1c);
-  scene.fog = new THREE.Fog(0x0a0e1c, 22, 38);
+  scene.fog = new THREE.Fog(0x0a0e1c, 20, 36);
 
-  const camera = new THREE.PerspectiveCamera(
-    42,
-    container.clientWidth / container.clientHeight,
-    0.1,
-    80,
-  );
-  camera.position.set(11, 9.5, 13);
-
+  const camera = new THREE.PerspectiveCamera(42, container.clientWidth / container.clientHeight, 0.1, 80);
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.08;
   controls.enablePan = false;
-  controls.enableZoom = true;
-  controls.minDistance = 6;
-  controls.maxDistance = 24;
+  controls.enableZoom = false; // wheel keeps scrolling the page
   controls.maxPolarAngle = Math.PI * 0.46;
-  controls.autoRotate = !reduced;
-  controls.autoRotateSpeed = 0.6;
-  controls.target.set(0, 1, 0);
+  controls.autoRotateSpeed = 0.5;
 
-  // ── Lighting ────────────────────────────────────────────────
-  const ambient = new THREE.AmbientLight(0x3b4a77, 0.9);
-  scene.add(ambient);
+  // ── Lights ──────────────────────────────────────────────────
+  scene.add(new THREE.AmbientLight(0x3b4a77, 0.9));
+  const key = new THREE.DirectionalLight(0xfff2e0, 2.2);
+  key.position.set(8, 12, 6);
+  const fill = new THREE.DirectionalLight(0x8fb3ff, 0.7);
+  fill.position.set(-6, 5, -8);
+  const laserLight = new THREE.PointLight(STAGE_COLOR.laser, 20, 10, 2);
+  laserLight.position.set(LAYOUT.gateX, 2.2, 0);
+  const robotLight = new THREE.PointLight(STAGE_COLOR.robot, 20, 10, 2);
+  robotLight.position.set(LAYOUT.robot.x, 3, -0.6);
+  scene.add(key, fill, laserLight, robotLight);
 
-  const keyLight = new THREE.DirectionalLight(0xfff2e0, 2.2);
-  keyLight.position.set(8, 12, 6);
-  scene.add(keyLight);
+  // ── Models ──────────────────────────────────────────────────
+  const belt = buildBelt();
+  const gate = buildGate();
+  const robot = buildRobot();
+  const chain = buildChain();
+  scene.add(buildFloor(), belt.group, gate.group, robot.group, buildPallet(), chain.group);
 
-  const fillLight = new THREE.DirectionalLight(0x8fb3ff, 0.7);
-  fillLight.position.set(-6, 5, -8);
-  scene.add(fillLight);
+  const blockMaterials = buildBlockMaterials();
+  const active = buildBlock(blockMaterials);
+  scene.add(active);
+  const stack: THREE.Mesh[] = [];
 
-  const cyanPoint = new THREE.PointLight(0x22d3ee, 40, 18, 2);
-  cyanPoint.position.set(GATE_X, 2.4, 0);
-  scene.add(cyanPoint);
+  // Laser spark burst when the block is polished.
+  const SPARKS = 40;
+  const sparkPos = new Float32Array(SPARKS * 3);
+  const sparkVel = Array.from({ length: SPARKS }, () => new THREE.Vector3());
+  const sparkGeo = new THREE.BufferGeometry();
+  sparkGeo.setAttribute("position", new THREE.BufferAttribute(sparkPos, 3));
+  const sparkMat = new THREE.PointsMaterial({ color: 0x7dd3fc, size: 0.08, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+  const sparks = new THREE.Points(sparkGeo, sparkMat);
+  scene.add(sparks);
+  let sparkLife = 0;
 
-  const purplePoint = new THREE.PointLight(0xa78bfa, 40, 18, 2);
-  purplePoint.position.set(-4.5, 2.8, -0.5);
-  scene.add(purplePoint);
-
-  // ── Floor ──────────────────────────────────────────────────
-  const floor = new THREE.Mesh(
-    new THREE.CircleGeometry(16, 48),
-    new THREE.MeshStandardMaterial({
-      color: 0x0d1426,
-      roughness: 0.85,
-      metalness: 0.1,
-    }),
-  );
-  floor.rotation.x = -Math.PI / 2;
-  floor.position.y = 0;
-  scene.add(floor);
-
-  const grid = new THREE.GridHelper(34, 34, 0x2a3a63, 0x1a2640);
-  (grid.material as THREE.Material).transparent = true;
-  (grid.material as THREE.Material).opacity = 0.55;
-  grid.position.y = 0.01;
-  scene.add(grid);
-
-  // ── Conveyor belt ──────────────────────────────────────────
-  const beltGroup = new THREE.Group();
-  const beltFrame = new THREE.Mesh(
-    new THREE.BoxGeometry(12, 0.28, 3.4),
-    new THREE.MeshStandardMaterial({
-      color: 0x141c30,
-      roughness: 0.6,
-      metalness: 0.5,
-    }),
-  );
-  beltFrame.position.set(0, 0.24, 0);
-  beltGroup.add(beltFrame);
-
-  const beltTop = new THREE.Mesh(
-    new THREE.PlaneGeometry(12, 3.1),
-    new THREE.MeshStandardMaterial({
-      map: createBeltTexture(),
-      roughness: 0.9,
-      color: 0x9aa7c2,
-    }),
-  );
-  beltTop.rotation.x = -Math.PI / 2;
-  beltTop.position.set(0, BELT_Y, 0);
-  beltGroup.add(beltTop);
-
-  const rollerGeo = new THREE.CylinderGeometry(0.14, 0.14, 3.4, 16);
-  const rollerMat = new THREE.MeshStandardMaterial({
-    color: 0x2c3a5c,
-    roughness: 0.4,
-    metalness: 0.8,
-  });
-  for (let x = -5.5; x <= 5.5; x += 1.1) {
-    const roller = new THREE.Mesh(rollerGeo, rollerMat);
-    roller.rotation.x = Math.PI / 2;
-    roller.position.set(x, 0.38, 0);
-    beltGroup.add(roller);
-  }
-  beltGroup.position.y = 0;
-  scene.add(beltGroup);
-
-  const beltTexture = (beltTop.material as THREE.MeshStandardMaterial)
-    .map as THREE.CanvasTexture;
-
-  // ── Conveyor items ─────────────────────────────────────────
-  const ITEM_COUNT = 9;
-  const itemGeo = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-  const itemMats = [
-    new THREE.MeshStandardMaterial({ color: 0x818cf8, roughness: 0.35, metalness: 0.3, emissive: 0x4338ca, emissiveIntensity: 0.25 }),
-    new THREE.MeshStandardMaterial({ color: 0x22d3ee, roughness: 0.35, metalness: 0.3, emissive: 0x0891b2, emissiveIntensity: 0.25 }),
-    new THREE.MeshStandardMaterial({ color: 0xe879f9, roughness: 0.35, metalness: 0.3, emissive: 0xa21caf, emissiveIntensity: 0.25 }),
-  ];
-  const items: THREE.Mesh[] = [];
-  for (let i = 0; i < ITEM_COUNT; i++) {
-    const item = new THREE.Mesh(itemGeo, itemMats[i % itemMats.length]);
-    item.position.set(BELT_HALF - i * (12 / ITEM_COUNT), BELT_Y + 0.26, 0);
-    item.rotation.y = (i * Math.PI) / 5;
-    beltGroup.add(item);
-    items.push(item);
-  }
-
-  // ── Laser gate ─────────────────────────────────────────────
-  const gateGroup = new THREE.Group();
-  const postMat = new THREE.MeshStandardMaterial({
-    color: 0x1c2740,
-    roughness: 0.4,
-    metalness: 0.7,
-  });
-  for (const z of [-1.7, 1.7]) {
-    const post = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.7, 0.16), postMat);
-    post.position.set(GATE_X, 0.85, z);
-    gateGroup.add(post);
-    const cap = new THREE.Mesh(
-      new THREE.SphereGeometry(0.09, 12, 12),
-      new THREE.MeshStandardMaterial({
-        color: 0x22d3ee,
-        emissive: 0x22d3ee,
-        emissiveIntensity: 1.6,
-      }),
-    );
-    cap.position.set(GATE_X, 1.72, z);
-    gateGroup.add(cap);
-  }
-  const beam = new THREE.Mesh(
-    new THREE.BoxGeometry(0.09, 0.09, 3.3),
-    new THREE.MeshBasicMaterial({
-      color: 0x67e8f9,
-      transparent: true,
-      opacity: 0.75,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    }),
-  );
-  beam.position.set(GATE_X, BELT_Y + 0.75, 0);
-  gateGroup.add(beam);
-  scene.add(gateGroup);
-
-  // ── Particles (laser pulse) ────────────────────────────────
-  const PARTICLE_COUNT = 48;
-  const particlePositions = new Float32Array(PARTICLE_COUNT * 3);
-  const particleVelocities: THREE.Vector3[] = [];
-  const particleLifetimes = new Float32Array(PARTICLE_COUNT);
-  for (let i = 0; i < PARTICLE_COUNT; i++) {
-    particleVelocities.push(new THREE.Vector3());
-    particleLifetimes[i] = 0;
-  }
-  const particleGeo = new THREE.BufferGeometry();
-  particleGeo.setAttribute(
-    "position",
-    new THREE.BufferAttribute(particlePositions, 3),
-  );
-  const particleMat = new THREE.PointsMaterial({
-    color: 0x7dd3fc,
-    size: 0.09,
-    transparent: true,
-    opacity: 0,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-  });
-  const particles = new THREE.Points(particleGeo, particleMat);
-  particles.visible = false;
-  scene.add(particles);
-
-  function triggerPulse() {
-    particles.visible = true;
-    particleMat.opacity = 0.95;
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-      particlePositions[i * 3] = GATE_X + (Math.random() - 0.5) * 0.1;
-      particlePositions[i * 3 + 1] = BELT_Y + 0.75;
-      particlePositions[i * 3 + 2] = (Math.random() - 0.5) * 2.4;
-      particleVelocities[i].set(
-        (Math.random() - 0.5) * 3,
-        1.6 + Math.random() * 2.4,
-        (Math.random() - 0.5) * 2.5,
-      );
-      particleLifetimes[i] = 1;
+  function burst(at: THREE.Vector3) {
+    sparkLife = 1;
+    for (let i = 0; i < SPARKS; i++) {
+      sparkPos.set([at.x, at.y + 0.3, at.z + (Math.random() - 0.5) * 0.4], i * 3);
+      sparkVel[i].set((Math.random() - 0.5) * 2.4, 1.2 + Math.random() * 2, (Math.random() - 0.5) * 2.4);
     }
-    particleGeo.attributes.position.needsUpdate = true;
   }
 
-  // ── Ambient floating dust ──────────────────────────────────
-  const DUST_COUNT = 90;
-  const dustPositions = new Float32Array(DUST_COUNT * 3);
-  for (let i = 0; i < DUST_COUNT; i++) {
-    dustPositions[i * 3] = (Math.random() - 0.5) * 18;
-    dustPositions[i * 3 + 1] = Math.random() * 5;
-    dustPositions[i * 3 + 2] = (Math.random() - 0.5) * 12;
+  // ── Job state ───────────────────────────────────────────────
+  let jobTime = 0;
+  let shipped = 0;
+  let polished = false;
+  let placed = false;
+  /** Pallet slot for the current block, fixed for the whole job so the arm path never jumps. */
+  let jobSlot = 0;
+  let lastStage: StageId | null = null;
+  const blockPos = new THREE.Vector3();
+
+  function resetBlock() {
+    polished = false;
+    placed = false;
+    jobSlot = stack.length;
+    active.visible = true;
+    active.material = blockMaterials.draft;
+    active.getObjectByName("edges")!.visible = true;
+    active.scale.setScalar(1);
+    active.rotation.set(0, 0, 0);
+    if (active.parent !== scene) scene.attach(active);
   }
-  const dustGeo = new THREE.BufferGeometry();
-  dustGeo.setAttribute("position", new THREE.BufferAttribute(dustPositions, 3));
-  const dustMat = new THREE.PointsMaterial({
-    color: 0x7d8db8,
-    size: 0.05,
-    transparent: true,
-    opacity: 0.4,
-    depthWrite: false,
-  });
-  const dust = new THREE.Points(dustGeo, dustMat);
-  scene.add(dust);
 
-  // ── Robot arm ──────────────────────────────────────────────
-  const robot = new THREE.Group();
-  robot.position.set(-4.6, 0, 0);
+  function placeOnPallet() {
+    const slot = jobSlot;
+    const settled = buildBlock(blockMaterials);
+    settled.material = active.material;
+    settled.getObjectByName("edges")!.visible = false;
+    const offset = stackSlotOffset(slot);
+    settled.position.set(LAYOUT.pallet.x + offset.x, PALLET_TOP + offset.y + LAYOUT.blockSize / 2, LAYOUT.pallet.z + offset.z);
+    scene.add(settled);
+    stack.push(settled);
+  }
 
-  const baseMat = new THREE.MeshStandardMaterial({
-    color: 0x2a3a63,
-    roughness: 0.4,
-    metalness: 0.7,
-  });
-  const armMat = new THREE.MeshStandardMaterial({
-    color: 0x3b4a77,
-    roughness: 0.45,
-    metalness: 0.6,
-  });
-  const accentMat = new THREE.MeshStandardMaterial({
-    color: 0xa78bfa,
-    emissive: 0x7c3aed,
-    emissiveIntensity: 0.4,
-    roughness: 0.35,
-    metalness: 0.4,
-  });
+  /** Starts the next block: empties a full pallet first so the new slot is free. */
+  function startJob() {
+    if (stack.length >= STACK_CAPACITY) clearPallet();
+    resetBlock();
+  }
 
-  const base = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.6, 0.5, 24), baseMat);
-  base.position.y = 0.25;
-  robot.add(base);
+  function removeSettled(block: THREE.Mesh) {
+    scene.remove(block);
+    block.geometry.dispose();
+    (block.getObjectByName("edges") as THREE.LineSegments).geometry.dispose();
+  }
 
-  const turret = new THREE.Group();
-  turret.position.y = 0.5;
-  robot.add(turret);
+  function clearPallet() {
+    stack.splice(0).forEach(removeSettled);
+  }
 
-  const shoulder = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.4, 20), accentMat);
-  shoulder.position.y = 0.2;
-  turret.add(shoulder);
+  /** Poses every moving part for the current `jobTime`. */
+  function applyJob(dt: number) {
+    const sample = stageAt(jobTime);
+    const { stage, progress } = sample;
 
-  const upperArmGroup = new THREE.Group();
-  upperArmGroup.position.set(0, 0.4, 0);
-  turret.add(upperArmGroup);
+    if (stage !== lastStage) {
+      lastStage = stage;
+      events.onStage?.(stage, shipped);
+    }
+    events.onProgress?.(stage, progress);
 
-  const upperArm = new THREE.Mesh(new THREE.BoxGeometry(0.22, 1.2, 0.22), armMat);
-  upperArm.position.y = 0.6;
-  upperArmGroup.add(upperArm);
+    // Belt + rollers
+    const speed = beltSpeed(sample);
+    belt.texture.offset.x -= dt * BELT_SCROLL * speed;
+    belt.rollers.forEach((r) => (r.rotation.y += dt * 4 * speed));
 
-  const elbow = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.3, 16), accentMat);
-  elbow.position.y = 1.2;
-  upperArmGroup.add(elbow);
+    // Laser: beam sweeps down over the block, then the block turns polished
+    const sweep = stage === "laser" ? laserSweep(progress) : 0;
+    gate.beam.position.y = BEAM_REST_Y + (BEAM_LOW_Y - BEAM_REST_Y) * sweep;
+    gate.beamMaterial.opacity = stage === "laser" ? 0.45 + sweep * 0.5 : 0.25;
+    gate.beam.scale.set(1 + sweep * 2, 1 + sweep * 2, 1);
+    const pastScanner = stage === "robot" || (stage === "laser" && progress >= LASER_POLISH_AT);
+    if (pastScanner && !polished) {
+      polished = true;
+      active.material = blockMaterials.polished[shipped % blockMaterials.polished.length];
+      active.getObjectByName("edges")!.visible = false;
+      if (stage === "laser") burst(active.position);
+    }
 
-  const foreArmGroup = new THREE.Group();
-  foreArmGroup.position.set(0, 1.2, 0);
-  upperArmGroup.add(foreArmGroup);
+    // Robot arm
+    const pose = armPose(sample, jobSlot);
+    const joints = solveArm(pose.target);
+    robot.turret.rotation.y = pose.target.yaw;
+    robot.upper.rotation.x = joints.shoulder;
+    robot.fore.rotation.x = joints.elbow;
+    robot.wrist.rotation.x = joints.wrist;
+    const finger = pose.gripClosed ? FINGER_CLOSED : FINGER_OPEN;
+    robot.fingers[0].position.x = -finger;
+    robot.fingers[1].position.x = finger;
 
-  const foreArm = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.05, 0.18), armMat);
-  foreArm.position.y = 0.52;
-  foreArmGroup.add(foreArm);
-
-  const wrist = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.24, 16), accentMat);
-  wrist.position.y = 1.05;
-  foreArmGroup.add(wrist);
-
-  const gripper = new THREE.Group();
-  gripper.position.y = 1.12;
-  foreArmGroup.add(gripper);
-
-  const gripMat = new THREE.MeshStandardMaterial({
-    color: 0x67e8f9,
-    emissive: 0x22d3ee,
-    emissiveIntensity: 0.5,
-    roughness: 0.3,
-    metalness: 0.4,
-  });
-  const gripA = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.34, 0.2), gripMat);
-  gripA.position.set(-0.09, 0.15, 0);
-  const gripB = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.34, 0.2), gripMat);
-  gripB.position.set(0.09, 0.15, 0);
-  gripper.add(gripA, gripB);
-
-  scene.add(robot);
-
-  // Keyframe timeline: [t, turretYaw, shoulderPitch, elbowPitch, gripOpen]
-  // Angles in radians; gripper open = spread (positive), closed = 0.
-  const KEYFRAMES: [number, number, number, number, number][] = [
-    [0.0, -0.35, -0.2, 0.5, 0.09],
-    [0.18, -0.35, -0.25, 0.55, 0.09],
-    [0.3, -0.55, 0.35, 0.9, 0.09],
-    [0.42, -0.55, 0.75, 1.15, 0.09],
-    [0.52, -0.55, 0.75, 1.15, 0.0],
-    [0.64, -0.55, 0.35, 0.9, 0.0],
-    [0.78, 0.85, 0.2, 0.7, 0.0],
-    [0.9, 0.85, 0.6, 1.1, 0.0],
-    [0.98, 0.85, 0.6, 1.1, 0.09],
-    [1.0, -0.35, -0.2, 0.5, 0.09],
-  ];
-
-  function sampleKeyframes(phase: number) {
-    let a = KEYFRAMES[0];
-    let b = KEYFRAMES[KEYFRAMES.length - 1];
-    for (let i = 0; i < KEYFRAMES.length - 1; i++) {
-      if (phase >= KEYFRAMES[i][0] && phase <= KEYFRAMES[i + 1][0]) {
-        a = KEYFRAMES[i];
-        b = KEYFRAMES[i + 1];
-        break;
+    // Block: rides the belt, then the gripper, then lands on the pallet
+    if (pose.carrying) {
+      if (active.parent !== robot.grip) {
+        robot.grip.attach(active);
+        active.position.set(0, 0, 0);
+        active.rotation.set(0, 0, 0);
       }
+    } else if (stage === "robot" && progress >= ROBOT_RELEASE_AT) {
+      if (!placed) {
+        placed = true;
+        placeOnPallet();
+        scene.attach(active);
+        active.visible = false;
+      }
+    } else {
+      active.visible = true;
+      if (active.parent !== scene) scene.attach(active);
+      blockPos.set(blockBeltX(sample), LAYOUT.beltY + LAYOUT.blockSize / 2, 0);
+      active.position.copy(blockPos);
+      // a small "pop" right as the block is polished
+      const pop = stage === "laser" ? Math.max(0, 1 - Math.abs(progress - LASER_POLISH_AT) * 12) : 0;
+      active.scale.setScalar(1 + pop * 0.18);
     }
-    const span = Math.max(b[0] - a[0], 1e-6);
-    const t = easeInOutCubic(Math.min(Math.max((phase - a[0]) / span, 0), 1));
-    return [
-      a[1] + (b[1] - a[1]) * t,
-      a[2] + (b[2] - a[2]) * t,
-      a[3] + (b[3] - a[3]) * t,
-      a[4] + (b[4] - a[4]) * t,
-    ];
+
+    // Chain: active station ring glows, links fill as the block moves downstream
+    STAGE_ORDER.forEach((id, i) => {
+      const current = STAGE_ORDER.indexOf(stage);
+      const ring = chain.rings[id];
+      ring.opacity = id === stage ? 0.75 + Math.sin(clockTime * 5) * 0.2 : i < current ? 0.45 : 0.18;
+    });
+    chain.links.forEach((link, i) => {
+      const current = STAGE_ORDER.indexOf(stage);
+      link.scale.x = i < current ? 1 : i === current ? Math.max(progress, 0.0001) : 0.0001;
+    });
+    robot.accent.emissiveIntensity = stage === "robot" ? 0.8 : 0.3;
+    gate.caps.emissiveIntensity = stage === "laser" ? 2 : 0.8;
+    laserLight.intensity = stage === "laser" ? 30 + sweep * 30 : 10;
+    robotLight.intensity = stage === "robot" ? 30 : 10;
+
+    // Sparks
+    if (sparkLife > 0) {
+      sparkLife = Math.max(0, sparkLife - dt * 1.3);
+      for (let i = 0; i < SPARKS; i++) {
+        sparkVel[i].y -= 3.2 * dt;
+        sparkPos[i * 3] += sparkVel[i].x * dt;
+        sparkPos[i * 3 + 1] += sparkVel[i].y * dt;
+        sparkPos[i * 3 + 2] += sparkVel[i].z * dt;
+      }
+      sparkGeo.attributes.position.needsUpdate = true;
+    }
+    sparkMat.opacity = sparkLife;
   }
 
-  // ── Animation loop ─────────────────────────────────────────
+  // ── Camera focus ────────────────────────────────────────────
+  let focusStage: StageId | "overview" = "overview";
+  let focusing = true;
+  const desiredPos = new THREE.Vector3();
+  const desiredTarget = new THREE.Vector3();
+
+  function framing(stage: StageId | "overview") {
+    const pose = CAMERA_POSES[stage];
+    desiredTarget.copy(pose.target);
+    desiredPos.copy(pose.position);
+    if (camera.aspect < NARROW_ASPECT) {
+      const zoom = (NARROW_ASPECT / camera.aspect) * NARROW_ZOOM_BOOST;
+      desiredPos.sub(pose.target).multiplyScalar(zoom).add(pose.target);
+    }
+  }
+
+  function snapCamera() {
+    framing(focusStage);
+    camera.position.copy(desiredPos);
+    controls.target.copy(desiredTarget);
+    focusing = false;
+  }
+
+  function stepCamera(dt: number) {
+    if (!focusing) return;
+    framing(focusStage);
+    const k = 1 - Math.exp(-FOCUS_EASE * dt);
+    camera.position.lerp(desiredPos, k);
+    controls.target.lerp(desiredTarget, k);
+    if (camera.position.distanceTo(desiredPos) < 0.02) focusing = false;
+  }
+
+  // Dragging hands the camera to the user; keep rendering while damping settles.
+  const DAMPING_TAIL_MS = 1200;
+  let interactUntil = 0;
+  let userMoved = false;
+  controls.addEventListener("start", () => {
+    focusing = false;
+    userMoved = true;
+    interactUntil = Infinity;
+    start();
+  });
+  controls.addEventListener("end", () => {
+    interactUntil = performance.now() + DAMPING_TAIL_MS;
+  });
+
+  // ── Loop ────────────────────────────────────────────────────
   const clock = new THREE.Clock();
-  let frame = 0;
+  let clockTime = 0;
+  let paused = reduced;
+  let visible = true;
+  let pageVisible = !document.hidden;
   let disposed = false;
-  let running = !reduced;
+  let frameId = 0;
 
-  function animate() {
-    if (disposed) return;
-    if (!running) return;
+  function syncAutoRotate() {
+    controls.autoRotate = !paused && !reduced && focusStage === "overview";
+  }
 
-    const dt = Math.min(clock.getDelta(), 0.05);
-    const time = clock.elapsedTime;
-    frame += 1;
-
-    // Belt texture scroll
-    beltTexture.offset.x -= dt * 0.22;
-
-    // Move items; recycle at edges; trigger laser pulse
-    let beamPulse = 0;
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      item.position.x -= dt * 1.15;
-      item.rotation.y += dt * 0.6;
-      if (item.position.x < -BELT_HALF) {
-        item.position.x = BELT_HALF;
-      }
-      if (!item.userData.passed && item.position.x < GATE_X) {
-        item.userData.passed = true;
-        triggerPulse();
-      }
-      if (item.position.x >= GATE_X) {
-        item.userData.passed = false;
-      }
-    }
-
-    // Laser beam pulse
-    beamPulse = 1.6 + Math.sin(time * 6) * 0.7;
-    (beam.material as THREE.MeshBasicMaterial).opacity =
-      0.55 + Math.abs(Math.sin(time * 6)) * 0.35;
-
-    // Particles update
-    if (particles.visible) {
-      let anyAlive = false;
-      for (let i = 0; i < PARTICLE_COUNT; i++) {
-        if (particleLifetimes[i] <= 0) {
-          particlePositions[i * 3 + 1] = -5;
-          continue;
-        }
-        anyAlive = true;
-        particleLifetimes[i] -= dt * 1.4;
-        particlePositions[i * 3] += particleVelocities[i].x * dt;
-        particlePositions[i * 3 + 1] += particleVelocities[i].y * dt;
-        particlePositions[i * 3 + 2] += particleVelocities[i].z * dt;
-        particleVelocities[i].y -= 3.2 * dt;
-        particleVelocities[i].x *= 0.99;
-        particleVelocities[i].z *= 0.99;
-      }
-      particleGeo.attributes.position.needsUpdate = true;
-      particleMat.opacity = Math.max(
-        particles.visible ? 0 : 0,
-        Math.min(...Array.from(particleLifetimes)) * 0.95,
-      );
-      if (!anyAlive) {
-        particles.visible = false;
-        particleMat.opacity = 0;
-      }
-    }
-
-    // Robot arm keyframe animation
-    const phase = (time % CYCLE) / CYCLE;
-    const [yaw, shoulderPitch, elbowPitch, gripOpen] = sampleKeyframes(phase);
-    turret.rotation.y = yaw;
-    upperArmGroup.rotation.x = shoulderPitch;
-    foreArmGroup.rotation.x = elbowPitch;
-    gripA.position.x = -0.09 - gripOpen;
-    gripB.position.x = 0.09 + gripOpen;
-
-    // Neon light flicker
-    cyanPoint.intensity = 34 + Math.sin(time * 3.1) * 8;
-    purplePoint.intensity = 34 + Math.sin(time * 2.3 + 1) * 8;
-
-    // Dust drift
-    const dustAttr = dustGeo.attributes.position as THREE.BufferAttribute;
-    for (let i = 0; i < DUST_COUNT; i++) {
-      dustAttr.array[i * 3] += Math.sin(time * 0.4 + i) * 0.0015;
-      dustAttr.array[i * 3 + 1] += 0.002;
-      if (dustAttr.array[i * 3 + 1] > 5) dustAttr.array[i * 3 + 1] = 0;
-    }
-    dustAttr.needsUpdate = true;
-
+  function render() {
     controls.update();
     renderer.render(scene, camera);
-    requestAnimationFrame(animate);
   }
 
-  const handleVisibility = () => {
-    if (document.hidden) {
-      running = false;
-      clock.stop();
-    } else if (!running) {
-      running = !reduced;
-      clock.start();
-      if (running) {
-        requestAnimationFrame(animate);
+  function tick() {
+    frameId = 0;
+    if (disposed || !visible || !pageVisible) return;
+    const dt = Math.min(clock.getDelta(), MAX_DT);
+    if (!paused) {
+      clockTime += dt;
+      const next = jobTime + dt;
+      if (next >= JOB_DURATION) {
+        shipped += 1;
+        jobTime = next - JOB_DURATION;
+        lastStage = null;
+        startJob();
+      } else {
+        jobTime = next;
       }
+      applyJob(dt);
     }
+    stepCamera(dt);
+    render();
+    // Keep looping while playing, gliding, or easing out a drag; idle paused scenes stop.
+    if (!paused || focusing || performance.now() < interactUntil) frameId = requestAnimationFrame(tick);
+  }
+
+  function start() {
+    if (frameId || disposed) return;
+    clock.getDelta(); // drop the time spent stopped
+    frameId = requestAnimationFrame(tick);
+  }
+
+  function stop() {
+    if (frameId) cancelAnimationFrame(frameId);
+    frameId = 0;
+  }
+
+  const io = new IntersectionObserver(([entry]) => {
+    visible = entry.isIntersecting;
+    if (visible) start();
+    else stop();
+  });
+  io.observe(container);
+
+  const onVisibility = () => {
+    pageVisible = !document.hidden;
+    if (pageVisible) start();
+    else stop();
   };
-  document.addEventListener("visibilitychange", handleVisibility);
+  document.addEventListener("visibilitychange", onVisibility);
 
   const resizeObserver = new ResizeObserver(() => {
     const w = container.clientWidth;
     const h = container.clientHeight;
-    if (w === 0 || h === 0) return;
+    if (!w || !h) return;
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
     renderer.setSize(w, h);
+    if (!focusing && focusStage === "overview" && !userMoved) snapCamera();
+    render();
   });
   resizeObserver.observe(container);
 
-  if (running) {
-    requestAnimationFrame(animate);
-  } else {
-    // render a single static frame for reduced-motion users
-    renderer.render(scene, camera);
-  }
+  // First frame: posed and framed, even when starting paused.
+  snapCamera();
+  syncAutoRotate();
+  applyJob(0);
+  render();
+  start();
 
   return {
+    setPaused(next) {
+      paused = next;
+      syncAutoRotate();
+      if (!paused) start();
+    },
+    focus(stage) {
+      focusStage = stage ?? "overview";
+      userMoved = false;
+      syncAutoRotate();
+      if (paused && stage) {
+        // Still frame of that station's work, so the click still shows something.
+        // Undo this job's placement first, or resuming would stack the block twice.
+        if (placed) {
+          const settled = stack.pop();
+          if (settled) removeSettled(settled);
+        }
+        startJob();
+        jobTime = stageMidpoint(stage);
+        applyJob(0);
+      }
+      if (reduced) {
+        snapCamera();
+        render();
+      } else {
+        focusing = true;
+        start();
+      }
+    },
     dispose() {
       disposed = true;
-      document.removeEventListener("visibilitychange", handleVisibility);
+      stop();
+      io.disconnect();
       resizeObserver.disconnect();
+      document.removeEventListener("visibilitychange", onVisibility);
       controls.dispose();
-      [itemGeo, particleGeo, dustGeo, floor.geometry, grid.geometry, beltFrame.geometry, beltTop.geometry, rollerGeo]
-        .forEach((g) => g.dispose());
-      itemMats.forEach((m) => m.dispose());
-      beltTexture.dispose();
-      particleMat.dispose();
-      dustMat.dispose();
+      clearPallet();
+      disposeTree(scene);
       renderer.dispose();
-      if (renderer.domElement.parentElement === container) {
-        container.removeChild(renderer.domElement);
-      }
+      renderer.domElement.remove();
     },
   };
 }

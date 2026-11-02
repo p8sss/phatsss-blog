@@ -18,7 +18,8 @@ export default function HomeBreadcrumbItem(): ReactNode {
             description: 'The ARIA label for the home page in the breadcrumbs',
           })}
           href={homeHref}
-          className="flex items-center gap-1">
+          // p/-m: a 26px hit area around the 14px icon without moving it
+          className="-m-1.5 flex items-center gap-1 rounded-md p-1.5">
           <Home01Icon size={14} />
         </Link>
       </BreadcrumbLink>

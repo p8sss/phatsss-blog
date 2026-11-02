@@ -94,13 +94,16 @@ function BlogListPageContent(props: Props): ReactNode {
   };
 
   return (
-    <BlogLayout sidebar={sidebar}>
+    // Below lg the sidebar would stack under the grid, repeating the filter
+    // chips (categories) and the grid itself ("All posts"), so hide it there
+    <BlogLayout sidebar={sidebar} wrapperClassName="max-lg:[&_aside]:hidden">
       {/* Page header + live search */}
       <header className="mb-10">
         <h1 className="!mb-3 !text-3xl !font-semibold tracking-tight sm:!text-4xl">
           {metadata.blogTitle}
         </h1>
-        {metadata.blogDescription && (
+        {/* Docusaurus defaults blogDescription to "Blog" — skip it when it only repeats the title */}
+        {metadata.blogDescription && metadata.blogDescription !== metadata.blogTitle && (
           <p className="!mb-0 text-lg text-muted-foreground">
             {metadata.blogDescription}
           </p>

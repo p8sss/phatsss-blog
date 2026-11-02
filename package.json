@@ -12,7 +12,8 @@
     "serve": "docusaurus serve",
     "write-translations": "docusaurus write-translations",
     "write-heading-ids": "docusaurus write-heading-ids",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@docusaurus/core": "^3.8.0",
@@ -43,6 +44,7 @@
     "@tailwindcss/postcss": "^4.3.3",
     "@types/three": "^0.185.4",
     "autoprefixer": "^10.4.21",
+    "patch-package": "^8.0.1",
     "postcss": "^8.5.3",
     "tailwindcss": "^4.1.7",
     "typescript": "~5.6.2"

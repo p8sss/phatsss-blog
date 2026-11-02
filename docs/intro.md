@@ -4,18 +4,7 @@ title: Coding Standards
 ---
 
 # Coding Standards
-  #### Comprehensive Coding Standards for JavaScript, TypeScript, React, Next.js, Node.js, and NestJS
-
-## Table of Contents
-1. [General JavaScript & TypeScript Standards](#general-javascript--typescript-standards)
-2. [React & Next.js Standards](#react--nextjs-standards)
-3. [Node.js Standards](#nodejs-standards)
-4. [NestJS Standards](#nestjs-standards)
-5. [Testing Standards](#testing-standards)
-6. [Security Standards](#security-standards)
-7. [Performance Standards](#performance-standards)
-8. [Documentation Standards](#documentation-standards)
-9. [Tooling & Configuration](#tooling--configuration)
+**Comprehensive Coding Standards for JavaScript, TypeScript, React, Next.js, Node.js, and NestJS**
 
 ## General JavaScript & TypeScript Standards
 
