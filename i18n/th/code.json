@@ -1,0 +1,124 @@
+{
+  "theme.blog.post.readingTime.plurals": {
+    "message": "อ่าน 1 นาที|อ่าน {readingTime} นาที",
+    "description": "Pluralized label for \"{readingTime} min read\""
+  },
+  "theme.blog.post.readMore": {
+    "message": "อ่านต่อ",
+    "description": "Label of the read-more link on truncated blog posts"
+  },
+  "theme.blog.sidebar.categories": {
+    "message": "หมวดหมู่",
+    "description": "Heading of the blog categories list"
+  },
+  "theme.blog.sidebar.recentPosts": {
+    "message": "บทความล่าสุด",
+    "description": "Heading of the blog recent posts list"
+  },
+  "theme.blog.sidebar.navAriaLabel": {
+    "message": "การนำทางบทความล่าสุดในบล็อก",
+    "description": "The ARIA label for recent posts in the blog sidebar"
+  },
+  "blog.list.searchPlaceholder": {
+    "message": "ค้นหาบทความ…",
+    "description": "Placeholder of the blog search input"
+  },
+  "blog.list.noResults": {
+    "message": "ไม่พบบทความ",
+    "description": "Empty state title when no articles match"
+  },
+  "blog.list.tryAdjusting": {
+    "message": "ลองปรับคำค้นหาหรือตัวกรองของคุณ",
+    "description": "Empty state hint"
+  },
+  "blog.list.loadMore": {
+    "message": "โหลดบทความเพิ่ม",
+    "description": "Label of the load-more button"
+  },
+  "factory.title": {
+    "message": "ที่ที่ไอเดียถูกผลิตขึ้น",
+    "description": "Factory section title"
+  },
+  "factory.description": {
+    "message": "มุมมอง 3D สดของกลไกเบื้องหลังบล็อก — สายพานลำเลียง แขนหุ่นยนต์ และเซนเซอร์เลเซอร์ เรนเดอร์ในเบราว์เซอร์ของคุณ",
+    "description": "Factory section description"
+  },
+  "theme.CodeBlock.copy": {
+    "message": "คัดลอก",
+    "description": "The copy button label on code blocks"
+  },
+  "theme.CodeBlock.copied": {
+    "message": "คัดลอกแล้ว",
+    "description": "The copied button label on code blocks"
+  },
+  "theme.CodeBlock.copyButtonAriaLabel": {
+    "message": "คัดลอกโค้ดไปยังคลิปบอร์ด",
+    "description": "The ARIA label for copy code blocks button"
+  },
+  "theme.blog.paginator.navAriaLabel": {
+    "message": "การนำทางหน้าบล็อก",
+    "description": "The ARIA label for the blog pagination"
+  },
+  "theme.blog.paginator.newerEntries": {
+    "message": "บทความใหม่กว่า",
+    "description": "The label used to navigate to the newer blog posts page"
+  },
+  "theme.blog.paginator.olderEntries": {
+    "message": "บทความเก่ากว่า",
+    "description": "The label used to navigate to the older blog posts page"
+  },
+  "theme.blog.post.paginator.navAriaLabel": {
+    "message": "การนำทางหน้าบทความ",
+    "description": "The ARIA label for the blog posts pagination"
+  },
+  "theme.blog.post.paginator.newerPost": {
+    "message": "บทความก่อนหน้า",
+    "description": "The blog post button label to navigate to the previous post"
+  },
+  "theme.blog.post.paginator.olderPost": {
+    "message": "บทความถัดไป",
+    "description": "The blog post button label to navigate to the next post"
+  },
+  "theme.tags.tagsPageLink": {
+    "message": "ดูแท็กทั้งหมด",
+    "description": "The label of the link targeting the tag list page"
+  },
+  "hero.cta.blog": {
+    "message": "อ่านบล็อก",
+    "description": "Hero call-to-action button"
+  },
+  "hero.cta.work": {
+    "message": "ดูผลงาน",
+    "description": "Hero call-to-action button"
+  },
+  "workExperience.type.fullTime": {
+    "message": "งานประจำ"
+  },
+  "workExperience.type.partTime": {
+    "message": "พาร์ทไทม์"
+  },
+  "workExperience.type.freelance": {
+    "message": "ฟรีแลนซ์"
+  },
+  "workExperience.type.education": {
+    "message": "การศึกษา"
+  },
+  "workExperience.present": {
+    "message": "ปัจจุบัน"
+  },
+  "workExperience.showMore": {
+    "message": "ดูเพิ่มเติม"
+  },
+  "workExperience.showLess": {
+    "message": "ย่อลง"
+  },
+  "workExperience.stack": {
+    "message": "เทคโนโลยี"
+  },
+  "theme.colorToggle.switchToLight": {
+    "message": "เปลี่ยนเป็นโหมดสว่าง"
+  },
+  "theme.colorToggle.switchToDark": {
+    "message": "เปลี่ยนเป็นโหมดมืด"
+  }
+}

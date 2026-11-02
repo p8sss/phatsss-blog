@@ -1,35 +1,41 @@
 {
   "name": "Phatsss Blog",
   "short_name": "Phatsss",
-  "theme_color": "#00ccff",
-  "background_color": "#ffffff",
+  "theme_color": "#000b14",
+  "background_color": "#000b14",
   "display": "standalone",
   "scope": "/phatsss-blog/",
   "start_url": "/phatsss-blog/",
   "icons": [
     {
-      "src": "https://phatsss.github.io/phatsss-blog/img/favicon.png",
+      "src": "img/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "https://phatsss.github.io/phatsss-blog/img/favicon.png",
+      "src": "img/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "https://phatsss.github.io/phatsss-blog/img/favicon.png",
+      "src": "img/icons/maskable-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "https://phatsss.github.io/phatsss-blog/img/favicon.png",
+      "src": "img/icons/maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    },
+    {
+      "src": "img/icons/blackhole.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ]
 }

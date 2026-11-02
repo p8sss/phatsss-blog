@@ -2,6 +2,10 @@ import React, { JSX } from 'react';
 import styles from "./styles.module.css";
 import CardPreview from './CardPreview';
 import { translate } from "@docusaurus/Translate";
+import Link from "@docusaurus/Link";
+
+import { Button } from "@/components/glass/button";
+import { ArrowRight01Icon } from "@/components/ui/icons";
 
 export default function Hero(): JSX.Element {
   return (
@@ -9,55 +13,40 @@ export default function Hero(): JSX.Element {
       <div className={styles.heroContent}>
         <h1 className={styles.heroTitle}>
           {translate({ id: "hero.title", message: "I'm" })}&nbsp;
-          <span className={`${styles.highlight} ${styles.sunset}`}>
-            @phatsss
+          {/* nowrap: the comma never wraps away from the handle */}
+          <span className="whitespace-nowrap">
+            <span className={`${styles.highlight} ${styles.sunset}`}>@phatsss</span>,
           </span>
-          ,<br />
+          <br />
           {translate({ id: "hero.position", message: "Software Developer" })}
         </h1>
         <p className={styles.heroDescription}>
           {translate({ id: "hero.description" })}
         </p>
-        {/* <div className={styles.buttonContainer}>
-          <button className={styles.primaryButton}>
-            Portfolio
-          </button>
-          <button className={styles.secondaryButton}>
-            Contact Me
-          </button>
-        </div> */}
+        <div className="mt-8 flex flex-wrap gap-3">
+          <Button asChild variant="prominent" size="lg" className={styles.ctaPrimary}>
+            <Link to="/blog">
+              {translate({ id: "hero.cta.blog", message: "Read the blog" })}
+              <ArrowRight01Icon size={18} data-icon="inline-end" />
+            </Link>
+          </Button>
+          <Button asChild variant="glass" size="lg">
+            <Link to="#portfolio">
+              {translate({ id: "hero.cta.work", message: "View my work" })}
+            </Link>
+          </Button>
+        </div>
       </div>
       <div className={styles.heroImageContainer}>
         <CardPreview>
-          {/* <div className={styles.avatarContainer}>
+          <div className={styles.avatarWrapper}>
             <img
-              src="/img/phatsss-logo.svg"
+              src="./img/phatsss-logo.svg"
               alt="Developer Avatar"
+              width={300}
+              height={300}
               className={styles.avatar}
             />
-          </div> */}
-          <div className={styles.container}>
-            <div className={styles.canvas}>
-              {[...Array(25)].map((_, i) => (
-                <div
-                  key={i}
-                  className={`${styles.tracker} ${styles[`tr-${i + 1}`]}`}
-                />
-              ))}
-            </div>
-
-            <div id="card" className={styles.noselect}>
-              <div className={styles.content}>
-                {/* Square-rounded glowing Avatar */}
-                <div className={styles.avatarWrapper}>
-                  <img
-                    src="./img/phatsss-logo.svg"
-                    alt="Developer Avatar"
-                    className={styles.avatar}
-                  />
-                </div>
-              </div>
-            </div>
           </div>
         </CardPreview>
       </div>

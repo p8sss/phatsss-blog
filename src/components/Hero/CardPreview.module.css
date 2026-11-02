@@ -1,9 +1,16 @@
 /* Main container for the card */
 .container {
+    /* Keep the canvas/tracker z-index: 200 local — unscoped, it matched
+     * Infima's navbar z-index and painted over the open mobile sidebar. */
+    isolation: isolate;
+    /* Accretion disk: violet → magenta → amber. White quote text holds
+     * ≥ 3:1 (large-text AA) across the band it occupies (20–80%). */
+    --card-galaxy: linear-gradient(43deg, oklch(0.46 0.19 290) 0%, oklch(0.54 0.21 345) 48%, oklch(0.72 0.14 62) 100%);
     position: relative;
     aspect-ratio: 16 / 9;
-        width: clamp(350px, 80vw, 449px);
-        height: clamp(200px, 45vw, 253px);
+        /* 288px min = a 320px viewport minus 16px gutters; 16:9 */
+        width: clamp(288px, 80vw, 449px);
+        height: clamp(162px, 45vw, 253px);
 }
 
 @media (min-width: 481px) and (max-width: 768px) {
@@ -29,7 +36,7 @@
     align-items: center;
     border-radius: 1.5rem;
     transition: 700ms;
-    background: linear-gradient(43deg, rgb(65, 88, 208) 0%, rgb(200, 80, 192) 46%, rgb(255, 204, 112) 100%);
+    background: var(--card-galaxy);
 }
 
 /* Subtitle styling */
@@ -131,7 +138,7 @@
 /* Card glow effect */
 #card::before {
     content: "";
-    background: linear-gradient(43deg, rgb(65, 88, 208) 0%, rgb(200, 80, 192) 46%, rgb(255, 204, 112) 100%);
+    background: var(--card-galaxy);
     filter: blur(2rem);
     opacity: 30%;
     width: 100%;
@@ -399,12 +406,13 @@
 }
 /* Quote text transitions */
 .quoteText {
-    font-family: monospace;
+    font-family: var(--font-mono);
     transition: opacity 0.5s ease, font-size 0.3s ease;
     width: 100%;
     text-align: center;
     margin: 0;
-    color: var(--phatss-white);
+    color: oklch(1 0 0);
+    text-shadow: 0 1px 12px oklch(0.2 0.1 300 / 45%);
 }
 
 .fadeIn {
@@ -426,6 +434,26 @@
 
 .smallText {
     font-size: 1.5rem;
+}
+
+/* Narrow cards (down to 288px): smaller quote, and room above the logo
+ * badge in the bottom-left corner so long quotes don't run under it. */
+@media (max-width: 480px) {
+    .content {
+        padding: 12px 16px 52px;
+    }
+
+    .largeText {
+        font-size: 1.5rem;
+    }
+
+    .mediumText {
+        font-size: 1.3rem;
+    }
+
+    .smallText {
+        font-size: 1.05rem;
+    }
 }
 /* test */
 /* Top row */

@@ -167,16 +167,16 @@
     "description": "ປ້າຍກຳກັບເຕືອນ"
   },
   "theme.CodeBlock.copied": {
-    "message": "ຄັດລອກແລ້ວ",
-    "description": "ປ້າຍກຳກັບຄັດລອກແລ້ວ"
+    "message": "ສຳເນົາແລ້ວ",
+    "description": "The copied button label on code blocks"
   },
   "theme.CodeBlock.copyButtonAriaLabel": {
-    "message": "ຄັດລອກລະຫັດ",
-    "description": "ປ້າຍກຳກັບ ARIA ປຸ່ມຄັດລອກ"
+    "message": "ສຳເນົາໂຄດໄປໃສ່ຄລິບບອດ",
+    "description": "The ARIA label for copy code blocks button"
   },
   "theme.CodeBlock.copy": {
-    "message": "ຄັດລອກ",
-    "description": "ປ້າຍກຳກັບຄັດລອກ"
+    "message": "ສຳເນົາ",
+    "description": "The copy button label on code blocks"
   },
   "theme.CodeBlock.wordWrapToggle": {
     "message": "ສະຫຼັບການຫຸ້ມຄຳ",
@@ -211,8 +211,8 @@
     "description": "The label used by the button on the collapsible TOC component"
   },
   "theme.blog.post.readMore": {
-    "message": "ອ່ານເພີ່ມເຕີມ",
-    "description": "The label used in blog post item excerpts to link to full blog posts"
+    "message": "ອ່ານເພີ່ມ",
+    "description": "Label of the read-more link on truncated blog posts"
   },
   "theme.blog.post.readMoreLabel": {
     "message": "ອ່ານເພີ່ມເຕີມກ່ຽວກັບ {title}",
@@ -358,7 +358,7 @@
     "message": "ປະສົບການທີ່ຜ່ານມາ"
   },
   "workExperience.description": {
-    "message": "ຈາກປະສົບການຫຼາຍກວ່າ 5ປີ ໃນການພັດທະນາ web application ໃຫ້ຫຼາຍອົງກອນ, ຮັບຜິດຊອບໜ້າວຽກທັງ Front-end ແລະ Back-end."
+    "message": "ຈາກປະສົບການຫຼາຍກວ່າ {years} ປີ ໃນການພັດທະນາ web application ໃຫ້ຫຼາຍອົງກອນ, ຮັບຜິດຊອບໜ້າວຽກທັງ Front-end ແລະ Back-end."
   },
   "workExperience.content1Description": {
     "message": "ພັດທະນາລະບົບທີຫຼາກຫຼາຍຮັບໃຊ້ຫຼາຍອົງກອນເຊັ່ນ: E-Wallet ທີ່ມີ features ໃນການ Top-up, transaction history ພັດທະນາໂດຍໃຊ້ Next.JS ແລະ Tanstack Query, Crypto Investment Platforms ທີ່ມີການເຊື່ອມຕໍ່ກັບ Binance API ໃນການສ້າງອໍເດີ, ລະບົບບໍລິຫານຈັດການດ້ານການຂົນສົ່ງໄປສະນີ ສຳລັບບັນທຶກ ແລະ ຕິດຕາມການຂົນສົ່ງພັດສະດຸ, ລະບົບບໍລິຫານຈັດການປະກັນໄພ ສຳລັບການບັນທຶກຂໍ້ມູນການຊື້-ຂາຍປະກັນໄພ, ການເຄລມເງິນປະກັນໄພ, ການຄິດໄລ່ຄ່າປະກັນຕ່າງໆ, Education platforms ທີ່ເປັນລະບົບສຳລັບການລົງທະບຽນຕ່າງໆຂອງນັກສຶກສາ, ການໃຫ້ຄະແນນ, ອອກບັດນັກສຶກສາ,​ອອກໃບຄະແນນ ແລະ ອື່ນໆ."
@@ -370,7 +370,7 @@
     "message": "ສຳເລັດການສຶກສາສາຂາ ການພັດທະນາເວັບໄຊ, ຄະນະວິທະຍາສາດທຳມະຊາດ ດ້ວຍເກຣດສະເລ່ຍ 3.95/4.00. ບົດໂຄງການຈົບຊັ້ນ: NUOL Football Management System ເປັນລະບົບຈັດການລີກການແຂ່ງຂັນກິລາບານເຕະຂອງ ມຊ, ໃນນັ້ນມີ features ທີ່ຫຼາກຫຼາຍເຊັ່ນ: ການຈັດການທີມແຂ່ງຂັນ, ການຈັດການໂຄດ,​ການຈັດການນັກເຕະ, ການຈັດການຂໍ້ມູນກຳມະການ, ການຈັດການຂໍ້ມູນລີກການແຂ່ງຂັນ, ການລົງຄະແນນໃນລະຫວ່າງການແຂ່ງ, ການໃຫ້ໃບເຫຼືອງ/ໃບແດງ, ການລົງໂທດແບນນັກເຕະ ແລະ ການຈັດນັດແຂ່ງຂັນແບບອັດຕະໂນມັດເປັນຕົ້ນ. ພັດທະນາໂດຍນຳໃຊ້ Laravel(PHP) ແລະ ຖານຂໍ້ມູນເປັນ MySQL."
   },
   "workExperience.content4Description": {
-    "message": "ຂ້ອຍໄດ້ອອກແບບ ແລະ ໄດ້ສົ່ງມອບ web application ຫຼາຍລະບົບເຊັ່ນ: ລະບົບຈັດການຫ້ອງສະໝຸດ(Laravel); ລະບົບຈັດການສາງນ້ຳມັນ(Laravel, NextJS) ສຳລັບບັນທຶກຂໍ້ມູນການຊື້-ຂາຍ ແລະ ຕິດຕາມນ້ຳມັນໃນສາງ; ລະບົບຕິດຕາມໂຄງການ(Laravel) ສຳລັບຕິດຕາມການດຳເນີນການຂອງແຕ່ລະໂຄງການ; ລະບົບ HRMS(NestJS, NodeJS, Vite, React, Tailwinds) ສຳລັບຕິດຕາມຂໍ້ມູນພະນັກງານ, ຄຳນວນເງິນເດືອນ, ບັກທຶກເວລາເຂົ້າ-ອອກວຽກ, ບັນທຶກວັນຂາດ/ລາ, ຈັດການຂໍ້ມູນອົງກອນ ແລະ ອື່ນໆ; ລະບົບ POS (React) ສຳລັບບັນທຶກຂໍ້ມູນການຊື້-ຂາຍ, ຕິດຕາມການຊື້-ຂາຍ ແລະ ສະຫຼຸບຍອດຂາຍ"
+    "message": "ຂ້ອຍໄດ້ອອກແບບ ແລະ ໄດ້ສົ່ງມອບ web application ຫຼາຍລະບົບເຊັ່ນ: ລະບົບຈັດການຫ້ອງສະໝຸດ(Laravel); ລະບົບຈັດການສາງນ້ຳມັນ(Laravel, NextJS) ສຳລັບບັນທຶກຂໍ້ມູນການຊື້-ຂາຍ ແລະ ຕິດຕາມນ້ຳມັນໃນສາງ; ລະບົບຕິດຕາມໂຄງການ(Laravel) ສຳລັບຕິດຕາມການດຳເນີນການຂອງແຕ່ລະໂຄງການ; ລະບົບ HRMS(NestJS, NodeJS, Vite, React, Tailwind CSS) ສຳລັບຕິດຕາມຂໍ້ມູນພະນັກງານ, ຄຳນວນເງິນເດືອນ, ບັກທຶກເວລາເຂົ້າ-ອອກວຽກ, ບັນທຶກວັນຂາດ/ລາ, ຈັດການຂໍ້ມູນອົງກອນ ແລະ ອື່ນໆ; ລະບົບ POS (React) ສຳລັບບັນທຶກຂໍ້ມູນການຊື້-ຂາຍ, ຕິດຕາມການຊື້-ຂາຍ ແລະ ສະຫຼຸບຍອດຂາຍ"
   },
   "service.title": {
     "message": "ບໍລິການ"
@@ -389,5 +389,75 @@
   },
   "sideProject.description": {
     "message": "ນີ້ແມ່ນໂປຣເຈັກນ້ອຍໆທີ່ສ້າງຂຶ້ນມາເປັນ open source ເພື່ອທົດລອງ stack ໃໝ່ໆ."
+  },
+  "theme.blog.sidebar.categories": {
+    "message": "ໝວດໝູ່",
+    "description": "Heading of the blog categories list"
+  },
+  "theme.blog.sidebar.recentPosts": {
+    "message": "ບົດຄວາມຫຼ້າສຸດ",
+    "description": "Heading of the blog recent posts list"
+  },
+  "blog.list.searchPlaceholder": {
+    "message": "ຄົ້ນຫາບົດຄວາມ…",
+    "description": "Placeholder of the blog search input"
+  },
+  "blog.list.noResults": {
+    "message": "ບໍ່ພົບບົດຄວາມ",
+    "description": "Empty state title when no articles match"
+  },
+  "blog.list.tryAdjusting": {
+    "message": "ລອງປັບຄຳຄົ້ນຫາ ຫຼື ຕົວກັ່ນຕອງຂອງທ່ານ",
+    "description": "Empty state hint"
+  },
+  "blog.list.loadMore": {
+    "message": "ໂຫຼດບົດຄວາມເພີ່ມ",
+    "description": "Label of the load-more button"
+  },
+  "factory.title": {
+    "message": "ບ່ອນທີ່ໄອເດຍຖືກຜະລິດ",
+    "description": "Factory section title"
+  },
+  "factory.description": {
+    "message": "ມຸມມອງ 3D ສົດຂອງກົນໄກເບື້ອງຫຼັງບລັອກ — ສາຍພານລຳລຽງ ແຂນຫຸ່ນຍົນ ແລະ ເຊັນເຊີເລເຊີ",
+    "description": "Factory section description"
+  },
+  "hero.cta.blog": {
+    "message": "ອ່ານບລັອກ",
+    "description": "Hero call-to-action button"
+  },
+  "hero.cta.work": {
+    "message": "ເບິ່ງຜົນງານ",
+    "description": "Hero call-to-action button"
+  },
+  "workExperience.type.fullTime": {
+    "message": "ເຕັມເວລາ"
+  },
+  "workExperience.type.partTime": {
+    "message": "ບາງເວລາ"
+  },
+  "workExperience.type.freelance": {
+    "message": "ຟຣີແລນ"
+  },
+  "workExperience.type.education": {
+    "message": "ການສຶກສາ"
+  },
+  "workExperience.present": {
+    "message": "ປັດຈຸບັນ"
+  },
+  "workExperience.showMore": {
+    "message": "ເບິ່ງເພີ່ມເຕີມ"
+  },
+  "workExperience.showLess": {
+    "message": "ຫຍໍ້ລົງ"
+  },
+  "workExperience.stack": {
+    "message": "ເຕັກໂນໂລຢີ"
+  },
+  "theme.colorToggle.switchToLight": {
+    "message": "ປ່ຽນເປັນໂໝດແຈ້ງ"
+  },
+  "theme.colorToggle.switchToDark": {
+    "message": "ປ່ຽນເປັນໂໝດມືດ"
   }
 }

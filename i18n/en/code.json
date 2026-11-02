@@ -390,7 +390,7 @@
     "message": "Work Experience"
   },
   "workExperience.description": {
-    "message": "Over 5.5+ years of experience in front-end development creating intuitive, modern, and user-friendly web applications."
+    "message": "{years}+ years of experience in front-end development creating intuitive, modern, and user-friendly web applications."
   },
   "workExperience.content1Description": {
     "message": "Developed multiple enterprise applications including E-Wallet Systems with secure features using Next.js and TanStack Query, Crypto Investment Platforms with Binance API integration, Postal Platforms for package management, Insurance Systems for policy creation and claims, and Education Platforms with student enrollment and payment features."
@@ -402,7 +402,7 @@
     "message": "Majored in Web Development at the Faculty of Natural Sciences with a GPA of 3.95/4.0. Completed thesis project: NUOL Football Management System - a platform to manage football leagues, teams, players, referees, and matches using Laravel and MySQL."
   },
   "workExperience.content4Description": {
-    "message": "I have designed and delivered full-stack web applications across diverse domains, including: a Laravel-based Library Management System; a NextJS-powered Gas Management & Inventory Tracking System; a Thesis Submission Portal for project timelines; a Student Registration System with Laravel; an HRMS (employee/payroll/performance tracking) using NestJS, Node.js, TypeScript, Vite, React, Tailwinds; and a React/Redux/Redux-Saga Point-of-Sale (POS) solution—demonstrating proficiency in JavaScript/TypeScript ecosystems across frontend (React, NextJS) and backend (Laravel, Node.js, NestJS) development."
+    "message": "I have designed and delivered full-stack web applications across diverse domains, including: a Laravel-based Library Management System; a NextJS-powered Gas Management & Inventory Tracking System; a Thesis Submission Portal for project timelines; a Student Registration System with Laravel; an HRMS (employee/payroll/performance tracking) using NestJS, Node.js, TypeScript, Vite, React, Tailwind CSS; and a React/Redux/Redux-Saga Point-of-Sale (POS) solution—demonstrating proficiency in JavaScript/TypeScript ecosystems across frontend (React, NextJS) and backend (Laravel, Node.js, NestJS) development."
   },
   "service.title": {
     "message": "Services"
@@ -414,7 +414,7 @@
     "message": "Portfolio"
   },
   "portfolio.description": {
-    "message": "Explore a selection of projects I've developed throughout my 5.5+ years of professional experience."
+    "message": "Explore a selection of projects I've developed throughout my {years}+ years of professional experience."
   },
   "sideProject.title": {
     "message": "My Free Time Projects"

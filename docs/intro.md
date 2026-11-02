@@ -4,18 +4,7 @@ title: Coding Standards
 ---
 
 # Coding Standards
-  #### Comprehensive Coding Standards for JavaScript, TypeScript, React, Next.js, Node.js, and NestJS
-
-## Table of Contents
-1. [General JavaScript & TypeScript Standards](#general-javascript--typescript-standards)
-2. [React & Next.js Standards](#react--nextjs-standards)
-3. [Node.js Standards](#nodejs-standards)
-4. [NestJS Standards](#nestjs-standards)
-5. [Testing Standards](#testing-standards)
-6. [Security Standards](#security-standards)
-7. [Performance Standards](#performance-standards)
-8. [Documentation Standards](#documentation-standards)
-9. [Tooling & Configuration](#tooling--configuration)
+**Comprehensive Coding Standards for JavaScript, TypeScript, React, Next.js, Node.js, and NestJS**
 
 ## General JavaScript & TypeScript Standards
 
@@ -85,6 +74,24 @@ if (user && user.profile && user.profile.name) {
 - Group related functionality in modules
 - Avoid circular dependencies
 - Keep files focused and concise (< 400 lines)
+
+```typescript
+// Good: named exports keep modules focused and refactor-friendly
+export interface UserProfile {
+  id: string;
+  name: string;
+}
+
+export const formatUserName = (user: UserProfile): string =>
+  user.name.trim();
+
+// Avoid: default exports mixed with unrelated helpers
+export default class UserModule {
+  formatName() {}
+  sendEmail() {}
+  saveToDatabase() {}
+}
+```
 
 ## React & Next.js Standards
 
@@ -262,12 +269,16 @@ export const errorHandler: ErrorRequestHandler = (
 - Version your APIs
 
 ```typescript
-// Good API structure
-// GET /api/v1/users - Get all users
-// POST /api/v1/users - Create new user
-// GET /api/v1/users/:id - Get specific user
-// PUT /api/v1/users/:id - Update user
-// DELETE /api/v1/users/:id - Delete user
+import { Router } from 'express';
+
+// /api/v1/users — versioned, RESTful route handlers
+const usersRouter = Router();
+
+usersRouter.get('/', listUsers); // GET    /api/v1/users
+usersRouter.post('/', createUser); // POST   /api/v1/users
+usersRouter.get('/:id', getUserById); // GET    /api/v1/users/:id
+usersRouter.put('/:id', updateUser); // PUT    /api/v1/users/:id
+usersRouter.delete('/:id', deleteUser); // DELETE /api/v1/users/:id
 ```
 
 ## NestJS Standards
@@ -403,6 +414,26 @@ describe('UsersService', () => {
 - Include integration tests for critical flows
 - Use snapshot testing sparingly
 
+```typescript
+// vitest.config.ts — enforce an 80% coverage gate
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  test: {
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html'],
+      thresholds: {
+        lines: 80,
+        functions: 80,
+        branches: 80,
+        statements: 80,
+      },
+    },
+  },
+});
+```
+
 ## Security Standards
 
 ### Authentication & Authorization
@@ -477,6 +508,16 @@ async findUsersWithPagination(
 - Use streaming for large data processing
 - Implement connection pooling for databases
 
+```typescript
+import { createReadStream } from 'node:fs';
+
+// Stream large files instead of buffering them entirely in memory
+export const downloadReport = (filePath: string, res: Response): void => {
+  res.setHeader('Content-Type', 'application/pdf');
+  createReadStream(filePath).pipe(res); // chunks flow to the client, memory stays low
+};
+```
+
 ## Documentation Standards
 
 ### Code Documentation
@@ -510,6 +551,19 @@ export function calculateDistance(
 - Use OpenAPI/Swagger for REST APIs
 - Keep documentation updated with code changes
 - Include examples for all endpoints
+
+```typescript
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+
+@ApiTags('users')
+@ApiOperation({ summary: 'Create a new user' })
+@ApiResponse({ status: 201, description: 'User created successfully' })
+@ApiResponse({ status: 400, description: 'Invalid input' })
+@Post()
+create(@Body() createUserDto: CreateUserDto) {
+  return this.usersService.create(createUserDto);
+}
+```
 
 ## Tooling & Configuration
 

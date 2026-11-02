@@ -35,6 +35,21 @@ A React + Vite + TanStack Query + TanStack Router application with SOLID-complia
 - React Context for auth & service DI
 - No global store unless absolutely needed
 
+```typescript
+// SOLID — depend on abstractions, not concretions (DIP)
+export interface IProductService {
+  getAll(): Promise<Product[]>;
+  create(dto: CreateProductDto): Promise<Product>;
+}
+
+// Hooks depend on the interface, so MockProductService
+// can be swapped in for tests without touching the UI.
+const { data } = useQuery({
+  queryKey: ['products'],
+  queryFn: () => productService.getAll(), // productService: IProductService
+});
+```
+
 ## Form Validation Standard
 
 All forms must use React Hook Form together with Zod for:
@@ -43,6 +58,41 @@ All forms must use React Hook Form together with Zod for:
 - Runtime validation
 - Declarative error messages
 - Zero boilerplate on inputs
+
+```tsx
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+
+// One schema = runtime validation + TypeScript types
+export const productSchema = z.object({
+  name: z.string().min(3, 'Name must be at least 3 characters'),
+  price: z.coerce.number().positive('Price must be greater than zero'),
+});
+export type ProductForm = z.infer<typeof productSchema>;
+
+export function ProductForm() {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ProductForm>({ resolver: zodResolver(productSchema) });
+
+  const onSubmit = (data: ProductForm) => console.log(data);
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <input {...register('name')} />
+      {errors.name && <span>{errors.name.message}</span>}
+
+      <input type="number" step="0.01" {...register('price')} />
+      {errors.price && <span>{errors.price.message}</span>}
+
+      <button type="submit">Save</button>
+    </form>
+  );
+}
+```
 
 ## Project Structure
 
@@ -135,6 +185,18 @@ src/                          # Application source root
   - UserType.ts , AuthState.ts
 - Constants : Use UPPER_SNAKE_CASE for constant values
   - API_ENDPOINTS , COLOR_PALETTE
+
+```typescript
+// PascalCase: components & types · camelCase: hooks & utilities · UPPER_SNAKE_CASE: constants
+import { UserProfile } from '@/types/UserProfile';
+import { useAuth } from '@/hooks/useAuth';
+import { formatDate } from '@/utils/formatDate';
+
+export const API_ENDPOINTS = {
+  PRODUCTS: '/products',
+  USERS: '/users',
+} as const;
+```
 
 # Getting Started
 

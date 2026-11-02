@@ -1,0 +1,55 @@
+/* Adjustments for markup rendered by Docusaurus/Infima or plugins that we
+ * don't own as components. Kept separate so custom.css stays tokens-only.
+ * Imported by custom.css (needs Tailwind for @apply).
+ */
+
+/* docusaurus-search-local's input, seated flat in the navbar's glass capsule
+ * (src/theme/Navbar/Content: .navbar-actions). Infima's magnifier background
+ * image is kept; only the fill is cleared so the shared glass shows through.
+ * The plugin's container brings a 16px left margin; the capsule's padding
+ * already spaces it, like every other item in the group. */
+.navbar-actions .navbar__search {
+  margin: 0;
+}
+
+.navbar-actions .navbar__search-input {
+  @apply h-control w-44 rounded-button border-0 bg-transparent text-sm text-foreground transition-colors duration-(--glass-duration) placeholder:text-muted-foreground hover:bg-fill focus:bg-fill;
+}
+
+@media (min-width: 1200px) {
+  .navbar-actions .navbar__search-input {
+    @apply w-52;
+  }
+}
+
+.navbar-actions .navbar__search kbd {
+  @apply border-glass-border bg-transparent text-glass-label-secondary;
+}
+
+/* Infima colours every <a> with an unlayered rule, which beats Tailwind's
+ * layered text-* utilities — so a Badge/Button rendered asChild as a link
+ * got the link colour (amber on an amber pill). revert-layer drops the
+ * unlayered declarations for component-owned links only, letting the
+ * component's own utilities apply. */
+a[data-slot],
+a[data-slot]:hover {
+  color: revert-layer;
+  text-decoration: revert-layer;
+}
+
+/* Infima indents every <ul> (unlayered, so Tailwind's pl-0 can't win). Lists
+ * we lay out ourselves — the docs sidebar tree and the footer columns — set
+ * their own item padding, so drop the list indent. */
+.theme-doc-sidebar-menu,
+.theme-doc-sidebar-menu ul,
+.theme-layout-footer ul {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+/* Same fight for markers: Infima's nested-list rules (ol ol → lower-roman)
+ * outrank the list-none utility, so restate it unlayered. */
+:is(ul, ol).list-none {
+  list-style: none;
+}
