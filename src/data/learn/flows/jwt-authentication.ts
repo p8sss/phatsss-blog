@@ -61,7 +61,7 @@ export const jwtAuthentication: FlowDefinition = {
       payload: "200 { accessToken }",
       variant: "response",
       detail:
-        "The client keeps the token. An httpOnly cookie hides it from page scripts. Memory or localStorage also work but are easier to steal through XSS.",
+        "Pick one way to keep it. An httpOnly cookie is hidden from page scripts and sent automatically, but needs CSRF protection such as SameSite. Memory keeps it out of storage, and the app sends it as a header, as below.",
     },
     {
       id: "call",
@@ -69,7 +69,8 @@ export const jwtAuthentication: FlowDefinition = {
       to: "api",
       title: "Call a protected route",
       payload: "Authorization: Bearer eyJ…",
-      detail: "Every later request carries the token instead of a session id.",
+      detail:
+        "This flow keeps the token in memory, so every later request carries it in a header instead of a session id.",
     },
     {
       id: "check",

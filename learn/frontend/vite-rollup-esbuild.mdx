@@ -1,0 +1,33 @@
+---
+title: Vite, Rollup and esbuild
+sidebar_label: Vite, Rollup and esbuild
+sidebar_position: 3
+hide_table_of_contents: true
+description: Which bundler builds what, and when to pick Vite, Rollup or esbuild.
+---
+
+import CompareTable from '@site/src/components/learn/CompareTable';
+import {viteRollupEsbuild} from '@site/src/data/learn/comparisons/vite-rollup-esbuild';
+
+# Vite, Rollup and esbuild
+
+**The question:** which one builds what, and when do you pick each?
+
+**The short answer:** they are layers more than rivals. Vite is the tool most apps use, and since Vite 8 it builds with Rolldown, a Rust bundler with a Rollup-compatible plugin API. Rollup still leads for publishing libraries. esbuild is the fast engine you reach for when speed matters more than output polish.
+
+<CompareTable comparison={viteRollupEsbuild} />
+
+## How they fit together
+
+- **Vite in development** skips bundling. The browser loads your source as native ES modules, and Vite transforms each file on request. Startup stays fast however large the app is.
+- **Vite in production** hands the build to Rolldown, which produces optimised, code-split chunks. Rolldown also pre-bundles dependencies, and Oxc transforms TypeScript and JSX.
+- **Vite 7 and older** used Rollup for builds and esbuild for pre-bundling and transforms. Many projects still run those versions.
+- **esbuild** is no longer used by Vite directly. On its own it is a complete bundler, and it still powers many other tools.
+
+## None of them type-check
+
+All three strip TypeScript types without checking them, so builds stay fast. Run `tsc --noEmit` in CI, or in your editor, to catch type errors.
+
+## Go deeper
+
+- [Frontend roadmap on roadmap.sh](https://roadmap.sh/frontend), under Module Bundlers

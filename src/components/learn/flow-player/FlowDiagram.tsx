@@ -2,6 +2,7 @@ import { useMemo, type JSX } from "react";
 import { edgeKey, latestStepOnEdge, travelEdges } from "@/lib/flow/edges";
 import {
   chipSize,
+  edgeAxis,
   edgeSegment,
   placeChip,
   placeChipCentered,
@@ -25,7 +26,10 @@ const BADGE_OFFSET = 24;
 const PACKET_RADIUS = 6;
 const CHIP_FONT_SIZE = 11;
 const CHIP_BOX_CLEARANCE = 4;
+const LOCAL_BADGE_AT = { x: 14, y: 16 };
 const RESPONSE_DASH = "6 6";
+/** Largest scale-up on wide screens: small grids stay crisp instead of ballooning. */
+const MAX_UPSCALE = 1.15;
 
 type EdgeState = "idle" | "done" | "active";
 
@@ -181,7 +185,8 @@ function DiagramActor({ actor, center, layout, involved, localBadge, localActive
         </text>
       )}
       {localBadge !== null && (
-        <StepBadge at={{ x: boxW, y: 0 }} number={localBadge + 1} color={color} filled={localActive} />
+        // pinned to the icon tile, inside the box, where no edge or edge badge can reach
+        <StepBadge at={LOCAL_BADGE_AT} number={localBadge + 1} color={color} filled={localActive} />
       )}
     </g>
   );
@@ -206,6 +211,42 @@ function PayloadChip({ text, center, color, opacity = 1 }: {
       >
         {text}
       </text>
+    </g>
+  );
+}
+
+/**
+ * The moving packet and its payload chip. On a vertical edge the chip rides on
+ * the packet and is drawn over it; on a diagonal the chip parks mid-edge and the
+ * packet passes over it.
+ */
+function TravellingPacket({ packet, segment, payload, color, canvasWidth, besideGap }: {
+  readonly packet: Point;
+  readonly segment: Segment;
+  readonly payload?: string;
+  readonly color: string;
+  readonly canvasWidth: number;
+  /** Keeps a chip beside a horizontal edge clear of the boxes. */
+  readonly besideGap: number;
+}): JSX.Element {
+  const chip = payload ? (
+    <PayloadChip
+      text={payload}
+      color={color}
+      center={placeChip(packet, segment, chipSize(payload, CHIP_FONT_SIZE), canvasWidth, besideGap)}
+    />
+  ) : null;
+  const dot = (
+    <>
+      <circle cx={packet.x} cy={packet.y} r={PACKET_RADIUS + 5} style={{ fill: tint(color, 22) }} />
+      <circle cx={packet.x} cy={packet.y} r={PACKET_RADIUS} style={{ fill: color }} />
+    </>
+  );
+  const packetOnTop = edgeAxis(segment) === "diagonal";
+  return (
+    <g>
+      {packetOnTop ? chip : dot}
+      {packetOnTop ? dot : chip}
     </g>
   );
 }
@@ -236,7 +277,8 @@ export function FlowDiagram({ flow, layout, sample, label }: FlowDiagramProps): 
   return (
     <svg
       viewBox={`0 0 ${width} ${height}`}
-      className="block h-auto w-full select-none"
+      className="mx-auto block h-auto w-full select-none"
+      style={{ maxWidth: width * MAX_UPSCALE }}
       role="img"
       aria-label={label}
     >
@@ -273,24 +315,14 @@ export function FlowDiagram({ flow, layout, sample, label }: FlowDiagramProps): 
         );
       })}
       {packet && activeSegment && (
-        <g>
-          <circle cx={packet.x} cy={packet.y} r={PACKET_RADIUS + 5} style={{ fill: tint(senderColor, 22) }} />
-          <circle cx={packet.x} cy={packet.y} r={PACKET_RADIUS} style={{ fill: senderColor }} />
-          {active.payload && (
-            <PayloadChip
-              text={active.payload}
-              color={senderColor}
-              center={placeChip(
-                packet,
-                activeSegment,
-                chipSize(active.payload, CHIP_FONT_SIZE),
-                width,
-                // clear the boxes, so the chip never covers the actor it arrives at
-                metrics.boxH / 2 - LANE + CHIP_BOX_CLEARANCE,
-              )}
-            />
-          )}
-        </g>
+        <TravellingPacket
+          packet={packet}
+          segment={activeSegment}
+          payload={active.payload}
+          color={senderColor}
+          canvasWidth={width}
+          besideGap={metrics.boxH / 2 - LANE + CHIP_BOX_CLEARANCE}
+        />
       )}
       {!active.to && active.payload && (
         <PayloadChip

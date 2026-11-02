@@ -1,0 +1,70 @@
+---
+title: From Dockerfile to running container
+sidebar_label: Dockerfile to container
+sidebar_position: 2
+hide_table_of_contents: true
+description: What happens between docker build and a process listening on a port.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {dockerfileToContainer} from '@site/src/data/learn/flows/dockerfile-to-container';
+
+# From Dockerfile to running container
+
+**The question:** what happens between `docker build` and a process listening on a port?
+
+**The short answer:** the build stacks cached, read-only layers into an image and stores it in a registry. Running it starts an ordinary process on the host, fenced in by kernel namespaces and cgroups.
+
+<FlowPlayer flow={dockerfileToContainer} />
+
+## A Dockerfile that caches well
+
+```dockerfile title="Dockerfile"
+FROM node:22-alpine AS build
+WORKDIR /app
+# dependencies change less often than source, so copy them first
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+# drop devDependencies before node_modules is copied into the final image
+RUN npm prune --omit=dev
+
+FROM node:22-alpine
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/node_modules ./node_modules
+USER node
+EXPOSE 3000
+CMD ["node", "dist/server.js"]
+```
+
+- **Order by change frequency.** Editing source only rebuilds the layers from `COPY . .` down. `npm ci` stays cached.
+- **Multi-stage builds** keep compilers and dev dependencies out of the final image.
+- **`USER node`** avoids running as root inside the container.
+
+## Container or virtual machine
+
+| | Container | Virtual machine |
+| --- | --- | --- |
+| Isolation | Namespaces and cgroups on a shared kernel | A full guest OS on a hypervisor |
+| Start time | Milliseconds | Seconds to minutes |
+| Size | Megabytes | Gigabytes |
+| Security boundary | Weaker: one kernel for all | Stronger |
+
+## Pitfalls
+
+- **Listening on localhost.** Inside a container, `127.0.0.1` is the container itself. Bind to `0.0.0.0`.
+- **PID 1 and signals.** Your app is PID 1 and must handle `SIGTERM`, or `docker stop` waits and then kills it. Use the exec form of `CMD`, as above, so signals reach the app.
+- **Mutable tags.** `latest` can change under you. Deploy a version tag or an image digest.
+
+## Related flows
+
+- [A Kubernetes rolling update](/learn/devops/kubernetes-rolling-update) shows how images like this are rolled out across a cluster.
+
+## Go deeper
+
+- [DevOps roadmap on roadmap.sh](https://roadmap.sh/devops), under Containers
+- [Docker overview](https://docs.docker.com/get-started/docker-overview/)
+- [Docker build docs](https://docs.docker.com/build/)

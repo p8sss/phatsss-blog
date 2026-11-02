@@ -166,11 +166,26 @@ export function chipSize(text: string, fontSize: number): Size {
   };
 }
 
+/** How far from the axis an edge may lean and still count as horizontal or vertical. */
+const AXIS_ALIGNED = 0.9;
+
+export type EdgeAxis = "horizontal" | "vertical" | "diagonal";
+
+export function edgeAxis(segment: Segment): EdgeAxis {
+  const normal = rightNormal(segment.start, segment.end);
+  if (Math.abs(normal.y) >= AXIS_ALIGNED) return "horizontal";
+  if (Math.abs(normal.x) >= AXIS_ALIGNED) return "vertical";
+  return "diagonal";
+}
+
 /**
- * Center of the payload chip for a packet at `anchor` on `segment`. Beside a
- * horizontal edge it rides on the lane's outer side. On a vertical edge there is
- * no room beside it, so the chip itself travels, held inside the gap between the
- * two boxes. Either way it is pulled back inside the canvas.
+ * Center of the payload chip for a packet at `anchor` on `segment`.
+ * - Horizontal edge: rides beside the lane, on its outer side.
+ * - Vertical edge: no room beside it, so the chip itself travels, held inside
+ *   the gap between the two boxes.
+ * - Diagonal edge: parks at the midpoint, which always falls in the clear gap
+ *   between grid rows; near either end it would cover a box.
+ * Either way it is pulled back inside the canvas.
  */
 export function placeChip(
   anchor: Point,
@@ -180,17 +195,18 @@ export function placeChip(
   /** Space between the lane and the chip beside a horizontal edge. */
   besideGap = CHIP_GAP,
 ): Point {
-  const normal = rightNormal(segment.start, segment.end);
-  const center =
-    Math.abs(normal.y) >= 0.5
-      ? offsetPoint(anchor, normal, size.h / 2 + besideGap)
-      : {
-          x: anchor.x,
-          y: Math.min(
-            Math.max(anchor.y, Math.min(segment.start.y, segment.end.y) + size.h / 2),
-            Math.max(segment.start.y, segment.end.y) - size.h / 2,
-          ),
-        };
+  const axis = edgeAxis(segment);
+  const center = (() => {
+    if (axis === "horizontal") {
+      return offsetPoint(anchor, rightNormal(segment.start, segment.end), size.h / 2 + besideGap);
+    }
+    if (axis === "vertical") {
+      const top = Math.min(segment.start.y, segment.end.y) + size.h / 2;
+      const bottom = Math.max(segment.start.y, segment.end.y) - size.h / 2;
+      return { x: anchor.x, y: Math.min(Math.max(anchor.y, top), bottom) };
+    }
+    return pointAlong(segment, 0.5);
+  })();
   return { x: clampChipX(center.x, size, canvasWidth), y: center.y };
 }
 

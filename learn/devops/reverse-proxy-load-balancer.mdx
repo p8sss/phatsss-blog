@@ -1,0 +1,71 @@
+---
+title: Reverse proxy and load balancer
+sidebar_label: Reverse proxy and load balancer
+sidebar_position: 1
+hide_table_of_contents: true
+description: How one public address spreads requests across many servers, and survives one going down.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {reverseProxyLoadBalancer} from '@site/src/data/learn/flows/reverse-proxy-load-balancer';
+
+# Reverse proxy and load balancer
+
+**The question:** how does one public address spread requests across many servers?
+
+**The short answer:** a reverse proxy accepts every request on the public address and forwards each one to a healthy backend it picks. Health checks quietly take broken servers out of rotation.
+
+<FlowPlayer flow={reverseProxyLoadBalancer} />
+
+## Forward proxy, reverse proxy, load balancer
+
+| | Sits in front of | Hides | Typical use |
+| --- | --- | --- | --- |
+| Forward proxy | Clients | The clients | Company egress filtering, caching |
+| Reverse proxy | Servers | The servers | TLS, caching, compression, routing by path |
+| Load balancer | A pool of servers | The pool | Spreading load, failover |
+
+Nginx, HAProxy, Envoy, Caddy and cloud load balancers all do both reverse proxying and load balancing.
+
+## Layer 4 or layer 7
+
+- **Layer 4** balancers route TCP or UDP connections by address and port. They are very fast and can't see HTTP.
+- **Layer 7** balancers understand HTTP. They can route `/api` and `/static` differently, set headers and retry idempotent requests.
+
+## Things that bite
+
+- **Sessions in memory.** If a backend keeps the session in RAM, losing it logs users out. Store sessions in Redis or a database, or use signed tokens.
+- **Missing client IPs.** Apps behind a proxy see the proxy's IP. Read `X-Forwarded-For`, and trust it only from your own proxy.
+- **Failures before ejection.** Between a crash and the health checks catching it, requests still go to the dead server. Let the proxy retry idempotent requests on another backend, with `proxy_next_upstream` in Nginx or `retries` and `option redispatch` in HAProxy.
+- **Health checks that lie.** A `/healthz` that always returns 200 keeps a broken server in rotation. Check the dependencies that matter.
+
+## Example: Nginx
+
+```nginx title="conf.d/shop.conf, included from the http block"
+upstream shop {
+  least_conn;
+  server 10.0.1.11:3000 max_fails=3 fail_timeout=10s;
+  server 10.0.1.12:3000 max_fails=3 fail_timeout=10s;
+}
+
+server {
+  listen 443 ssl;
+  server_name shop.example;
+  ssl_certificate     /etc/ssl/shop.example.crt;
+  ssl_certificate_key /etc/ssl/shop.example.key;
+
+  location / {
+    proxy_pass http://shop;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+}
+```
+
+Open-source Nginx marks a server down passively, after failed real requests. Active health checks like the ones in the flow need HAProxy, Envoy, NGINX Plus or a cloud load balancer.
+
+## Go deeper
+
+- [DevOps roadmap on roadmap.sh](https://roadmap.sh/devops), under "What is and how to setup X ?"
+- [Nginx load balancing guide](https://nginx.org/en/docs/http/load_balancing.html)

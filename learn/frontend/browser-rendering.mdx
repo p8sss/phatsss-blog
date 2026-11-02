@@ -1,0 +1,48 @@
+---
+title: How a browser renders a page
+sidebar_label: How a browser renders
+sidebar_position: 1
+hide_table_of_contents: true
+description: The critical rendering path, from the first HTML byte to the first painted pixel.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {browserRendering} from '@site/src/data/learn/flows/browser-rendering';
+
+# How a browser renders a page
+
+**The question:** what happens between the first HTML byte and the first painted pixel?
+
+**The short answer:** the browser builds two trees, the DOM from HTML and the CSSOM from CSS, merges them into a render tree, works out where every box goes, then paints.
+
+<FlowPlayer flow={browserRendering} />
+
+## What blocks the first paint
+
+| Resource | Blocks parsing | Blocks rendering | How to unblock |
+| --- | --- | --- | --- |
+| CSS in a `<link>` | No | Yes | Inline critical CSS; load the rest later |
+| `<script>` | Yes | Yes | Add `defer`, or `type="module"` |
+| `<script async>` | Only while running | Only while running | Use for independent scripts such as analytics |
+| `<script defer>` | No | No | Runs after parsing, in order |
+| Images | No | No | Set `width` and `height` to avoid layout shift |
+
+## Keep later frames cheap too
+
+After the first paint every change goes through some of the same stages. What it costs depends on what you change:
+
+- **Geometry**, such as `width`, `top` or font size, runs layout, paint and composite. This is the most expensive.
+- **Appearance**, such as `color` or `background`, runs paint and composite.
+- **`transform` and `opacity`** usually only run composite. That is why smooth animations use them.
+
+Reading layout values, such as `offsetHeight`, right after writing styles forces the browser to lay out early. Doing that in a loop is called layout thrashing.
+
+## Related flows
+
+- [Opening a URL](/learn/backend/open-a-url) shows how the HTML got here.
+- [The event loop](/learn/frontend/event-loop) shows when scripts actually run.
+
+## Go deeper
+
+- [Frontend roadmap on roadmap.sh](https://roadmap.sh/frontend), under Internet
+- [Critical rendering path on web.dev](https://web.dev/articles/critical-rendering-path)

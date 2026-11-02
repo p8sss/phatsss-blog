@@ -93,4 +93,14 @@ describe("validateFlow", () => {
     const steps = [{ id: "diag", from: "c", to: "d", title: "t", detail: "d" }];
     assert.deepEqual(validateFlow({ ...valid, actors, steps }), []);
   });
+
+  test("rejects grids taller than two rows or wider than four columns", () => {
+    const actors = [
+      { ...valid.actors[0], row: 2 },
+      { ...valid.actors[1], col: 4 },
+    ];
+    const errors = validateFlow({ ...valid, actors }).join();
+    assert.match(errors, /actor "c" row 2 is past the last row/);
+    assert.match(errors, /actor "s" col 4 is past the last column/);
+  });
 });

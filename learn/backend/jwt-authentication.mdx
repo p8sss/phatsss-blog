@@ -1,6 +1,7 @@
 ---
 title: JWT authentication
 sidebar_label: JWT authentication
+sidebar_position: 2
 hide_table_of_contents: true
 description: How a server trusts a request without looking up a session, step by step.
 ---
@@ -61,6 +62,11 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
 ```
 
 In Nest the same check lives in a guard, usually through `@nestjs/jwt` or `passport-jwt`.
+
+## Related flows
+
+- [OAuth login with PKCE](/learn/frontend/oauth-pkce) shows how a browser app gets tokens from a separate sign-in provider.
+- [The TLS handshake](/learn/devops/tls-handshake) is what keeps the token secret on the wire.
 
 ## Go deeper
 
