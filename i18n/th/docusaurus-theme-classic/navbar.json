@@ -15,8 +15,8 @@
     "message": "บุ๊กมาร์ก",
     "description": "Navbar item with label Bookmarks"
   },
-  "item.label.Elements": {
-    "message": "องค์ประกอบ",
-    "description": "Navbar item with label Elements"
+  "item.label.Learn": {
+    "message": "เรียนรู้",
+    "description": "Navbar item with label Learn"
   }
 }

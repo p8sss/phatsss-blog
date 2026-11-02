@@ -103,6 +103,16 @@ const config: Config = {
   // Local search plugin (no Algolia, 100% client-side)
   plugins: [
     require.resolve("./plugins/tailwindcss"),
+    // Second docs instance: animated "how it works" flows, grouped by roadmap
+    [
+      "@docusaurus/plugin-content-docs",
+      {
+        id: "learn",
+        path: "learn",
+        routeBasePath: "learn",
+        sidebarPath: "./sidebarsLearn.ts",
+      },
+    ],
     require.resolve("./plugins/blog-tags"),
     [
       require.resolve("@easyops-cn/docusaurus-search-local"),
@@ -239,7 +249,13 @@ const config: Config = {
         },
         { to: "/blog", label: "Blog", position: "left" },
         { to: "/bookmarks", label: "Bookmarks", position: "left" },
-        { to: "/elements", label: "Elements", position: "left" },
+        {
+          type: "docSidebar",
+          sidebarId: "learnSidebar",
+          docsPluginId: "learn",
+          position: "left",
+          label: "Learn",
+        },
         { type: "search", position: "right" },
         {
           type: "localeDropdown",

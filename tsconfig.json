@@ -3,6 +3,8 @@
   "extends": "@docusaurus/tsconfig",
   "compilerOptions": {
     "baseUrl": ".",
+    // tests run on Node's type stripping, which needs explicit .ts import paths
+    "allowImportingTsExtensions": true,
     "paths": {
       "@/*": ["./src/*"],
       "@site/*": ["./*"]

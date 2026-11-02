@@ -1,5 +1,6 @@
 import { JSX, lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { translate } from "@docusaurus/Translate";
 import { PauseIcon, PlayIcon, SparklesIcon } from "@/components/ui/icons";
 import SectionHeading from "../SectionHeading";
@@ -7,18 +8,6 @@ import { StationStepper, STATION_HEX } from "./StationStepper";
 import { STAGE_ORDER, type StageId } from "./factoryTimeline";
 
 const FactoryCanvas = lazy(() => import("./FactoryCanvas"));
-
-function usePrefersReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(false);
-  useEffect(() => {
-    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setReduced(query.matches);
-    update();
-    query.addEventListener("change", update);
-    return () => query.removeEventListener("change", update);
-  }, []);
-  return reduced;
-}
 
 function FactoryFallback() {
   return (

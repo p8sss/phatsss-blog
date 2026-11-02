@@ -1,0 +1,69 @@
+---
+title: JWT authentication
+sidebar_label: JWT authentication
+hide_table_of_contents: true
+description: How a server trusts a request without looking up a session, step by step.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {jwtAuthentication} from '@site/src/data/learn/flows/jwt-authentication';
+
+# JWT authentication
+
+**The question:** how does a server trust a request without looking up a session?
+
+**The short answer:** at login the server signs a small token with a secret. Later it checks that signature instead of asking a database who you are.
+
+<FlowPlayer flow={jwtAuthentication} />
+
+## Why it works
+
+A JSON Web Token has three parts: a header, a payload of claims, and a signature over both. Only a holder of the secret can produce a valid signature. If anyone edits the payload, for example to change the user id, the signature no longer matches and verification fails.
+
+That is why step 8 needs no database. Every server that knows the secret can verify every token on its own.
+
+## Sessions or JWT
+
+| | Session cookie | JWT |
+| --- | --- | --- |
+| Where state lives | Server or session store | Inside the token |
+| Check on each request | Look up the session id | Verify the signature |
+| Log out or revoke | Delete the session | Hard before `exp`, needs a denylist or short expiry |
+| Scaling across servers | Shared session store | Shared secret or public key |
+| Size on each request | A short id | Hundreds of bytes |
+
+## Trade-offs to know
+
+- **Revocation is hard.** A signed token stays valid until it expires. Keep access tokens short-lived, around 5 to 15 minutes, and use a refresh token that the server can revoke.
+- **The payload is public.** It is Base64URL-encoded, not encrypted. Put ids and roles in it, never secrets.
+- **Pin the algorithm.** Verify with an explicit algorithm list so a token cannot pick a weaker one.
+- **Many services, one issuer.** Sign with a private key using RS256 or ES256. Other services then verify with the public key and never hold the signing secret.
+
+## In Express
+
+```ts title="require-auth.ts"
+import type {NextFunction, Request, Response} from 'express';
+import jwt from 'jsonwebtoken';
+
+export function requireAuth(req: Request, res: Response, next: NextFunction) {
+  const header = req.headers.authorization ?? '';
+  const token = header.startsWith('Bearer ') ? header.slice('Bearer '.length) : null;
+  if (!token) {
+    return res.status(401).json({error: 'Missing token'});
+  }
+  try {
+    res.locals.user = jwt.verify(token, process.env.JWT_SECRET!, {algorithms: ['HS256']});
+    return next();
+  } catch {
+    return res.status(401).json({error: 'Invalid or expired token'});
+  }
+}
+```
+
+In Nest the same check lives in a guard, usually through `@nestjs/jwt` or `passport-jwt`.
+
+## Go deeper
+
+- [Backend roadmap on roadmap.sh](https://roadmap.sh/backend), under Learn about APIs, then Authentication
+- [RFC 7519, the JWT specification](https://www.rfc-editor.org/rfc/rfc7519)
+- [Introduction to JSON Web Tokens on jwt.io](https://jwt.io/introduction)
