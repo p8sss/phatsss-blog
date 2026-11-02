@@ -15,8 +15,8 @@
     "message": "ບຸກມາກ",
     "description": "Navbar item with label Bookmarks"
   },
-  "item.label.Elements": {
-    "message": "ອົງປະກອບ",
-    "description": "Navbar item with label Elements"
+  "item.label.Learn": {
+    "message": "ຮຽນຮູ້",
+    "description": "Navbar item with label Learn"
   }
 }
