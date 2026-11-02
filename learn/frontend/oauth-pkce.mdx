@@ -1,0 +1,52 @@
+---
+title: OAuth login with PKCE
+sidebar_label: OAuth login with PKCE
+sidebar_position: 4
+hide_table_of_contents: true
+description: How a browser app signs in through another site without a client secret.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {oauthPkce} from '@site/src/data/learn/flows/oauth-pkce';
+
+# OAuth login with PKCE
+
+**The question:** how does a browser app sign in through another site without a client secret?
+
+**The short answer:** the app sends the sign-in provider a hash of a random secret before the user signs in. It later proves it is the same app by revealing the secret itself. That is PKCE, Proof Key for Code Exchange.
+
+<FlowPlayer flow={oauthPkce} />
+
+## Why PKCE exists
+
+Anything shipped to a browser is public, so a single-page app can't hold a client secret. Without one, an attacker who steals the authorization code, say from a malicious extension or a leaked redirect, could redeem it. With PKCE the code is useless without the verifier, which stays in the browser, usually in sessionStorage across the redirect, and is only sent with the token request.
+
+PKCE is now recommended for every OAuth client, including server-side apps. The older implicit flow, which returned tokens straight in the URL, should no longer be used.
+
+## Terms in the flow
+
+| Term | Meaning |
+| --- | --- |
+| Authorization code | A one-time ticket the app trades for tokens |
+| `state` | A random value checked on return, to block forged callbacks |
+| Code verifier | The random secret the app keeps |
+| Code challenge | The hash of the verifier, sent up front |
+| Access token | What the API accepts; short-lived |
+| ID token | OpenID Connect's signed statement of who the user is |
+| Refresh token | Gets new access tokens; should rotate on every use |
+
+## Where to keep the tokens
+
+- **In memory** is the safest place in the browser, but a reload loses them.
+- **localStorage** survives reloads and is readable by any script on the page, including injected ones.
+- **A backend-for-frontend** keeps the tokens on your server and gives the browser an httpOnly session cookie. This is the strongest option for sensitive apps.
+
+## Related flows
+
+- [JWT authentication](/learn/backend/jwt-authentication) shows what the API does with a signed token.
+
+## Go deeper
+
+- [Frontend roadmap on roadmap.sh](https://roadmap.sh/frontend), under Auth Strategies
+- [RFC 7636, PKCE](https://www.rfc-editor.org/rfc/rfc7636)
+- [RFC 6749, OAuth 2.0](https://www.rfc-editor.org/rfc/rfc6749)

@@ -1,0 +1,82 @@
+---
+title: A Kubernetes rolling update
+sidebar_label: Kubernetes rolling update
+sidebar_position: 5
+hide_table_of_contents: true
+description: How a Deployment replaces every pod without dropping traffic.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {kubernetesRollingUpdate} from '@site/src/data/learn/flows/kubernetes-rolling-update';
+
+# A Kubernetes rolling update
+
+**The question:** how does a deployment replace every pod without dropping traffic?
+
+**The short answer:** the Deployment controller starts a new pod, waits for its readiness probe, adds it to the Service, then retires one old pod. It repeats until every pod runs the new version.
+
+<FlowPlayer flow={kubernetesRollingUpdate} />
+
+## The settings that shape a rollout
+
+```yaml title="deployment.yaml"
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shop
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1        # at most one extra pod during the rollout
+      maxUnavailable: 0  # never drop below three ready pods
+  selector:
+    matchLabels: {app: shop}
+  template:
+    metadata:
+      labels: {app: shop}
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: shop
+          image: registry.example/shop:v2
+          readinessProbe:
+            httpGet: {path: /ready, port: 3000}
+            periodSeconds: 5
+```
+
+## Everything is a control loop
+
+No component tells another what to do. Each one watches the desired state in the API server, compares it with reality, and acts to close the gap:
+
+- the **Deployment controller** manages ReplicaSets,
+- the **scheduler** assigns pods to nodes,
+- each **kubelet** runs the pods assigned to its node,
+- the **EndpointSlice controller** keeps each Service's list of ready pods current.
+
+That is why a crashed node heals itself: the pods it ran no longer exist, so the gap reopens and the loop fills it.
+
+## Useful commands
+
+```bash
+kubectl rollout status deployment/shop
+kubectl rollout history deployment/shop
+kubectl rollout undo deployment/shop
+```
+
+## Pitfalls
+
+- **No readiness probe.** Pods get traffic as soon as the container starts, often before the app can answer.
+- **Ignoring SIGTERM.** In-flight requests are cut when the old pod stops. Handle the signal and drain.
+- **Shutdown races the Service update.** Removing an old pod from the Service and sending it SIGTERM happen in parallel, so requests can still arrive after SIGTERM. A short `preStop` sleep covers the gap.
+
+## Related flows
+
+- [From Dockerfile to running container](/learn/devops/dockerfile-to-container) shows what each pod is running.
+- [Reverse proxy and load balancer](/learn/devops/reverse-proxy-load-balancer) shows the same health-check idea outside a cluster.
+
+## Go deeper
+
+- [DevOps roadmap on roadmap.sh](https://roadmap.sh/devops), under Container Orchestration
+- [Kubernetes Deployments](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/)

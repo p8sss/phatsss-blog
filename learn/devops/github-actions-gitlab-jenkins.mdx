@@ -1,0 +1,72 @@
+---
+title: GitHub Actions vs GitLab CI vs Jenkins
+sidebar_label: GitHub Actions, GitLab CI, Jenkins
+sidebar_position: 4
+hide_table_of_contents: true
+description: Hosted or self-run CI/CD, and where GitHub Actions, GitLab CI and Jenkins each fit.
+---
+
+import CompareTable from '@site/src/components/learn/CompareTable';
+import {githubActionsGitlabJenkins} from '@site/src/data/learn/comparisons/github-actions-gitlab-jenkins';
+
+# GitHub Actions vs GitLab CI vs Jenkins
+
+**The question:** hosted or self-run, and where does each one fit?
+
+**The short answer:** use the CI built into wherever your code lives, GitHub Actions on GitHub and GitLab CI on GitLab, unless you have a strong reason to run your own. Jenkins is that reason's tool: maximum control, at the cost of running it.
+
+<CompareTable comparison={githubActionsGitlabJenkins} />
+
+## The same pipeline in each
+
+Install, test and build on every push:
+
+```yaml title=".github/workflows/ci.yml"
+on: push
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      # in production, pin each action to a full commit SHA
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+```
+
+```yaml title=".gitlab-ci.yml"
+test:
+  image: node:22
+  script:
+    - npm ci
+    - npm test
+    - npm run build
+```
+
+```groovy title="Jenkinsfile"
+pipeline {
+  agent { docker { image 'node:22' } }
+  stages {
+    stage('Test') {
+      steps {
+        sh 'npm ci'
+        sh 'npm test'
+        sh 'npm run build'
+      }
+    }
+  }
+}
+```
+
+## Whichever you pick
+
+- **Pin third-party steps** to a version or commit. A moving tag can change your pipeline without a code change.
+- **Prefer OIDC to long-lived cloud keys.** All three can exchange a short-lived identity token for cloud credentials.
+- **Cache dependencies** between runs. It is often the biggest speed-up available.
+
+## Go deeper
+
+- [DevOps roadmap on roadmap.sh](https://roadmap.sh/devops), under CI / CD Tools

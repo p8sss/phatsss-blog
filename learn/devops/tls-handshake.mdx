@@ -1,0 +1,52 @@
+---
+title: The TLS handshake
+sidebar_label: The TLS handshake
+sidebar_position: 3
+hide_table_of_contents: true
+description: How a client and a server agree on keys nobody listening can learn, in TLS 1.3.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {tlsHandshake} from '@site/src/data/learn/flows/tls-handshake';
+
+# The TLS handshake
+
+**The question:** how do two strangers agree on a key that nobody listening can learn?
+
+**The short answer:** each side sends the public half of a fresh key pair. Combining your own private half with the other side's public half gives both sides the same secret. The server's certificate proves you are talking to the right server, not someone in the middle.
+
+<FlowPlayer flow={tlsHandshake} />
+
+## Two problems, two tools
+
+| Problem | Solved by | Step in the flow |
+| --- | --- | --- |
+| Agree on a secret over an open network | Ephemeral Diffie-Hellman key exchange (ECDHE) | 1 to 4 |
+| Make sure the other side is really example.com | The certificate and its signature over the handshake | 5 and 6 |
+| Keep the data private and untampered | Symmetric encryption such as AES-GCM or ChaCha20-Poly1305 | 8 |
+
+Key exchange alone is not enough. Without the certificate check, an attacker in the middle could run one key exchange with you and another with the server.
+
+## What TLS 1.3 changed
+
+- **One round trip** for a full handshake instead of two, because the client guesses the key exchange and sends its key share right away.
+- **Forward secrecy by default.** Static RSA key exchange is gone, so every full handshake uses ephemeral keys. Only PSK-only resumption and 0-RTT early data give it up.
+- **Old ciphers are gone,** including RC4, CBC-mode ciphers and SHA-1 signatures.
+- **0-RTT resumption** lets a returning client send data immediately. That data can be replayed, so only use it for safe, idempotent requests.
+
+## Check it yourself
+
+```bash
+openssl s_client -connect example.com:443 -tls1_3 -servername example.com
+```
+
+The output shows the negotiated protocol and cipher, and the certificate chain the client verified.
+
+## Related flows
+
+- [Opening a URL](/learn/backend/open-a-url) shows where this handshake fits in a page load.
+
+## Go deeper
+
+- [DevOps roadmap on roadmap.sh](https://roadmap.sh/devops), under Networking & Protocols
+- [RFC 8446, TLS 1.3](https://www.rfc-editor.org/rfc/rfc8446)

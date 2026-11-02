@@ -1,0 +1,57 @@
+---
+title: The event loop
+sidebar_label: The event loop
+sidebar_position: 2
+hide_table_of_contents: true
+description: Why a resolved promise runs before a zero-delay timeout, traced step by step.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {eventLoop} from '@site/src/data/learn/flows/event-loop';
+
+# The event loop
+
+**The question:** why does a resolved promise run before a zero-delay timeout?
+
+**The short answer:** JavaScript runs one task at a time. After each task it empties the whole microtask queue, where promise callbacks go, before it takes the next task, where timer callbacks go.
+
+```js title="The script in the flow"
+console.log('A');
+setTimeout(() => console.log('B'), 0);
+Promise.resolve().then(() => console.log('C'));
+console.log('D');
+// A, D, C, B
+```
+
+<FlowPlayer flow={eventLoop} />
+
+## The loop in four lines
+
+1. Take the oldest task from the task queue and run it to completion.
+2. Run every microtask, including new ones queued along the way.
+3. Let the browser render a frame if one is due.
+4. Repeat.
+
+## What goes where
+
+| Queue | Gets callbacks from |
+| --- | --- |
+| Microtasks | `Promise.then`, `catch`, `finally`, `await` continuations, `queueMicrotask`, `MutationObserver` |
+| Tasks | `setTimeout`, `setInterval`, DOM events, `MessageChannel`, network callbacks |
+| Before the next paint | `requestAnimationFrame` |
+
+## Pitfalls
+
+- **Long tasks freeze the page.** Nothing else runs, not even clicks or rendering, until the stack is empty. Split heavy work into chunks or move it to a Web Worker.
+- **Microtasks can starve rendering.** A promise chain that keeps queueing more microtasks never lets the browser paint.
+- **`setTimeout(fn, 0)` is not zero.** Browsers clamp timers nested more than five levels deep to at least 4 ms, and throttle background tabs harder.
+
+## Related flows
+
+- [How a browser renders a page](/learn/frontend/browser-rendering) shows what happens in step 3 of the loop.
+
+## Go deeper
+
+- [Frontend roadmap on roadmap.sh](https://roadmap.sh/frontend), under JavaScript
+- [My event loop post, in Lao](/blog/event-loop-in-javascript)
+- [Event loops in the HTML standard](https://html.spec.whatwg.org/multipage/webappapis.html#event-loops)

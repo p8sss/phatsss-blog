@@ -1,0 +1,42 @@
+---
+title: Server rendering and hydration
+sidebar_label: SSR and hydration
+sidebar_position: 5
+hide_table_of_contents: true
+description: What the server sends in server-side rendering, and what the browser still has to do.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {ssrHydration} from '@site/src/data/learn/flows/ssr-hydration';
+
+# Server rendering and hydration
+
+**The question:** what does the server send, and what does the browser still have to do?
+
+**The short answer:** the server sends finished HTML, so the page shows up fast. The browser then downloads the same app as JavaScript and hydrates it, attaching event handlers to the HTML it already has.
+
+<FlowPlayer flow={ssrHydration} />
+
+## Rendering strategies side by side
+
+| Strategy | HTML is built | Good for | Cost |
+| --- | --- | --- | --- |
+| Client-side rendering | In the browser | Logged-in dashboards | Blank page until JS runs; weaker SEO |
+| Server-side rendering | On every request | Personalised or fast-changing pages | Server work per request; hydration |
+| Static generation | At build time | Docs, blogs, marketing | Rebuild to change content |
+| Incremental regeneration | At build, refreshed later | Large catalogues | Brief staleness |
+
+This site is statically generated with Docusaurus. These flows hydrate after the HTML loads.
+
+## Hydration pitfalls
+
+- **Mismatches.** If the browser renders different markup than the server did, for example from `Date.now()`, `Math.random()` or reading `window` during render, the framework warns and may throw the server HTML away. Read browser-only values in an effect instead.
+- **The uncanny valley.** Between the paint and hydration the page looks ready but ignores clicks. A smaller bundle shortens it.
+- **Paying twice.** The data is sent once as HTML and again as JSON for hydration. Keep page data lean.
+
+Islands, partial hydration and React Server Components all attack the same cost: they ship and hydrate JavaScript only for the parts that are interactive.
+
+## Go deeper
+
+- [Frontend roadmap on roadmap.sh](https://roadmap.sh/frontend), under SSR
+- [React's hydrateRoot reference](https://react.dev/reference/react-dom/client/hydrateRoot)

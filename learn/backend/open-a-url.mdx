@@ -1,0 +1,50 @@
+---
+title: Opening a URL
+sidebar_label: Opening a URL
+sidebar_position: 1
+hide_table_of_contents: true
+description: What happens between typing a URL and seeing the page, from DNS to the first paint.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {openAUrl} from '@site/src/data/learn/flows/open-a-url';
+
+# Opening a URL
+
+**The question:** what happens between typing a URL and seeing the page?
+
+**The short answer:** the browser turns the name into an IP address with DNS, opens a connection, secures it with TLS, asks for the page over HTTP, then renders what comes back.
+
+<FlowPlayer flow={openAUrl} />
+
+## Where the time goes
+
+Every arrow that leaves the browser costs at least one network round trip. On a fresh visit that is roughly:
+
+| Stage | Round trips | Skipped when |
+| --- | --- | --- |
+| DNS lookup | 1 to several | The address is cached for its TTL |
+| TCP handshake | 1 | The connection is reused or HTTP/3 is used |
+| TLS 1.3 handshake | 1 | A resumed session sends 0-RTT early data, for safe requests only |
+| HTTP request and response | 1 | The response is in the browser cache |
+
+That is why a site far away feels slow even when the server is fast. A CDN cuts each round trip by answering from a server near the reader.
+
+## Things worth knowing
+
+- **DNS is a cache hierarchy.** The browser, the OS and the resolver all cache answers. A long TTL means fewer lookups, and also a slower switch when you move servers.
+- **One IP, many sites.** The `Host` header, and SNI during TLS, tell a shared server which site you want.
+- **HTTP/2 and HTTP/3 reuse one connection.** CSS, scripts and images share the connection the HTML came on, so the handshakes are paid once.
+- **The address in this flow is an example.** `203.0.113.10` comes from a block reserved for documentation.
+
+## Related flows
+
+- [The TLS handshake](/learn/devops/tls-handshake) zooms into step 7.
+- [How a browser renders a page](/learn/frontend/browser-rendering) zooms into step 10.
+- [Reverse proxy and load balancer](/learn/devops/reverse-proxy-load-balancer) shows what usually sits in front of the web server.
+
+## Go deeper
+
+- [Backend roadmap on roadmap.sh](https://roadmap.sh/backend), under Introduction
+- [RFC 1034, DNS concepts](https://www.rfc-editor.org/rfc/rfc1034)
+- [RFC 9110, HTTP semantics](https://www.rfc-editor.org/rfc/rfc9110)

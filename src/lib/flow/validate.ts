@@ -9,6 +9,12 @@ export const PAYLOAD_MAX_LENGTH = 32;
 /** Longest label and sublabel that fit inside an actor box beside its icon. */
 export const LABEL_MAX_LENGTH = 12;
 export const SUBLABEL_MAX_LENGTH = 16;
+/**
+ * Grid limits. The narrow layout transposes rows into columns, so two rows keep
+ * it two columns wide on a phone; four columns keep the wide layout readable.
+ */
+export const MAX_ROWS = 2;
+export const MAX_COLS = 4;
 
 function duplicates(values: readonly string[]): readonly string[] {
   return [...new Set(values.filter((value, i) => values.indexOf(value) !== i))];
@@ -34,7 +40,13 @@ function actorErrors(flow: FlowDefinition): readonly string[] {
       .filter((axis) => !Number.isInteger(a[axis]) || a[axis] < 0)
       .map((axis) => `actor "${a.id}" ${axis} must be a whole number of 0 or more`),
   );
-  return [...dupIds, ...dupCells, ...tooLong, ...offGrid];
+  const tooFar = flow.actors.flatMap((a) => [
+    ...(a.row >= MAX_ROWS ? [`actor "${a.id}" row ${a.row} is past the last row (max ${MAX_ROWS} rows)`] : []),
+    ...(a.col >= MAX_COLS
+      ? [`actor "${a.id}" col ${a.col} is past the last column (max ${MAX_COLS} columns)`]
+      : []),
+  ]);
+  return [...dupIds, ...dupCells, ...tooLong, ...offGrid, ...tooFar];
 }
 
 /** True when `p` sits strictly between `a` and `b` on the straight grid line joining them. */

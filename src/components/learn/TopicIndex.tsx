@@ -90,7 +90,7 @@ export default function TopicIndex({ roadmap }: { readonly roadmap: Roadmap }): 
   return (
     // div + list roles: the prose styles underline every link inside an <li>,
     // which would underline the whole topic card
-    <div role="list" className="relative my-6">
+    <div role="list" className="relative mt-5 mb-2">
       {roadmap.sections.map((section, index) => {
         const isLast = index === roadmap.sections.length - 1;
         const hasLive = section.topics.some((t) => t.to);

@@ -1,0 +1,38 @@
+---
+title: RabbitMQ vs Kafka
+sidebar_label: RabbitMQ vs Kafka
+sidebar_position: 4
+hide_table_of_contents: true
+description: Queue or log. How RabbitMQ and Kafka differ, and which one fits the job.
+---
+
+import CompareTable from '@site/src/components/learn/CompareTable';
+import {rabbitmqVsKafka} from '@site/src/data/learn/comparisons/rabbitmq-vs-kafka';
+
+# RabbitMQ vs Kafka
+
+**The question:** queue or log, which fits the job?
+
+**The short answer:** RabbitMQ hands each message to one worker and forgets it. Kafka writes every event to a log that any number of readers can read, and re-read, at their own pace.
+
+<CompareTable comparison={rabbitmqVsKafka} />
+
+## The one idea that separates them
+
+Ask what happens to a message after it is read.
+
+- **In a queue, reading consumes it.** That is perfect for work: one email, sent once, by one worker.
+- **In a log, reading leaves it in place.** That is perfect for facts: "order 42 was paid" can feed billing, analytics and search indexing separately, and a new service can start from the beginning later.
+
+Most mix-ups come from using a log as a job queue, or a queue as an event store. Kafka 4.2's share groups add queue-style consumption on top of the log, which narrows the gap for job workloads.
+
+## Questions to ask before choosing
+
+1. Must a service read messages sent before it existed, or read them again? If yes, lean towards Kafka, or RabbitMQ streams.
+2. Do several services each need a copy? Both handle that: a fanout or topic exchange in RabbitMQ, separate consumer groups in Kafka.
+3. Do you need per-message retries, delays, priorities or routing rules? If yes, lean towards RabbitMQ.
+4. Who will run it? A managed service removes most of the operational gap between them.
+
+## Go deeper
+
+- [Backend roadmap on roadmap.sh](https://roadmap.sh/backend), under Message Brokers

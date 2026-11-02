@@ -8,6 +8,7 @@ import { layoutFlow, type Orientation } from "@/lib/flow/geometry";
 import { buildTimeline, sampleAt, stepHoldTime, stepStartTime } from "@/lib/flow/timeline";
 import type { FlowDefinition } from "@/lib/flow/types";
 import { validateFlow } from "@/lib/flow/validate";
+import { DataError } from "../DataError";
 import { actorStyle } from "./actor-style";
 import { FlowControls } from "./FlowControls";
 import { FlowDiagram } from "./FlowDiagram";
@@ -23,24 +24,6 @@ const MIN_WIDE_SCALE = 0.8;
 
 interface FlowPlayerProps {
   readonly flow: FlowDefinition;
-}
-
-function FlowError({ flow, errors }: { readonly flow: FlowDefinition; readonly errors: readonly string[] }) {
-  return (
-    <Card material="solid" className="my-6 gap-2 border-destructive/40 px-4">
-      <p className="!m-0 font-semibold text-destructive-ink">
-        {translate(
-          { id: "learn.flow.invalid", message: "The flow \"{id}\" can't be drawn." },
-          { id: flow.id },
-        )}
-      </p>
-      <ul className="!m-0 !pl-5 text-sm text-muted-foreground">
-        {errors.map((error) => (
-          <li key={error}>{error}</li>
-        ))}
-      </ul>
-    </Card>
-  );
 }
 
 function useColorOf(flow: FlowDefinition) {
@@ -176,7 +159,17 @@ function ValidFlowPlayer({ flow }: FlowPlayerProps): JSX.Element {
 /** Animated ByteByteGo-style flow with step controls and a text walkthrough. */
 export default function FlowPlayer({ flow }: FlowPlayerProps): JSX.Element {
   const errors = useMemo(() => validateFlow(flow), [flow]);
-  if (errors.length > 0) return <FlowError flow={flow} errors={errors} />;
+  if (errors.length > 0) {
+    return (
+      <DataError
+        errors={errors}
+        message={translate(
+          { id: "learn.flow.invalid", message: "The flow \"{id}\" can't be drawn." },
+          { id: flow.id },
+        )}
+      />
+    );
+  }
   // keyed so the clock and refs reset if the page swaps in another flow
   return <ValidFlowPlayer key={flow.id} flow={flow} />;
 }

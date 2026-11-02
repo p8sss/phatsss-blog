@@ -4,16 +4,18 @@ sidebar_label: Overview
 sidebar_position: 0
 slug: /
 hide_table_of_contents: true
-description: Backend topics explained as animated, step-by-step flows.
+description: Backend, frontend and DevOps topics explained as animated, step-by-step flows.
 ---
 
-import TopicIndex from '@site/src/components/learn/TopicIndex';
-import {backendRoadmap} from '@site/src/data/learn/backend';
+import LearnOverview from '@site/src/components/learn/LearnOverview';
+import {LEARN_ROADMAPS} from '@site/src/data/learn/roadmaps';
 
 # Learn by watching it work
 
 Each topic answers one question, such as "what happens when…", with an animated flow you can play, pause and step through. Topics that compare tools get a comparison instead. Topics that are a list of ideas link out.
 
-<TopicIndex roadmap={backendRoadmap} />
+The roadmaps run in order: backend first, then frontend, then DevOps.
 
-Topic names and their order follow the [Backend roadmap on roadmap.sh](https://roadmap.sh/backend). The diagrams and explanations here are my own. Go to roadmap.sh for the full map and its curated resources.
+<LearnOverview roadmaps={LEARN_ROADMAPS} />
+
+Roadmap names, section names and their order follow [roadmap.sh](https://roadmap.sh). The diagrams and explanations here are my own. Go to roadmap.sh for the full maps and their curated resources.

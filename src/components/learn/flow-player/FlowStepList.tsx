@@ -2,7 +2,6 @@ import { memo, type JSX } from "react";
 import clsx from "clsx";
 import { stepStatus, type FlowSample } from "@/lib/flow/timeline";
 import type { FlowStep } from "@/lib/flow/types";
-import { tint } from "./actor-style";
 
 interface FlowStepListProps {
   readonly steps: readonly FlowStep[];
@@ -42,12 +41,13 @@ export const FlowStepList = memo(function FlowStepList({
               )}
             >
               <span
-                className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full border text-[11px] font-bold tabular-nums transition-colors"
-                style={
-                  isActive
-                    ? { background: color, borderColor: color, color: "var(--background)" }
-                    : { borderColor: tint(color, status === "done" ? 70 : 35), color }
-                }
+                className={clsx(
+                  "mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full border text-[11px] font-bold tabular-nums transition-colors",
+                  !isActive && "border-border",
+                  status === "upcoming" ? "text-muted-foreground" : "text-foreground",
+                )}
+                // only the active step takes the sender's hue, matching the diagram's packet
+                style={isActive ? { background: color, borderColor: color, color: "var(--background)" } : undefined}
               >
                 {index + 1}
               </span>

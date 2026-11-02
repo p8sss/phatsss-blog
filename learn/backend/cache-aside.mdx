@@ -1,0 +1,74 @@
+---
+title: Cache-aside with Redis
+sidebar_label: Cache-aside with Redis
+sidebar_position: 3
+hide_table_of_contents: true
+description: What happens on a cache miss, a cache hit and a write when the app manages a Redis cache.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {cacheAside} from '@site/src/data/learn/flows/cache-aside';
+
+# Cache-aside with Redis
+
+**The question:** what happens on a cache hit, a miss, and a write?
+
+**The short answer:** the app reads the cache first and falls back to the database on a miss, filling the cache on the way out. On a write it updates the database, then deletes the cached key.
+
+<FlowPlayer flow={cacheAside} />
+
+## Why this pattern is the default
+
+The cache only ever holds data someone actually asked for, and losing the cache never loses data. If the code treats cache errors as misses, as below, a Redis outage makes reads slower but keeps them correct.
+
+## The other caching patterns
+
+| Pattern | Who writes the cache | Good for | Watch out for |
+| --- | --- | --- | --- |
+| Cache-aside | The app, on a read miss | Read-heavy data | The first read is slow; stale reads until the TTL or a delete |
+| Read-through | The cache library, on a miss | Same as cache-aside, with less app code | Needs a cache that can load from your database |
+| Write-through | The app or cache, on every write | Data that is read right after it is written | Every write pays for both stores |
+| Write-behind | The cache, flushing later | Very write-heavy counters and metrics | Data loss if the cache dies before flushing |
+
+## Pitfalls
+
+- **Stampede on a hot key.** When a popular key expires, hundreds of requests miss at once and all hit the database. Fix it with a short lock or a single-flight refill so one request reloads, or refresh hot keys shortly before they expire.
+- **Many keys expiring together.** Keys filled at the same moment expire at the same moment. Add a little random jitter to each TTL.
+- **Delete, don't overwrite, on writes.** Two writers racing to `SET` can leave the older value cached. A `DEL` lets the next read load the current row.
+- **Cache what is expensive, not everything.** Measure first. A primary-key lookup on an indexed table may not need a cache at all.
+- **Always set a TTL.** It bounds the damage of a missed invalidation.
+
+## In code
+
+```ts title="get-product.ts"
+import {createClient} from 'redis';
+
+// fail fast while disconnected instead of queueing commands until Redis returns
+const redis = createClient({url: process.env.REDIS_URL, disableOfflineQueue: true});
+redis.on('error', (err) => logger.warn({err}, 'redis unavailable'));
+await redis.connect();
+
+// `db` and `logger` stand for your data layer and your logger
+const TTL_SECONDS = 300;
+
+export async function getProduct(id: number): Promise<Product> {
+  const key = `product:${id}`;
+  const cached = await redis.get(key).catch(() => null); // an outage reads as a miss
+  if (cached) return JSON.parse(cached) as Product;
+
+  const product = await db.products.findById(id);
+  await redis.set(key, JSON.stringify(product), {EX: TTL_SECONDS}).catch(() => undefined);
+  return product;
+}
+
+export async function updatePrice(id: number, price: number): Promise<void> {
+  await db.products.update(id, {price});
+  // if this delete fails, the TTL still bounds how long the old price is served
+  await redis.del(`product:${id}`).catch((err) => logger.warn({err, id}, 'cache delete failed'));
+}
+```
+
+## Go deeper
+
+- [Backend roadmap on roadmap.sh](https://roadmap.sh/backend), under Caching
+- [Redis documentation](https://redis.io/docs/latest/)

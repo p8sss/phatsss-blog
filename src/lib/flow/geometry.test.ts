@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   chipSize,
   clipToBox,
+  edgeAxis,
   edgeSegment,
   layoutFlow,
   NARROW_METRICS,
@@ -116,6 +117,14 @@ describe("chips", () => {
     assert.equal(placeChip({ x: 160, y: 300 }, vertical, size, 320).y, 300 - size.h / 2);
   });
 
+  test("parks at the midpoint of a diagonal edge, wherever the packet is", () => {
+    const diagonal = { start: { x: 100, y: 100 }, end: { x: 370, y: 270 } };
+    const early = placeChip({ x: 120, y: 112 }, diagonal, size, 600);
+    const late = placeChip({ x: 350, y: 258 }, diagonal, size, 600);
+    assert.deepEqual(early, { x: 235, y: 185 });
+    assert.deepEqual(late, early);
+  });
+
   test("stays inside the canvas", () => {
     const chip = placeChip({ x: 10, y: 100 }, horizontal, size, 600);
     assert.ok(chip.x - size.w / 2 >= 0);
@@ -127,5 +136,14 @@ describe("placeChipCentered", () => {
     const size = { w: 100, h: 20 };
     assert.deepEqual(placeChipCentered({ x: 300, y: 80 }, size, 600), { x: 300, y: 80 });
     assert.equal(placeChipCentered({ x: 20, y: 80 }, size, 600).x, size.w / 2 + 4);
+  });
+});
+
+describe("edgeAxis", () => {
+  test("classifies edges by how far they lean", () => {
+    const from = { x: 0, y: 0 };
+    assert.equal(edgeAxis({ start: from, end: { x: 200, y: 10 } }), "horizontal");
+    assert.equal(edgeAxis({ start: from, end: { x: 5, y: -200 } }), "vertical");
+    assert.equal(edgeAxis({ start: from, end: { x: 270, y: 170 } }), "diagonal");
   });
 });
