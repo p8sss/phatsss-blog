@@ -43,10 +43,14 @@ function MobileMenuButton(): ReactNode {
   );
 }
 
-/** Search and language share one liquid-glass capsule; the theme button stands alone. */
+/**
+ * Search and language share one liquid-glass capsule; the theme button stands alone.
+ * Desktop only: on mobile the bar is just the logo and the menu, and the sheet
+ * carries search, language and theme.
+ */
 function NavbarActions(): ReactNode {
   return (
-    <div className="flex items-center gap-2">
+    <div className="hidden items-center gap-2 min-[997px]:flex">
       <GlassGroup className="navbar-actions">
         <SearchBar />
         <LocaleDropdownNavbarItem className="hidden min-[997px]:inline-flex" />
@@ -71,7 +75,6 @@ export default function NavbarContent(): ReactNode {
           "flex min-w-0 flex-1 items-center gap-2"
         )}
       >
-        <MobileMenuButton />
         {/* glass like the other two groups, so it stays legible over content */}
         <NavbarBrand glow className="glass-liquid h-control-lg rounded-button px-4" />
       </div>
@@ -83,6 +86,7 @@ export default function NavbarContent(): ReactNode {
         )}
       >
         <NavbarActions />
+        <MobileMenuButton />
       </div>
     </div>
   );

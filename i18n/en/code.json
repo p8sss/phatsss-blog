@@ -390,19 +390,22 @@
     "message": "Work Experience"
   },
   "workExperience.description": {
-    "message": "{years}+ years of experience in front-end development creating intuitive, modern, and user-friendly web applications."
+    "message": "{years}+ years of full-stack experience building web platforms, from front-end interfaces to back-end services and the standards that keep them secure and maintainable."
+  },
+  "workExperience.tsdDescription": {
+    "message": "Build platforms and enterprise standards that other teams build on: shared architecture, security and quality baselines, reusable UI foundations and delivery pipelines. Projects include a financial web application, a document management system, a payment gateway, a theme generator for consistent branded interfaces, and AI loop workflows, where agents plan, build, test and review work in repeatable cycles (loop engineering). Work across the stack with Next.js, React and TypeScript on the front end and NestJS, Node.js and Go services on PostgreSQL and Redis, with OAuth 2.0 / OIDC authentication, CI/CD to Kubernetes and monitoring built in from the start. Mentor developers through code review and shared engineering standards."
   },
   "workExperience.content1Description": {
-    "message": "Developed multiple enterprise applications including E-Wallet Systems with secure features using Next.js and TanStack Query, Crypto Investment Platforms with Binance API integration, Postal Platforms for package management, Insurance Systems for policy creation and claims, and Education Platforms with student enrollment and payment features."
+    "message": "Built front ends for enterprise clients in fintech, logistics, insurance and education: an e-wallet with top-up and transaction history, a crypto investment platform that places orders through the Binance API, a postal platform for registering and tracking parcels, an insurance system covering policy sales, premium calculation and claims, and an education platform for enrolment, grading, student cards and payments. Worked mainly in Next.js and React with TanStack Query, turning designs into responsive interfaces and integrating REST APIs."
   },
   "workExperience.content2Description": {
-    "message": "Developed a College Management System with core features for student registration, score tracking, course management, tuition handling, and notifications using Laravel (PHP) and MySQL. Focused on both visual design and functional workflows to improve data management and accessibility to academic records."
+    "message": "Developed a college management system covering student and course registration, score tracking, curriculum management, transcripts, graduation projects and notifications, built with Laravel (PHP) and MySQL. Balanced clear visual design with practical workflows so staff and students could reach academic records easily."
   },
   "workExperience.content3Description": {
-    "message": "Majored in Web Development at the Faculty of Natural Sciences with a GPA of 3.95/4.0. Completed thesis project: NUOL Football Management System - a platform to manage football leagues, teams, players, referees, and matches using Laravel and MySQL."
+    "message": "Majored in Web Development at the Faculty of Natural Sciences with a GPA of 3.95/4.00. Thesis project: a league management system for university football, covering teams, coaches, players, referees, live match scoring, yellow and red cards, player bans and automatic fixture scheduling, built with Laravel and MySQL."
   },
   "workExperience.content4Description": {
-    "message": "I have designed and delivered full-stack web applications across diverse domains, including: a Laravel-based Library Management System; a NextJS-powered Gas Management & Inventory Tracking System; a Thesis Submission Portal for project timelines; a Student Registration System with Laravel; an HRMS (employee/payroll/performance tracking) using NestJS, Node.js, TypeScript, Vite, React, Tailwind CSS; and a React/Redux/Redux-Saga Point-of-Sale (POS) solution—demonstrating proficiency in JavaScript/TypeScript ecosystems across frontend (React, NextJS) and backend (Laravel, Node.js, NestJS) development."
+    "message": "Design and deliver full-stack web applications for clients across many domains: a library management system, a fuel depot inventory system that records purchases and sales and tracks stock, a thesis project tracking portal, a student registration system, an HR and payroll system with attendance, leave and organisation records, and a point-of-sale system that records and summarises sales. Front ends in React and Next.js; back ends in Laravel, Node.js and NestJS."
   },
   "service.title": {
     "message": "Services"

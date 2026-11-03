@@ -35,13 +35,109 @@
     "message": "โหลดบทความเพิ่ม",
     "description": "Label of the load-more button"
   },
-  "factory.title": {
-    "message": "ที่ที่ไอเดียถูกผลิตขึ้น",
-    "description": "Factory section title"
+  "journey.eyebrow": {
+    "message": "เส้นทางของคำขอ",
+    "description": "Request Journey eyebrow"
   },
-  "factory.description": {
-    "message": "มุมมอง 3D สดของกลไกเบื้องหลังบล็อก — สายพานลำเลียง แขนหุ่นยนต์ และเซนเซอร์เลเซอร์ เรนเดอร์ในเบราว์เซอร์ของคุณ",
-    "description": "Factory section description"
+  "journey.title": {
+    "message": "จากเซิร์ฟเวอร์เครื่องเดียว สู่ระบบระดับองค์กร",
+    "description": "Request Journey section title"
+  },
+  "journey.description": {
+    "message": "ติดตามการเปิดหน้าเว็บที่เรนเดอร์ฝั่งเซิร์ฟเวอร์หนึ่งครั้งและการเรียก API จากแอปหนึ่งครั้ง ผ่านการเติบโตห้าขั้น แต่ละขั้นเพิ่มทราฟฟิกจนมีบางอย่างพัง แล้วขั้นถัดไปจะแก้ไข รวมถึงเรื่องความปลอดภัยด้วย",
+    "description": "Request Journey section description"
+  },
+  "journey.stages": {
+    "message": "ขั้นตอน",
+    "description": "Label of the stage rail"
+  },
+  "journey.practices": {
+    "message": "สิ่งที่มีในขั้นนี้",
+    "description": "Label of the practices list"
+  },
+  "journey.new": {
+    "message": "ใหม่",
+    "description": "Tag on boxes a stage adds"
+  },
+  "journey.surge.load": {
+    "message": "โหลด {percent}%",
+    "description": "Load meter on the bottleneck box"
+  },
+  "journey.metric.rps": {
+    "message": "คำขอ/วินาที",
+    "description": "Requests per second metric"
+  },
+  "journey.metric.p95": {
+    "message": "ความหน่วง p95",
+    "description": "p95 latency metric"
+  },
+  "journey.metric.errors": {
+    "message": "ข้อผิดพลาด",
+    "description": "Error rate metric"
+  },
+  "journey.metric.blocked": {
+    "message": "ถูกบล็อก",
+    "description": "Blocked traffic metric"
+  },
+  "journey.metric.illustrative": {
+    "message": "ตัวเลขเพื่อการอธิบาย",
+    "description": "Note that metrics are not real measurements"
+  },
+  "journey.walk.eyebrow": {
+    "message": "หนึ่งคำขอ · ขั้นที่ {n} จาก {total}",
+    "description": "Narration eyebrow while one request plays"
+  },
+  "journey.surge.eyebrow": {
+    "message": "ทราฟฟิกพุ่ง",
+    "description": "Narration eyebrow during the surge"
+  },
+  "journey.surge.hint.bottleneck": {
+    "message": "ดูกล่อง {name}: เมื่อรับไม่ไหว คำขอจะล้มเหลวที่นั่น",
+    "description": "Surge hint naming the bottleneck"
+  },
+  "journey.surge.hint.headroom": {
+    "message": "ทุกชั้นยังมีกำลังเหลือ",
+    "description": "Surge hint when nothing saturates"
+  },
+  "journey.surge.hint.guarded": {
+    "message": "จุดสีแดงคือการโจมตี วงสีเขียวคือจุดที่ด่านป้องกันหยุดมันไว้",
+    "description": "Surge hint when guards stop attacks"
+  },
+  "journey.surge.hint.unguarded": {
+    "message": "จุดสีแดงคือบอต และไม่มีอะไรหน้า API ที่แยกมันออกได้",
+    "description": "Surge hint when attacks get through"
+  },
+  "journey.verdict.holds": {
+    "message": "รับไหว",
+    "description": "Verdict eyebrow when the stage survives"
+  },
+  "journey.verdict.breaks": {
+    "message": "อะไรพัง",
+    "description": "Verdict eyebrow when the stage fails"
+  },
+  "journey.action.surge": {
+    "message": "ข้ามไปดูทราฟฟิก",
+    "description": "Button that jumps to the surge"
+  },
+  "journey.action.restart": {
+    "message": "เริ่มใหม่",
+    "description": "Button that restarts from stage one"
+  },
+  "journey.action.fix": {
+    "message": "แก้ด้วย: {stage}",
+    "description": "Button that opens the next stage"
+  },
+  "journey.announce.stage": {
+    "message": "ขั้นที่ {n}: {label}. {title}",
+    "description": "Screen reader announcement when a new stage starts"
+  },
+  "learn.flow.activityLog": {
+    "message": "บันทึกกิจกรรม",
+    "description": "Disclosure that reveals a flow's steps"
+  },
+  "learn.flow.activityLog.count": {
+    "message": "{count} ขั้น",
+    "description": "Number of steps in the activity log"
   },
   "theme.CodeBlock.copy": {
     "message": "คัดลอก",
@@ -120,5 +216,37 @@
   },
   "theme.colorToggle.switchToDark": {
     "message": "เปลี่ยนเป็นโหมดมืด"
+  },
+  "workExperience.title": {
+    "message": "ประสบการณ์การทำงาน",
+    "description": "Work experience section title"
+  },
+  "workExperience.description": {
+    "message": "ประสบการณ์กว่า {years} ปีในการพัฒนาแบบ Full-stack สร้างเว็บแพลตฟอร์มตั้งแต่หน้าบ้าน ระบบหลังบ้าน ไปจนถึงมาตรฐานที่ทำให้ระบบปลอดภัยและดูแลง่าย",
+    "description": "Work experience section description"
+  },
+  "workExperience.tsdDescription": {
+    "message": "สร้างแพลตฟอร์มและมาตรฐานระดับองค์กรให้ทีมอื่นนำไปต่อยอด ทั้งสถาปัตยกรรมกลาง มาตรฐานด้านความปลอดภัยและคุณภาพ พื้นฐาน UI ที่ใช้ซ้ำได้ และไปป์ไลน์การส่งมอบ โปรเจกต์ที่ทำ เช่น เว็บแอปด้านการเงิน ระบบจัดการเอกสาร เพย์เมนต์เกตเวย์ เครื่องมือสร้างธีมให้หน้าตาระบบสอดคล้องกับแบรนด์ และ AI loop workflow ที่ให้ AI agent วางแผน พัฒนา ทดสอบ และรีวิวงานเป็นรอบซ้ำได้ (loop engineering) ทำงานทั้งฝั่งหน้าบ้านด้วย Next.js, React และ TypeScript และฝั่งหลังบ้านด้วย NestJS, Node.js และ Go บน PostgreSQL และ Redis โดยวางระบบยืนยันตัวตนด้วย OAuth 2.0 / OIDC, CI/CD ขึ้น Kubernetes และการมอนิเตอร์ไว้ตั้งแต่เริ่มต้น พร้อมเป็นพี่เลี้ยงให้นักพัฒนาในทีมผ่านการรีวิวโค้ดและมาตรฐานการพัฒนาร่วมกัน",
+    "description": "TSD, Senior Developer role description"
+  },
+  "workExperience.content1Description": {
+    "message": "พัฒนาหน้าบ้านให้ลูกค้าองค์กรหลายอุตสาหกรรม ทั้งการเงิน โลจิสติกส์ ประกันภัย และการศึกษา ได้แก่ ระบบ e-wallet ที่มีการเติมเงินและประวัติธุรกรรม แพลตฟอร์มลงทุนคริปโตที่ส่งคำสั่งซื้อขายผ่าน Binance API แพลตฟอร์มไปรษณีย์สำหรับลงทะเบียนและติดตามพัสดุ ระบบประกันภัยที่ครอบคลุมการขายกรมธรรม์ การคำนวณเบี้ยประกัน และการเคลม และแพลตฟอร์มการศึกษาสำหรับการลงทะเบียน การให้คะแนน บัตรนักศึกษา และการชำระเงิน ใช้ Next.js และ React ร่วมกับ TanStack Query เป็นหลัก แปลงดีไซน์เป็นหน้าจอที่รองรับทุกอุปกรณ์ และเชื่อมต่อ REST API",
+    "description": "Lao IT Dev, Front-End Developer role description"
+  },
+  "workExperience.content2Description": {
+    "message": "พัฒนาระบบบริหารจัดการวิทยาลัย ครอบคลุมการลงทะเบียนนักศึกษาและรายวิชา การติดตามคะแนน การจัดการหลักสูตร ใบแสดงผลการเรียน โปรเจกต์จบการศึกษา และการแจ้งเตือน ด้วย Laravel (PHP) และ MySQL โดยใส่ใจทั้งงานออกแบบหน้าจอและขั้นตอนการใช้งาน เพื่อให้เจ้าหน้าที่และนักศึกษาเข้าถึงข้อมูลการเรียนได้ง่าย",
+    "description": "Lao IT Dev, Software Engineer role description"
+  },
+  "workExperience.content3Description": {
+    "message": "สำเร็จการศึกษาสาขาการพัฒนาเว็บไซต์ คณะวิทยาศาสตร์ธรรมชาติ ด้วยเกรดเฉลี่ย 3.95/4.00 โปรเจกต์จบ: ระบบจัดการลีกฟุตบอลของมหาวิทยาลัย ครอบคลุมการจัดการทีม โค้ช นักเตะ และกรรมการ การบันทึกคะแนนระหว่างแข่ง ใบเหลือง/ใบแดง การแบนนักเตะ และการจัดตารางแข่งอัตโนมัติ พัฒนาด้วย Laravel และ MySQL",
+    "description": "NUOL education description"
+  },
+  "workExperience.content4Description": {
+    "message": "ออกแบบและส่งมอบเว็บแอปพลิเคชันแบบ Full-stack ให้ลูกค้าหลากหลายธุรกิจ เช่น ระบบจัดการห้องสมุด ระบบคลังน้ำมันที่บันทึกการซื้อขายและติดตามสต็อก ระบบติดตามโปรเจกต์จบการศึกษา ระบบลงทะเบียนนักศึกษา ระบบ HR และเงินเดือนพร้อมการลงเวลา วันลา และข้อมูลองค์กร และระบบ POS สำหรับบันทึกและสรุปยอดขาย ฝั่งหน้าบ้านใช้ React และ Next.js ฝั่งหลังบ้านใช้ Laravel, Node.js และ NestJS",
+    "description": "Freelance role description"
+  },
+  "theme.SearchBar.label": {
+    "message": "ค้นหา",
+    "description": "The ARIA label and placeholder for search button"
   }
 }

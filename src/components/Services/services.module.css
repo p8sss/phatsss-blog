@@ -1,0 +1,149 @@
+/*
+ * Service cards as blueprint sheets: a fine grid that fades from the top-right
+ * corner, a glow in the card's accent, an accent edge and an index number.
+ * Each card sets --service-hue; every accent below derives from it.
+ */
+.card {
+  --service-ink: oklch(0.5 0.15 var(--service-hue));
+  --service-on-ink: oklch(0.99 0 0);
+  --service-line: oklch(0.5 0.1 var(--service-hue) / 13%);
+  --service-glow: oklch(0.8 0.13 var(--service-hue) / 30%);
+  --service-tile: oklch(0.96 0.03 var(--service-hue) / 80%);
+  --service-grid: 22px;
+  --service-reach: 70%;
+  --service-ease: var(--glass-ease, ease-out);
+  --service-duration: calc(var(--glass-duration, 200ms) * 1.5);
+  transition: border-color var(--service-duration) var(--service-ease);
+}
+
+:global([data-theme="dark"]) .card {
+  --service-ink: oklch(0.8 0.12 var(--service-hue));
+  --service-on-ink: oklch(0.18 0.03 var(--service-hue));
+  --service-line: oklch(0.85 0.08 var(--service-hue) / 10%);
+  --service-glow: oklch(0.6 0.15 var(--service-hue) / 26%);
+  --service-tile: oklch(0.32 0.06 var(--service-hue) / 70%);
+}
+
+.card:hover {
+  border-color: oklch(from var(--service-ink) l c h / 35%);
+}
+
+.featured {
+  --service-grid: 32px;
+  --service-reach: 95%;
+}
+
+/* the grid and the glow, behind the content */
+.backdrop,
+.backdrop::after {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.backdrop {
+  background-image:
+    linear-gradient(to right, var(--service-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--service-line) 1px, transparent 1px);
+  background-size: var(--service-grid) var(--service-grid);
+  background-position: right -1px top -1px;
+  -webkit-mask-image: radial-gradient(circle at 100% 0%, #000, transparent var(--service-reach));
+  mask-image: radial-gradient(circle at 100% 0%, #000, transparent var(--service-reach));
+  opacity: 0.7;
+  transition: opacity var(--service-duration) var(--service-ease);
+}
+
+.backdrop::after {
+  content: "";
+  background: radial-gradient(circle at 100% 0%, var(--service-glow), transparent 60%);
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+.card:hover .backdrop {
+  opacity: 1;
+}
+
+/* a hairline in the accent along the top edge, drawn out on hover */
+.edge {
+  position: absolute;
+  top: 0;
+  right: 1.5rem;
+  left: 1.5rem;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(to right, transparent, var(--service-ink), transparent);
+  opacity: 0.45;
+  transform: scaleX(0.55);
+  transition:
+    opacity var(--service-duration) var(--service-ease),
+    transform var(--service-duration) var(--service-ease);
+}
+
+.card:hover .edge {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+.index {
+  position: absolute;
+  top: 1rem;
+  right: 1.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--service-ink);
+  opacity: 0.75;
+  font-variant-numeric: tabular-nums;
+}
+
+.featured .index {
+  top: 1.75rem;
+  right: 2rem;
+}
+
+.tile {
+  border-color: oklch(from var(--service-ink) l c h / 22%);
+  background: var(--service-tile);
+  color: var(--service-ink);
+  transition:
+    background-color var(--service-duration) var(--service-ease),
+    color var(--service-duration) var(--service-ease);
+}
+
+.card:hover .tile {
+  background: var(--service-ink);
+  color: var(--service-on-ink);
+}
+
+/* the feature's watermark: its own icon, oversized and drawn in hairlines like a plan */
+.watermark {
+  /* below the index, above the title */
+  position: absolute;
+  top: 4rem;
+  right: -2.5rem;
+  color: var(--service-ink);
+  opacity: 0.22;
+  pointer-events: none;
+}
+
+/* Tailwind's lg, where the first card becomes the 2×2 feature */
+@media (min-width: 64rem) {
+  .featured .tile {
+    border-color: transparent;
+    background: linear-gradient(
+      135deg,
+      oklch(0.64 0.16 var(--service-hue)),
+      oklch(0.55 0.2 calc(var(--service-hue) - 55))
+    );
+    color: oklch(0.99 0 0);
+    box-shadow: 0 8px 24px -8px oklch(0.55 0.2 var(--service-hue) / 55%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .edge {
+    transform: none;
+  }
+}

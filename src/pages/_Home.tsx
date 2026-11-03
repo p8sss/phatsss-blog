@@ -7,7 +7,7 @@ import SideProjects from "../components/SideProjects";
 import Services from "../components/Services";
 import Portfolio from "../components/Portfolio";
 import {LogoLoopComponent} from "../components/LogoLoop";
-import FactorySection from "../components/FactorySection";
+import RequestJourney from "../components/RequestJourney";
 
 export default function Home(): JSX.Element {
   const { siteConfig } = useDocusaurusContext();
@@ -20,7 +20,7 @@ export default function Home(): JSX.Element {
       <main className="mx-auto w-full max-w-6xl px-4 sm:px-6">
         <Hero />
         <LogoLoopComponent />
-        <FactorySection />
+        <RequestJourney />
         <WorkExperience />
         <Services />
         <Portfolio />
