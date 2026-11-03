@@ -1,0 +1,68 @@
+---
+title: How a B-tree index answers a query
+sidebar_label: B-tree index lookup
+sidebar_position: 2
+hide_table_of_contents: true
+description: How a B-tree index turns a full table scan into a few page reads, and what every write pays for it.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {btreeIndex} from '@site/src/data/learn/flows/btree-index';
+
+# How a B-tree index answers a query
+
+**The question:** Why does an index turn a full table scan into a few page reads?
+
+**The short answer:** a B-tree keeps the indexed values sorted in a shallow tree of pages. A lookup reads one page per level, then one table page, instead of every page in the table. The price is paid on writes, which must keep every index in order.
+
+<FlowPlayer flow={btreeIndex} />
+
+## What a B-tree can and cannot help with
+
+The examples use PostgreSQL and an index on `users (email)` unless the row says otherwise.
+
+| Query shape | Uses the index? | Why |
+| --- | --- | --- |
+| `email = 'ana@example.com'` | Yes | One descent to one leaf. |
+| `email IN ('a@example.com', 'b@example.com')` | Yes | It works like a set of equality searches. |
+| `created_at > now() - interval '1 day'` | Yes, with an index on `created_at` | Descend to the start of the range, then walk the leaves in order. |
+| `ORDER BY email LIMIT 20` | Yes | The leaves are already sorted, so there is nothing to sort. |
+| `lower(email) = 'ana@example.com'` | Only with an index on `lower(email)` | The index stores `email`, not the result of the function. |
+| `email LIKE 'ana%'` | Only with the C collation or the `text_pattern_ops` operator class | A fixed prefix gives the search a place to start. |
+| `email LIKE '%@example.com'` | No | There is no prefix to descend with. Look at a trigram index instead. |
+| Index on `(tenant_id, email)`, filter on `email` only | Sometimes | PostgreSQL 18 and later can skip scan when `tenant_id` has few distinct values. Otherwise it reads the whole index or the table. |
+
+## See it yourself
+
+```sql title="explain-index.sql"
+-- CONCURRENTLY builds the index without blocking writes to the table
+CREATE INDEX CONCURRENTLY users_email_idx ON users (email);
+ANALYZE users;
+
+-- Look for "Index Scan using users_email_idx" in the plan.
+-- Since PostgreSQL 18, EXPLAIN ANALYZE also prints Buffers: the pages it touched.
+EXPLAIN ANALYZE
+SELECT id, name FROM users WHERE email = 'ana@example.com';
+```
+
+## Pitfalls
+
+- **Low selectivity.** If a filter matches a large share of the table, jumping between index and heap costs more than reading the table in order. The planner then picks a sequential scan, and it is usually right.
+- **A function hides the column.** `WHERE lower(email) = …` or `WHERE created_at::date = …` cannot use a plain index on the column. Index the expression or rewrite the filter as a range.
+- **Column order in a composite index.** An index on `(a, b)` is sorted by `a` first. It serves filters on `a`, or on `a` and `b`, far better than filters on `b` alone.
+- **Every index slows every write.** Each insert and each update of an indexed column touches every matching index. Drop the ones no query uses.
+- **Random keys scatter inserts.** Random UUIDs land on random leaves, so inserts touch many pages and cause many splits. Time-ordered keys such as UUID version 7 keep inserts near the right edge of the tree.
+- **Avoiding the heap needs a covering index.** If every column the query needs is in the index, PostgreSQL can answer with an index-only scan. It still checks the visibility map, so it works best on tables that change slowly.
+
+## Related flows
+
+- [Cache-aside with Redis](/learn/backend/cache-aside) is the next step when even an indexed read is too slow or too frequent.
+- [The N+1 query problem](/learn/backend/n-plus-one) shows that a fast lookup repeated a hundred times is still slow.
+- [Replication and failover](/learn/backend/replication-failover) shows how the same pages are copied to a replica.
+
+## Go deeper
+
+- [Backend roadmap on roadmap.sh](https://roadmap.sh/backend), under Relational Databases
+- [PostgreSQL: index types](https://www.postgresql.org/docs/current/indexes-types.html)
+- [PostgreSQL: B-tree implementation](https://www.postgresql.org/docs/current/btree.html)
+- [PostgreSQL: index-only scans and covering indexes](https://www.postgresql.org/docs/current/indexes-index-only-scans.html)

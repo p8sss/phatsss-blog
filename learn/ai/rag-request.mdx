@@ -1,0 +1,90 @@
+---
+title: A RAG request from question to cited answer
+sidebar_label: A RAG request
+sidebar_position: 9
+hide_table_of_contents: true
+description: Where chunking, retrieval, reranking and generation each happen in retrieval-augmented generation, and how citations are checked.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {ragRequest} from '@site/src/data/learn/flows/rag-request';
+
+# A RAG request from question to cited answer
+
+**The question:** Where do chunking, retrieval, reranking and generation each happen?
+
+**The short answer:** Chunking and embedding happen once, offline, when documents are ingested. At question time the app retrieves a broad set of candidate chunks, a reranker narrows them to the best few, and the LLM writes an answer that cites them by number. The app then checks that every citation points at a chunk it actually sent.
+
+<FlowPlayer flow={ragRequest} />
+
+## Each stage, and how it fails
+
+| Stage | When | Tuned for | Typical failure |
+| --- | --- | --- | --- |
+| Chunking | At ingest | Chunks that each hold one idea | Splits a table or a step list in half |
+| Embedding | At ingest, and once per question | Same model on both sides | Mixed models after an upgrade |
+| Retrieval | Per question | Recall: fetch more than you need | The right chunk never makes the short list |
+| Reranking | Per question | Precision: keep only what answers the question | Too few kept, so a needed fact is dropped |
+| Generation | Per question | Faithfulness to the sources | Answers from training data instead of the sources |
+
+When an answer is wrong, find the first stage that lost the fact. Was the fact in the retrieved set? In the reranked set? In the prompt? Most fixes belong upstream of the model.
+
+## Building the prompt and checking citations
+
+```ts title="answer-with-citations.ts"
+export interface Chunk {
+  readonly id: string;
+  readonly source: string; // e.g. "refunds.md §2"
+  readonly text: string;
+}
+
+export function buildPrompt(question: string, chunks: readonly Chunk[]): string {
+  const sources = chunks
+    .map((c, i) => `<source id="${i + 1}" ref="${c.source}">\n${c.text}\n</source>`)
+    .join("\n");
+  return [
+    sources,
+    "Answer the question using only the sources above.",
+    "Cite every claim with its source number, like [1].",
+    "If the sources do not answer the question, say that you do not know.",
+    `Question: ${question}`,
+  ].join("\n\n");
+}
+
+/** Maps [n] markers back to the chunks that were sent, and reports any that point nowhere. */
+export function checkCitations(
+  answer: string,
+  chunks: readonly Chunk[],
+): { cited: Chunk[]; unknown: number[] } {
+  const numbers = [...new Set([...answer.matchAll(/\[(\d+)\]/g)].map((m) => Number(m[1])))];
+  const isKnown = (n: number) => n >= 1 && n <= chunks.length;
+  return {
+    cited: numbers.filter(isKnown).map((n) => chunks[n - 1]),
+    unknown: numbers.filter((n) => !isKnown(n)),
+  };
+}
+```
+
+Some APIs can do this for you. Anthropic's citations feature, for example, returns the exact passages each part of the answer came from.
+
+## Pitfalls
+
+- **Chunks without context.** "It increased by 3%" means nothing alone. Prepend the document title and section heading to each chunk before embedding.
+- **Vector search alone misses exact terms.** Product codes, error messages and names often need keyword search. Merge both result lists.
+- **Stuffing the prompt.** Twenty loosely related chunks dilute the good ones and cost tokens. Rerank and keep a few.
+- **Stale indexes.** A document edited yesterday but not re-ingested gives confidently outdated answers. Re-ingest on change and store a version or date with each chunk.
+- **Retrieved text is untrusted input.** A document can contain instructions aimed at the model. Treat it as data, and never let it trigger actions on its own.
+
+## Related flows
+
+- [Text to vector to similarity](/learn/ai/embeddings-similarity) explains the embedding step.
+- [A vector search, step by step](/learn/ai/hnsw-search) shows retrieval inside the index.
+- [RAG vs fine-tuning](/learn/ai/rag-vs-fine-tuning) helps decide whether retrieval is the right tool.
+- [A prompt injection, and the guardrails that catch it](/learn/ai/prompt-injection) covers the last pitfall in depth.
+
+## Go deeper
+
+- [AI Engineer roadmap on roadmap.sh](https://roadmap.sh/ai-engineer), under What are RAGs?
+- [Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks](https://arxiv.org/abs/2005.11401), Lewis et al.
+- [Introducing Contextual Retrieval](https://www.anthropic.com/research/contextual-retrieval), Anthropic, on chunk context, hybrid search and reranking
+- [Citations](https://platform.claude.com/docs/en/build-with-claude/citations), Anthropic docs

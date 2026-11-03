@@ -1,0 +1,65 @@
+---
+title: SQL injection, and the query that stops it
+sidebar_label: SQL injection
+sidebar_position: 7
+hide_table_of_contents: true
+description: How one quote mark turns user input into SQL code, and why parameterised queries end the problem.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {sqlInjection} from '@site/src/data/learn/flows/sql-injection';
+
+# SQL injection, and the query that stops it
+
+**The question:** how does one quote mark become a data breach?
+
+**The short answer:** when an app builds SQL by gluing strings together, user input can close the string and add its own SQL. Parameterised queries send the SQL and the data separately, so input can only ever be a value.
+
+<FlowPlayer flow={sqlInjection} />
+
+## Vulnerable and fixed, side by side
+
+```ts title="login.ts"
+import {Pool} from 'pg';
+
+const pool = new Pool();
+
+// Vulnerable: the input becomes part of the SQL text
+export async function findUserUnsafe(email: string) {
+  return pool.query(`SELECT id, password_hash FROM users WHERE email = '${email}'`);
+}
+
+// Fixed: $1 is a placeholder, and the value travels separately
+export async function findUser(email: string) {
+  return pool.query('SELECT id, password_hash FROM users WHERE email = $1', [email]);
+}
+```
+
+ORMs and query builders parameterise for you, until you reach for a raw query helper and interpolate into it. Search your code for template strings that contain `SELECT`, `WHERE` or `ORDER BY`.
+
+## Defences in order of strength
+
+| Defence | Stops injection | Notes |
+| --- | --- | --- |
+| Parameterised queries | Yes, for values | The primary fix. Works in every mainstream driver |
+| Allowlisting identifiers | Yes, for names | Placeholders can't hold table or column names, so map user choices to a fixed list |
+| Least-privilege database user | Limits the damage | The app's user shouldn't be able to drop tables or read other schemas |
+| Escaping input by hand | Fragile | Easy to get wrong for one encoding or one context. Avoid it |
+| A web application firewall | Partial | Catches known patterns, misses new ones. A backstop, not a fix |
+
+## Pitfalls
+
+- **Dynamic `ORDER BY`.** A sort column from the query string can't be a parameter. Map `?sort=price` to a known column name in code.
+- **Stored procedures that build SQL.** A procedure that concatenates its arguments into dynamic SQL is just as injectable.
+- **Second-order injection.** Data that was safely stored can still be dangerous if a later query concatenates it.
+
+## Related flows
+
+- [Password login with bcrypt](/learn/security/password-hashing) shows what the login query should be looking up.
+- [The N+1 query problem](/learn/backend/n-plus-one) is another way query building goes wrong, for speed rather than security.
+
+## Go deeper
+
+- [Security roadmap on roadmap.sh](https://roadmap.sh/devsecops), under OWASP Top 10
+- [OWASP SQL Injection Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html)
+- [OWASP Query Parameterization Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Query_Parameterization_Cheat_Sheet.html)

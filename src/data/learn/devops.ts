@@ -49,6 +49,32 @@ export const devopsRoadmap: Roadmap = {
       ],
     },
     {
+      id: "serverless",
+      title: "Serverless",
+      topics: [
+        {
+          id: "lambda-cold-start",
+          title: "A Lambda cold start",
+          question: "What happens before your function's first line runs?",
+          format: "flow",
+          to: "/learn/devops/lambda-cold-start",
+        },
+      ],
+    },
+    {
+      id: "provisioning",
+      title: "Provisioning",
+      topics: [
+        {
+          id: "terraform-plan-apply",
+          title: "Terraform plan and apply",
+          question: "How does Terraform turn a config file into real infrastructure?",
+          format: "flow",
+          to: "/learn/devops/terraform-plan-apply",
+        },
+      ],
+    },
+    {
       id: "ci-cd-tools",
       title: "CI / CD Tools",
       topics: [
@@ -62,6 +88,32 @@ export const devopsRoadmap: Roadmap = {
       ],
     },
     {
+      id: "secret-management",
+      title: "Secret Management",
+      topics: [
+        {
+          id: "vault-to-pod",
+          title: "A secret from Vault to a pod",
+          question: "How does a database password reach a container without living in Git?",
+          format: "flow",
+          to: "/learn/devops/vault-to-pod",
+        },
+      ],
+    },
+    {
+      id: "infrastructure-monitoring",
+      title: "Infrastructure Monitoring",
+      topics: [
+        {
+          id: "prometheus-alert",
+          title: "From a Prometheus scrape to an alert",
+          question: "How does a metric become a page on someone's phone?",
+          format: "flow",
+          to: "/learn/devops/prometheus-alert",
+        },
+      ],
+    },
+    {
       id: "container-orchestration",
       title: "Container Orchestration",
       topics: [
@@ -71,6 +123,45 @@ export const devopsRoadmap: Roadmap = {
           question: "How does a deployment replace every pod without dropping traffic?",
           format: "flow",
           to: "/learn/devops/kubernetes-rolling-update",
+        },
+      ],
+    },
+    {
+      id: "gitops",
+      title: "GitOps",
+      topics: [
+        {
+          id: "argocd-sync",
+          title: "A commit becomes a deployment with Argo CD",
+          question: "How does a Git merge change what runs in the cluster?",
+          format: "flow",
+          to: "/learn/devops/argocd-sync",
+        },
+      ],
+    },
+    {
+      id: "observability",
+      title: "Observability",
+      topics: [
+        {
+          id: "logs-metrics-traces",
+          title: "Logs vs metrics vs traces",
+          question: "What does each signal answer, and what does it cost?",
+          format: "compare",
+          to: "/learn/devops/logs-metrics-traces",
+        },
+      ],
+    },
+    {
+      id: "service-mesh",
+      title: "Service Mesh",
+      topics: [
+        {
+          id: "sidecar-request",
+          title: "What a sidecar does to one request",
+          question: "What happens to a call between two services in a mesh?",
+          format: "flow",
+          to: "/learn/devops/sidecar-request",
         },
       ],
     },

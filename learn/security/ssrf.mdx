@@ -1,0 +1,80 @@
+---
+title: Server-side request forgery
+sidebar_label: SSRF
+sidebar_position: 10
+hide_table_of_contents: true
+description: How a URL parameter turns your server into a proxy to internal services, and the checks that stop it.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {ssrf} from '@site/src/data/learn/flows/ssrf';
+
+# Server-side request forgery
+
+**The question:** how does a URL parameter reach your cloud metadata service?
+
+**The short answer:** any feature that fetches a URL on a user's behalf, such as link previews, webhooks or image imports, makes requests from inside your network. Without checks, an attacker can point it at internal services, including the cloud metadata endpoint that hands out credentials.
+
+<FlowPlayer flow={ssrf} />
+
+## Where SSRF hides
+
+| Feature | What the user controls |
+| --- | --- |
+| Link previews and unfurling | A URL to fetch and summarise |
+| Webhooks | The callback URL your server will POST to |
+| Image or file import from a URL | The source address |
+| PDF or screenshot rendering | HTML that loads further resources |
+| XML parsing | External entities that point at URLs |
+
+## Checking a destination in Node
+
+```ts title="assert-public-url.ts"
+import {lookup} from 'node:dns/promises';
+import {BlockList} from 'node:net';
+
+const blocked = new BlockList();
+blocked.addSubnet('0.0.0.0', 8);
+blocked.addSubnet('10.0.0.0', 8);
+blocked.addSubnet('172.16.0.0', 12);
+blocked.addSubnet('192.168.0.0', 16);
+blocked.addSubnet('127.0.0.0', 8);
+blocked.addSubnet('169.254.0.0', 16);
+blocked.addSubnet('::', 128, 'ipv6');
+blocked.addSubnet('::1', 128, 'ipv6');
+blocked.addSubnet('fc00::', 7, 'ipv6');
+blocked.addSubnet('fe80::', 10, 'ipv6');
+
+export async function assertPublicUrl(raw: string): Promise<URL> {
+  const url = new URL(raw);
+  if (url.protocol !== 'https:') throw new Error('only https is allowed');
+  const addresses = await lookup(url.hostname, {all: true});
+  const isBlocked = addresses.some(({address, family}) =>
+    blocked.check(address, family === 6 ? 'ipv6' : 'ipv4'),
+  );
+  if (isBlocked) throw new Error('destination not allowed');
+  return url;
+}
+```
+
+`0.0.0.0` and `::` matter because connecting to them reaches the local machine on Linux and macOS. BlockList also matches IPv4-mapped IPv6 addresses such as `::ffff:169.254.169.254` against the IPv4 rules, as long as you check them with type `'ipv6'` as above.
+
+This is a starting point, not a complete defence. The fetch that follows resolves the name again, so a DNS rebinding attack can swap the address in between. Close that gap by connecting to the address you checked, or by sending all outbound fetches through an egress proxy that enforces the rules. Redirects are a second gap. Turn them off, or run the check again on every hop.
+
+## Defences in layers
+
+- **Allowlist when you can.** A webhook feature that only talks to known partner domains is far easier to secure than one that fetches anything.
+- **Require IMDSv2** on AWS, and set the response hop limit to 1 for instances that don't run containers. Google Cloud and Azure require a request header on their metadata endpoints, `Metadata-Flavor: Google` and `Metadata: true`. That only helps when the attacker can't set headers.
+- **Give instances narrow roles,** so leaked credentials unlock little.
+- **Don't echo fetched bodies back.** Return only what the feature needs, such as a title and an image.
+
+## Related flows
+
+- [How a cloud API call is authorised](/learn/security/iam-request) shows what stolen role credentials can and can't do.
+- [A secret from Vault to a pod](/learn/devops/vault-to-pod) shows how to keep long-lived secrets off instances altogether.
+
+## Go deeper
+
+- [Security roadmap on roadmap.sh](https://roadmap.sh/devsecops), under OWASP Top 10
+- [OWASP Server-Side Request Forgery Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html)
+- [Configure the instance metadata service on AWS](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-instance-metadata-options.html)

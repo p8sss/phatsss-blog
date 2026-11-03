@@ -1,0 +1,48 @@
+---
+title: pgvector vs Qdrant vs Pinecone
+sidebar_label: pgvector vs Qdrant vs Pinecone
+sidebar_position: 8
+hide_table_of_contents: true
+description: A Postgres extension, an open-source engine and a managed service compared, and which vector store fits the job.
+---
+
+import CompareTable from '@site/src/components/learn/CompareTable';
+import {vectorDatabasesCompare} from '@site/src/data/learn/comparisons/vector-databases-compare';
+
+# pgvector vs Qdrant vs Pinecone
+
+**The question:** Which vector store fits the job?
+
+**The short answer:** If you already run Postgres, start with pgvector and keep vectors next to the data they describe. Reach for Qdrant when filtered search at scale is the core of the product and you want to own the engine. Pick Pinecone when you want vector search as a service with nothing to operate.
+
+<CompareTable comparison={vectorDatabasesCompare} />
+
+## The one question that decides most cases
+
+Ask where the source of truth lives.
+
+- **In Postgres already?** pgvector keeps the vector in the same row, in the same transaction, behind the same backups and permissions. A deleted row takes its vector with it. There is no sync job to break.
+- **Spread across many systems?** Then you are building a search index anyway, like Elasticsearch for text. A dedicated engine such as Qdrant or Pinecone is a natural fit, and a pipeline keeps it updated.
+
+All three use approximate indexes, so recall and latency depend more on settings and data than on the brand. Benchmark with your own vectors and your own filters.
+
+## Questions to ask before choosing
+
+1. How many vectors, and how fast is that growing? Millions fit comfortably in Postgres. Billions point to a dedicated engine.
+2. Do most queries filter by tenant, category or date? Test filtered recall, not just unfiltered speed.
+3. Do you need keyword and vector search together? All three can, in different ways. Check that the fusion method suits your data.
+4. Who operates it? A managed option, including managed Postgres or Qdrant Cloud, removes most of the gap with Pinecone.
+5. Where must the data live? Self-hosting or Bring Your Own Cloud may be required for compliance.
+
+## Related flows
+
+- [A vector search, step by step](/learn/ai/hnsw-search) shows how HNSW, the index pgvector and Qdrant use, finds neighbours.
+- [Text to vector to similarity](/learn/ai/embeddings-similarity) covers what goes into the store.
+- [How Elasticsearch answers a search](/learn/backend/elasticsearch-query) is the keyword side of hybrid search.
+
+## Go deeper
+
+- [AI Engineer roadmap on roadmap.sh](https://roadmap.sh/ai-engineer), under Vector Databases
+- [pgvector README](https://github.com/pgvector/pgvector)
+- [Qdrant documentation](https://qdrant.tech/documentation/)
+- [Pinecone documentation](https://docs.pinecone.io/guides/get-started/overview)

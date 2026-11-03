@@ -1,0 +1,62 @@
+---
+title: Logs vs metrics vs traces
+sidebar_label: Logs vs metrics vs traces
+sidebar_position: 11
+hide_table_of_contents: true
+description: What each observability signal answers, what drives its cost, and how the three link together.
+---
+
+import CompareTable from '@site/src/components/learn/CompareTable';
+import {logsMetricsTraces} from '@site/src/data/learn/comparisons/logs-metrics-traces';
+
+# Logs vs metrics vs traces
+
+**The question:** What does each signal answer, and what does it cost?
+
+**The short answer:** Metrics tell you that something is wrong, cheaply and over time. Traces show where in the request path it went wrong. Logs tell you exactly what happened in that one event.
+
+<CompareTable comparison={logsMetricsTraces} />
+
+## One failure, three ways
+
+The same failed checkout, seen through each signal. The shared trace id is what lets you jump from one view to the next.
+
+```text title="one failed checkout"
+metric  checkout_requests_total{status="error"}  1291
+
+trace   0af7651916cd43dd8448eb211c80319c  POST /checkout  2.31s
+          ├─ GET  orders/42           12 ms
+          └─ POST payments/charge   2.28 s  ERROR
+
+log     {"level":"error","msg":"card declined by issuer","order_id":42,
+         "trace_id":"0af7651916cd43dd8448eb211c80319c"}
+```
+
+A typical investigation runs in that order. An alert on the metric fires. The trace narrows it to the payments call. The log gives the reason.
+
+## Where the money goes
+
+- **Logs grow with traffic.** Double the requests and you double the bytes. Drop debug logs in production and keep fields structured, so you can filter without full-text search.
+- **Metrics grow with label values.** Traffic barely matters, but every new label value creates a new series. A `status` label with five values is fine. A `user_id` label is not.
+- **Traces grow with requests and services.** Sampling is the main dial. Tail sampling can keep every error and slow request while dropping most of the fast, successful ones.
+
+## Pitfalls
+
+- **Unbounded labels.** User ids, emails or full URLs as metric labels can exhaust Prometheus's memory. Put them in logs or span attributes instead.
+- **Logs without a trace id.** Without one, you cannot get from a slow trace to its log lines. OpenTelemetry log bridges add the active trace and span ids for you.
+- **Head sampling only.** Deciding at the start keeps a random share of requests, so the rare failure you need is often gone. Tail sampling fixes that, at the cost of buffering whole traces.
+- **Secrets and personal data in logs.** Logs are copied widely and kept a long time. Redact tokens, passwords and card numbers before they are written.
+- **Treating the three as separate tools.** Use the same service name and resource attributes everywhere, so a dashboard can link to traces and traces can link to logs.
+
+## Related flows
+
+- [From a Prometheus scrape to an alert](/learn/devops/prometheus-alert) follows a metric all the way to a page.
+- [What a sidecar does to one request](/learn/devops/sidecar-request) shows a mesh producing metrics and spans for every call.
+- [Tracing one agent run](/learn/ai/agent-tracing) applies the same span model to an AI agent.
+
+## Go deeper
+
+- [DevOps roadmap on roadmap.sh](https://roadmap.sh/devops), under Observability
+- [OpenTelemetry signals](https://opentelemetry.io/docs/concepts/signals/)
+- [Prometheus metric and label naming](https://prometheus.io/docs/practices/naming/)
+- [W3C Trace Context](https://www.w3.org/TR/trace-context/)

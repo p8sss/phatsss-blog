@@ -1,0 +1,70 @@
+---
+title: What LCP measures, and what delays it
+sidebar_label: Largest Contentful Paint
+sidebar_position: 12
+hide_table_of_contents: true
+description: The four phases of Largest Contentful Paint, how to measure each one, and how to shrink it.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {lcp} from '@site/src/data/learn/flows/lcp';
+
+# What LCP measures, and what delays it
+
+**The question:** Which four phases make up Largest Contentful Paint, and how do you shrink each?
+
+**The short answer:** LCP is the time from navigation until the largest image or text block in the viewport paints. It splits into time to first byte, resource load delay, resource load duration and element render delay. Measure the four in the field, then fix the biggest one first.
+
+<FlowPlayer flow={lcp} />
+
+## The four phases
+
+| Phase | Ends when | Rough share on a healthy page | Main fixes |
+| --- | --- | --- | --- |
+| Time to first byte | The first byte of HTML arrives | About 40% | Fewer redirects, faster server work, HTML cached at the CDN edge |
+| Resource load delay | The LCP resource starts loading | Under 10% | Put the image in the HTML, add `fetchpriority="high"`, never lazy-load it |
+| Resource load duration | The LCP resource finishes loading | About 40% | Smaller, right-sized images, AVIF or WebP, a CDN, long cache lifetimes |
+| Element render delay | The LCP element paints | Under 10% | Fewer render-blocking styles and scripts, shorter main-thread tasks, server rendering |
+
+The shares are guidelines from web.dev, not targets in milliseconds. When the LCP element is text, the two resource phases are zero, and a web font can show up as render delay.
+
+## Measure the phases from real visits
+
+```js title="report-lcp.js"
+import {onLCP} from 'web-vitals/attribution';
+
+onLCP(({value, rating, attribution}) => {
+  const body = JSON.stringify({
+    value,
+    rating,
+    element: attribution.target,
+    ttfb: attribution.timeToFirstByte,
+    loadDelay: attribution.resourceLoadDelay,
+    loadDuration: attribution.resourceLoadDuration,
+    renderDelay: attribution.elementRenderDelay,
+  });
+  navigator.sendBeacon('/rum', body);
+});
+```
+
+The attribution build of the `web-vitals` library splits LCP into exactly these phases. The good threshold is 2.5 seconds or less at the 75th percentile.
+
+## Pitfalls
+
+- **Lazy-loading the hero.** `loading="lazy"` on the LCP image delays it until layout, which adds resource load delay.
+- **Hiding the image from the HTML.** A CSS background or an image injected by JavaScript is discovered late. If you must, add `<link rel="preload" as="image" fetchpriority="high">`.
+- **Fetch priority everywhere.** Marking many images high priority means none of them is. Use it on one or two.
+- **Client-side rendering.** If JavaScript builds the page, nothing can paint until the bundle downloads and runs. Render the hero on the server.
+- **Fixing lab numbers only.** Lighthouse runs one simulated load. Real devices, networks and caches decide your score, so check field data.
+
+## Related flows
+
+- [How a browser renders a page](/learn/frontend/browser-rendering) shows the parsing and render-blocking steps behind element render delay.
+- [Server rendering and hydration](/learn/frontend/ssr-hydration) is the usual fix for slow client-side rendering.
+- [HTTP caching with ETag](/learn/backend/http-caching-etag) shortens load duration on repeat visits.
+
+## Go deeper
+
+- [Frontend roadmap on roadmap.sh](https://roadmap.sh/frontend), under Performance
+- [web.dev: Largest Contentful Paint](https://web.dev/articles/lcp)
+- [web.dev: Optimize LCP](https://web.dev/articles/optimize-lcp)

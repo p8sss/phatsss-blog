@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   buildTimeline,
   LOCAL_STEP_SECONDS,
+  pacedSteps,
   sampleAt,
   stepHoldTime,
   stepStartTime,
@@ -93,5 +94,20 @@ describe("step times", () => {
       assert.equal(sample.index, index);
       assert.ok(sample.progress > 0.99);
     });
+  });
+});
+
+describe("pacedSteps", () => {
+  test("scales explicit and default durations alike", () => {
+    const paced = pacedSteps([steps[0], { id: "d", from: "x", to: "y", title: "D", detail: "d" }], 0.5);
+    assert.deepEqual(
+      paced.map((step) => step.duration),
+      [1, TRAVEL_STEP_SECONDS * 0.5],
+    );
+  });
+
+  test("leaves the original steps untouched", () => {
+    pacedSteps(steps, 2);
+    assert.equal(steps[0].duration, 2);
   });
 });

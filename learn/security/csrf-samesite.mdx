@@ -1,0 +1,63 @@
+---
+title: CSRF and SameSite cookies
+sidebar_label: CSRF and SameSite
+sidebar_position: 9
+hide_table_of_contents: true
+description: How another site makes a signed-in browser send requests to your app, and how SameSite cookies and tokens stop it.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {csrfSamesite} from '@site/src/data/learn/flows/csrf-samesite';
+
+# CSRF and SameSite cookies
+
+**The question:** how does another site make your browser act on your behalf?
+
+**The short answer:** browsers attach cookies to every request for a site, whichever page started it. A malicious page can quietly submit a form to your app and ride the user's session. SameSite cookies keep the session off cross-site requests, and a CSRF token or origin check proves the request came from your own pages.
+
+<FlowPlayer flow={csrfSamesite} />
+
+## The SameSite values
+
+| Value | Cookie sent on cross-site requests | Use it for |
+| --- | --- | --- |
+| `Strict` | Never, not even when following a link | Highly sensitive actions; users arriving by link look signed out |
+| `Lax` | Only on top-level GET navigations | Most session cookies |
+| `None` | Always, and it requires `Secure` | Cookies that must work inside third-party embeds, where the browser still allows third-party cookies |
+
+Browsers differ when the attribute is missing. Chrome and Edge treat the cookie as Lax, but still send it on cross-site POSTs for two minutes after it is set. Firefox and Safari send it on cross-site requests. Set the attribute explicitly on every cookie.
+
+## Setting it in Express
+
+```ts title="session-cookie.ts"
+res.cookie('sid', sessionId, {
+  httpOnly: true, // page scripts can't read it
+  secure: true, // HTTPS only
+  sameSite: 'lax', // left off cross-site POSTs
+  path: '/',
+});
+```
+
+## Defence in layers
+
+- **SameSite=Lax** stops most CSRF with one attribute.
+- **Never change state on GET.** Lax still sends the cookie on top-level links, so `GET /delete?id=7` stays forgeable.
+- **Check `Origin` or `Sec-Fetch-Site`** on state-changing requests and reject cross-site ones.
+- **Use a CSRF token** for forms, from your framework's built-in protection. A synchronizer token or a signed double-submit cookie both work.
+
+## Pitfalls
+
+- **Same-site isn't same-origin.** `evil.example.com` and `app.example.com` are the same site, so SameSite doesn't protect you from a compromised sibling subdomain.
+- **Bearer tokens in headers aren't vulnerable to CSRF,** because the browser never adds them by itself. Moving to cookies brings CSRF back into scope.
+
+## Related flows
+
+- [XSS, and how CSP contains it](/learn/security/xss-csp) covers the attack CSRF defences can't stop: script running on your own page.
+- [Sessions vs JWT vs opaque tokens](/learn/security/sessions-jwt-opaque) compares where to keep the credential in the first place.
+- [CORS and the preflight request](/learn/frontend/cors-preflight) explains why a CORS policy doesn't block a simple form post.
+
+## Go deeper
+
+- [Security roadmap on roadmap.sh](https://roadmap.sh/devsecops), under OWASP Top 10
+- [OWASP Cross-Site Request Forgery Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)
+- [Set-Cookie and SameSite on MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie)

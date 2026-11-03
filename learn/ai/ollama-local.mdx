@@ -1,0 +1,75 @@
+---
+title: Running a model locally with Ollama
+sidebar_label: Ollama on your laptop
+sidebar_position: 5
+hide_table_of_contents: true
+description: What Ollama does between ollama run and a streamed answer, from pulling layers to loading weights onto the GPU.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {ollamaLocal} from '@site/src/data/learn/flows/ollama-local';
+
+# Running a model locally with Ollama
+
+**The question:** What happens between ollama run and a streamed answer on your laptop?
+
+**The short answer:** The CLI asks a local server for the model. The server pulls it from the registry if needed, then starts a runner that loads the weights into GPU or CPU memory. Your message is rendered with the model's chat template, and tokens stream back as newline-delimited JSON.
+
+<FlowPlayer flow={ollamaLocal} />
+
+## Try it
+
+```bash title="terminal"
+ollama pull gemma4
+ollama run gemma4 "Why is the sky blue?"
+
+# the same model over HTTP; the reply streams as one JSON object per line
+curl http://localhost:11434/api/chat -d '{
+  "model": "gemma4",
+  "messages": [{"role": "user", "content": "Why is the sky blue?"}]
+}'
+
+# loaded models, their size, GPU or CPU split, and when they unload
+ollama ps
+
+# unload now instead of waiting for the keep-alive timer
+ollama stop gemma4
+```
+
+The server also exposes an OpenAI-compatible API at `http://localhost:11434/v1`, so most OpenAI SDK code works by changing the base URL.
+
+## Settings that matter
+
+Set these as environment variables on the server, not the CLI.
+
+| Variable | Default | What it controls |
+| --- | --- | --- |
+| `OLLAMA_HOST` | `127.0.0.1:11434` | The address the server listens on |
+| `OLLAMA_KEEP_ALIVE` | 5 minutes | How long an idle model stays in memory |
+| `OLLAMA_CONTEXT_LENGTH` | 4k tokens below 24 GiB of VRAM, more on bigger GPUs | The context window each loaded model gets |
+| `OLLAMA_NUM_PARALLEL` | 1 | Requests one model serves at the same time |
+| `OLLAMA_MAX_LOADED_MODELS` | 3 per GPU, or 3 on CPU | How many models can be loaded at once |
+| `OLLAMA_MODELS` | `~/.ollama/models` on macOS | Where blobs and manifests are stored |
+
+A request can override the context length with `options.num_ctx` and the timer with `keep_alive`.
+
+## Pitfalls
+
+- **The default context is small on most laptops.** 4k tokens fills up fast with RAG chunks or tool results. Ollama's docs suggest at least 64k for agents and coding tools, if memory allows.
+- **More context costs memory.** Memory grows with the context length times `OLLAMA_NUM_PARALLEL`. If the model no longer fits, layers spill to the CPU and speed collapses. `ollama ps` shows the split.
+- **There is no authentication.** Setting `OLLAMA_HOST=0.0.0.0` exposes the API to your whole network. Put a proxy with auth in front if others need it.
+- **The first request after idle is slow.** That is the weights loading again. Raise `keep_alive` for services that need a fast first answer.
+- **Quantized is not the same as the original.** Library models are usually quantized to fit consumer hardware. Compare quality on your task before you rely on one.
+
+## Related flows
+
+- [From prompt to next token](/learn/ai/llm-next-token) shows what the runner does for each token.
+- [Open-weight vs closed models](/learn/ai/open-vs-closed-models) helps decide when local models are the right call.
+- [Streaming a response](/learn/ai/llm-streaming) covers reading a stream like this one in an app.
+
+## Go deeper
+
+- [AI Engineer roadmap on roadmap.sh](https://roadmap.sh/ai-engineer), under Ollama
+- [Ollama API reference](https://docs.ollama.com/api)
+- [Ollama FAQ](https://docs.ollama.com/faq), for storage paths, keep-alive and concurrency
+- [Ollama context length](https://docs.ollama.com/context-length)

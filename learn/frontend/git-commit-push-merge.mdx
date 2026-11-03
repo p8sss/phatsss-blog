@@ -1,0 +1,62 @@
+---
+title: What happens on commit, push and merge
+sidebar_label: Commit, push and merge
+sidebar_position: 3
+hide_table_of_contents: true
+description: What Git stores when you commit, what travels when you push, and what a merge creates.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {gitCommitPushMerge} from '@site/src/data/learn/flows/git-commit-push-merge';
+
+# What happens on commit, push and merge
+
+**The question:** What does Git actually store, and what moves when you push?
+
+**The short answer:** Git stores snapshots as objects named by the hash of their content: blobs for files, trees for folders and commits that tie them together. A branch is just a name pointing at one commit. A push sends the objects the remote lacks, then asks it to move that name.
+
+<FlowPlayer flow={gitCommitPushMerge} />
+
+## The four kinds of object
+
+| Object | Holds | Points at |
+| --- | --- | --- |
+| Blob | The bytes of one file, with no name | Nothing |
+| Tree | One folder: names, file modes and hashes | Blobs and other trees |
+| Commit | Author, committer, time and message | One tree, and zero or more parent commits |
+| Annotated tag | A tag name, tagger and message | Usually a commit |
+
+Every object's name is the hash of its type, size and content. Git uses SHA-1 by default today. New repositories can opt into SHA-256, which is planned to become the default in Git 3.0.
+
+## See it in your own repository
+
+These plumbing commands are read-only, so they are safe to run anywhere.
+
+```bash title="Look inside .git"
+git ls-files --stage          # the index: mode, blob hash and path for each file
+git cat-file -p HEAD          # the commit: its tree, parents, author and message
+git cat-file -p 'HEAD^{tree}' # the top tree: one line per file or folder
+git rev-parse main            # the commit hash a branch points at
+git count-objects -v          # how many objects are loose and how many are packed
+```
+
+## Pitfalls
+
+- **A commit is a snapshot, not a diff.** Git shows diffs by comparing two snapshots. Storage stays small because unchanged files reuse the same blob, and packfiles compress similar objects.
+- **Amend and rebase create new commits.** The old ones are not changed, because their hashes cannot change. If you already pushed them, the remote branch has to be force-pushed.
+- **Force-pushing can delete a teammate's work from the branch.** Prefer `git push --force-with-lease`, which refuses if the remote moved since your last fetch.
+- **A pushed secret is in history.** Deleting the file in a new commit leaves the old blob reachable. Rotate the secret first, then rewrite history if you must.
+- **Your local main goes stale.** Merging on GitHub or GitLab moves the remote's main only. Run `git fetch` or `git pull` before you branch again.
+
+## Related flows
+
+- [The TLS handshake](/learn/devops/tls-handshake) shows how a push over HTTPS is encrypted.
+- [A commit becomes a deployment with Argo CD](/learn/devops/argocd-sync) picks up after the merge.
+- [GitHub Actions vs GitLab CI vs Jenkins](/learn/devops/github-actions-gitlab-jenkins) compares what runs when a push lands.
+
+## Go deeper
+
+- [Frontend roadmap on roadmap.sh](https://roadmap.sh/frontend), under Version Control
+- [Pro Git: Git objects](https://git-scm.com/book/en/v2/Git-Internals-Git-Objects)
+- [Pro Git: transfer protocols](https://git-scm.com/book/en/v2/Git-Internals-Transfer-Protocols)
+- [git merge reference](https://git-scm.com/docs/git-merge)

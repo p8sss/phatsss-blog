@@ -5,6 +5,7 @@ import {
   clipToBox,
   edgeAxis,
   edgeSegment,
+  fitLayout,
   layoutFlow,
   NARROW_METRICS,
   placeChip,
@@ -145,5 +146,22 @@ describe("edgeAxis", () => {
     assert.equal(edgeAxis({ start: from, end: { x: 200, y: 10 } }), "horizontal");
     assert.equal(edgeAxis({ start: from, end: { x: 5, y: -200 } }), "vertical");
     assert.equal(edgeAxis({ start: from, end: { x: 270, y: 170 } }), "diagonal");
+  });
+});
+
+describe("fitLayout", () => {
+  const layout = layoutFlow(row, "wide");
+
+  test("centers the diagram in a larger frame", () => {
+    const fitted = fitLayout(layout, { w: layout.width + 100, h: layout.height + 40 });
+    assert.equal(fitted.width, layout.width + 100);
+    assert.equal(fitted.height, layout.height + 40);
+    assert.deepEqual(fitted.placements.a, { x: layout.placements.a.x + 50, y: layout.placements.a.y + 20 });
+  });
+
+  test("never shrinks a diagram below its own size", () => {
+    const fitted = fitLayout(layout, { w: 10, h: 10 });
+    assert.equal(fitted.width, layout.width);
+    assert.deepEqual(fitted.placements, layout.placements);
   });
 });

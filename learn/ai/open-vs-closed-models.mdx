@@ -1,0 +1,78 @@
+---
+title: Open-weight vs closed models
+sidebar_label: Open-weight vs closed
+sidebar_position: 4
+hide_table_of_contents: true
+description: What changes in cost, privacy and control when you call a closed model API or run open weights yourself.
+---
+
+import CompareTable from '@site/src/components/learn/CompareTable';
+import {openVsClosedModels} from '@site/src/data/learn/comparisons/open-vs-closed-models';
+
+# Open-weight vs closed models
+
+**The question:** Hosted APIs or weights you run: what changes in cost, privacy and control?
+
+**The short answer:** A closed API gives you the strongest models with no infrastructure, but your prompts leave your network and the vendor controls the model's lifetime. Open weights give you control and privacy. Run them yourself only when you can keep the hardware busy, or a hosted provider can serve them for you.
+
+<CompareTable comparison={openVsClosedModels} />
+
+## Open weights are not the same as open source
+
+"Open weights" means you can download the trained parameters. It does not mean you get the training data or the training code, and it does not mean any use is allowed.
+
+- **Some licences are permissive.** gpt-oss and Gemma 4, for example, ship under Apache 2.0.
+- **Some add conditions.** The Llama 3.1 licence requires a separate licence from Meta for products with more than 700 million monthly active users, and it comes with an acceptable use policy.
+- **The Open Source Initiative's definition asks for more.** Its Open Source AI Definition requires enough information about the training data, plus the code, for someone to rebuild a similar system.
+
+Read the licence of the exact model and version you ship.
+
+## Keep the choice reversible
+
+Most model servers, including vLLM and Ollama, offer an OpenAI-compatible endpoint. If your code talks to that shape of API, switching between a closed model, a hosted open model and your own server is a configuration change.
+
+```ts title="llm-client.ts"
+import OpenAI from "openai";
+
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) throw new Error(`${name} must be set`);
+  return value;
+}
+
+const baseURL = requireEnv("LLM_BASE_URL"); // e.g. http://localhost:11434/v1 for Ollama
+const model = requireEnv("LLM_MODEL"); // e.g. gpt-oss:20b
+
+// a local server ignores the key, but the SDK requires a value
+export const llm = new OpenAI({ baseURL, apiKey: process.env.LLM_API_KEY ?? "unused" });
+
+export async function ask(question: string): Promise<string> {
+  const res = await llm.chat.completions.create({
+    model,
+    messages: [{ role: "user", content: question }],
+  });
+  return res.choices[0]?.message.content ?? "";
+}
+```
+
+Compatibility covers the common parts: chat messages, streaming and usually tools. Vendor-specific features such as prompt caching controls or thinking settings differ, so test those on each backend.
+
+## Questions to ask before choosing
+
+1. Can this data leave our network at all, under any contract? If not, the answer is self-hosting.
+2. Does an open model pass our evals for this task? Measure it. Do not assume either way.
+3. Is traffic steady enough to keep a GPU busy most of the day? If not, per-token pricing usually wins.
+4. Who will run inference servers, upgrades and on-call? That cost is easy to leave out.
+
+## Related flows
+
+- [Running a model locally with Ollama](/learn/ai/ollama-local) shows what self-hosting looks like on a laptop.
+- [RAG vs fine-tuning](/learn/ai/rag-vs-fine-tuning) covers the customisation that open weights make possible.
+- [How an eval suite gates a prompt change](/learn/ai/eval-gate) is how you answer question 2.
+
+## Go deeper
+
+- [AI Engineer roadmap on roadmap.sh](https://roadmap.sh/ai-engineer), under Choosing the Right Model
+- [The Open Source AI Definition](https://opensource.org/ai/open-source-ai-definition), Open Source Initiative
+- [Data controls in the OpenAI platform](https://developers.openai.com/api/docs/guides/your-data), an example of a closed vendor's data terms
+- [vLLM documentation](https://docs.vllm.ai/en/latest/), a widely used open-source inference server

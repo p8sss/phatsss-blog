@@ -1,0 +1,78 @@
+---
+title: The N+1 query problem
+sidebar_label: The N+1 query problem
+sidebar_position: 7
+hide_table_of_contents: true
+description: Why one page load fires a hundred queries, and how eager loading and batching collapse them into one or two.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {nPlusOne} from '@site/src/data/learn/flows/n-plus-one';
+
+# The N+1 query problem
+
+**The question:** Why does one page load fire a hundred queries, and how do you collapse them?
+
+**The short answer:** code loads a list with one query, then loads something related for each item with one more query per item. Each query is fast, but the round trips add up. Load the related rows for the whole list at once, with a join or a single `IN` query.
+
+<FlowPlayer flow={nPlusOne} />
+
+## The fix in common tools
+
+| Tool | One query per relation | One query with a join | Catch lazy loads |
+| --- | --- | --- | --- |
+| Django | `prefetch_related('author')` | `select_related('author')` | Count queries in tests |
+| Rails | `preload(:author)` | `eager_load(:author)` | `strict_loading` |
+| SQLAlchemy | `selectinload(Post.author)` | `joinedload(Post.author)` | `lazy="raise"` on the relationship |
+| Laravel | `with('author')` | A manual join | `Model::preventLazyLoading()` |
+| GraphQL servers | DataLoader per request | Query planners in some servers | Trace resolver calls |
+
+## Batching in GraphQL
+
+In GraphQL each field has its own resolver, so N+1 appears by default. DataLoader collects every `load(id)` made in the same tick and hands them to one batch function.
+
+```ts title="author-loader.ts"
+import DataLoader from 'dataloader';
+
+// `db`, `User` and `Post` stand for your data layer and types
+export function createAuthorLoader() {
+  return new DataLoader<number, User | null>(async (ids) => {
+    const users = await db.query<User>('SELECT * FROM users WHERE id = ANY($1)', [ids]);
+    const byId = new Map(users.map((user) => [user.id, user]));
+    // the result must have the same length and order as `ids`
+    return ids.map((id) => byId.get(id) ?? null);
+  });
+}
+
+type Context = {authorLoader: ReturnType<typeof createAuthorLoader>};
+
+export const resolvers = {
+  Post: {
+    // 100 posts call load() 100 times; DataLoader sends one query with the distinct ids
+    author: (post: Post, _args: unknown, ctx: Context) => ctx.authorLoader.load(post.authorId),
+  },
+};
+```
+
+Create a new loader for every request. Its cache must never serve one user's data to another.
+
+## Pitfalls
+
+- **It hides in templates.** The extra queries come from reading `post.author` in a view or serializer, far from the code that ran the first query. Watch the query count per request, not just the slowest query.
+- **Joining several lists at once.** Joining posts to comments and to tags in one query multiplies the rows: 10 comments times 5 tags is 50 rows per post. Use one query per relation instead.
+- **Huge IN lists.** Thousands of ids in one query can hit parameter limits and produce poor plans. Load in chunks, or join on the original filter.
+- **Joins and pagination.** `LIMIT 20` on a join limits joined rows, not posts. Paginate the parent query first, then load its children.
+- **Caching instead of fixing.** A cache in front of 100 queries still sends 100 cache requests. Fix the access pattern first.
+
+## Related flows
+
+- [How a B-tree index answers a query](/learn/backend/btree-index) explains why each single lookup is fast, and why that is not enough.
+- [Cache-aside with Redis](/learn/backend/cache-aside) helps once the query count is already low.
+- [REST vs GraphQL vs gRPC](/learn/backend/rest-graphql-grpc) covers why GraphQL servers meet this problem most often.
+
+## Go deeper
+
+- [Backend roadmap on roadmap.sh](https://roadmap.sh/backend), under More about Databases
+- [Rails guide: eager loading associations](https://guides.rubyonrails.org/active_record_querying.html#eager-loading-associations)
+- [GraphQL: performance and the N+1 problem](https://graphql.org/learn/performance/)
+- [DataLoader](https://github.com/graphql/dataloader)

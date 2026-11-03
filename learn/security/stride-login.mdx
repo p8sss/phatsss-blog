@@ -1,0 +1,58 @@
+---
+title: STRIDE on a login form
+sidebar_label: STRIDE on a login form
+sidebar_position: 16
+hide_table_of_contents: true
+description: A worked threat model of one feature, walking a login request through all six STRIDE categories.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {strideLogin} from '@site/src/data/learn/flows/stride-login';
+
+# STRIDE on a login form
+
+**The question:** what does a threat model of one feature actually look like?
+
+**The short answer:** draw how a login request moves between the browser, the API, the database and the logs, and mark where it crosses a trust boundary. Then ask the six STRIDE questions at each step. Every answer becomes either a mitigation ticket or a risk you knowingly accept.
+
+<FlowPlayer flow={strideLogin} />
+
+## The six questions
+
+| Letter | Threat | Property it breaks | On this login form |
+| --- | --- | --- | --- |
+| S | Spoofing | Authentication | Credential stuffing, session fixation |
+| T | Tampering | Integrity | Changed request in transit, SQL injection |
+| R | Repudiation | Non-repudiation | "It wasn't me" with no log to prove otherwise |
+| I | Information disclosure | Confidentiality | Leaked hashes, account enumeration through errors or timing |
+| D | Denial of service | Availability | Locking out real users, flooding the expensive hash |
+| E | Elevation of privilege | Authorization | Trusting a role sent by the client |
+
+## Running one in an hour
+
+The OWASP cheat sheet frames every threat model as four questions. For one feature, that fits in a meeting:
+
+1. **What are we working on?** Sketch the data flow on a whiteboard. Mark trust boundaries: browser to API, API to database.
+2. **What can go wrong?** Walk each element and each flow through the six letters. Write everything down, even the unlikely.
+3. **What are we going to do about it?** Mitigate, accept, transfer or remove the feature. Give each mitigation an owner.
+4. **Did we do a good enough job?** Check that the tickets were done, and test them. Redo the model when the feature changes.
+
+## Pitfalls
+
+- **Modeling the whole system at once.** It never finishes. Model one feature or one change, close to when it is designed.
+- **Stopping at the list.** A threat model is only useful if its findings become tickets with owners.
+- **Only modeling outside attackers.** STRIDE applies to insiders, compromised services and your own admins too.
+- **Forgetting the boring flows.** Password reset and account recovery often bypass the protections the main login has.
+
+## Related flows
+
+- [STRIDE vs PASTA](/learn/security/stride-vs-pasta) compares this method with a heavier, risk-centric one.
+- [Password login with bcrypt](/learn/security/password-hashing) shows the hashing step in detail.
+- [SQL injection, and the query that stops it](/learn/security/sql-injection) expands the tampering threat on the database query.
+- [Passkey login with WebAuthn](/learn/security/passkey-webauthn) removes credential stuffing and phishing from the picture.
+
+## Go deeper
+
+- [Security roadmap on roadmap.sh](https://roadmap.sh/devsecops), under Threat Modeling
+- [OWASP Threat Modeling Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Threat_Modeling_Cheat_Sheet.html)
+- [OWASP Authentication Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html)

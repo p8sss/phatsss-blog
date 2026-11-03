@@ -1,0 +1,137 @@
+import type { FlowDefinition } from "../../../lib/flow/types";
+
+/** Backend roadmap → More about Databases. */
+export const nPlusOne: FlowDefinition = {
+  id: "n-plus-one",
+  title: "One page, 101 queries, then 2",
+  actors: [
+    { id: "browser", label: "Browser", sublabel: "blog reader", kind: "client", col: 0, row: 0 },
+    { id: "app", label: "App server", sublabel: "ORM code", kind: "server", col: 1, row: 0 },
+    { id: "db", label: "Database", sublabel: "posts + users", kind: "database", col: 2, row: 0 },
+  ],
+  steps: [
+    {
+      id: "request",
+      from: "browser",
+      to: "app",
+      title: "Request the post list",
+      payload: "GET /posts",
+      detail: "The page shows 100 posts, each with its author's name.",
+    },
+    {
+      id: "posts",
+      from: "app",
+      to: "db",
+      title: "Load the posts",
+      payload: "SELECT * FROM posts LIMIT 100",
+      detail: "This is the 1 in N+1. One query, one round trip.",
+    },
+    {
+      id: "posts-rows",
+      from: "db",
+      to: "app",
+      title: "Return 100 posts",
+      payload: "100 rows with author_id",
+      variant: "response",
+      detail: "Each row holds an author_id, but not the author's name.",
+    },
+    {
+      id: "author-1",
+      from: "app",
+      to: "db",
+      title: "Load the first author",
+      payload: "SELECT * FROM users WHERE id = 7",
+      detail:
+        "The template reads post.author. A lazy-loading ORM fetches it right there, with its own query.",
+    },
+    {
+      id: "author-1-row",
+      from: "db",
+      to: "app",
+      title: "Return one user",
+      payload: "{ id: 7, name: 'Ana' }",
+      variant: "response",
+      detail: "Fast on its own. A primary-key lookup takes well under a millisecond inside the database.",
+    },
+    {
+      id: "authors-rest",
+      from: "app",
+      to: "db",
+      title: "Repeat for every post",
+      payload: "… WHERE id = ? × 99 more",
+      detail:
+        "The loop runs once per post. That is the N: 100 more queries, each waiting a full network round trip before the next one starts.",
+    },
+    {
+      id: "authors-rest-rows",
+      from: "db",
+      to: "app",
+      title: "99 more answers",
+      payload: "99 round trips later",
+      variant: "response",
+      detail:
+        "Many of them fetch the same author again. The cost grows with page size, and each query holds a pooled connection while it runs.",
+    },
+    {
+      id: "slow-response",
+      from: "app",
+      to: "browser",
+      title: "Respond, slowly",
+      payload: "200 after 101 queries",
+      variant: "response",
+      detail:
+        "In development the database is local and this feels fine. In production a 1 ms round trip becomes 100 ms of pure waiting.",
+    },
+    {
+      id: "fix",
+      from: "app",
+      title: "Batch the related loads",
+      payload: "authorIds = [7, 12, 31, …]",
+      detail:
+        "The fix is to load the posts first, collect every author id, then fetch all the authors in one query. ORMs call this eager loading.",
+    },
+    {
+      id: "posts-again",
+      from: "app",
+      to: "db",
+      title: "Load the posts",
+      payload: "SELECT * FROM posts LIMIT 100",
+      detail: "The first query does not change.",
+    },
+    {
+      id: "posts-again-rows",
+      from: "db",
+      to: "app",
+      title: "Return 100 posts",
+      payload: "100 rows with author_id",
+      variant: "response",
+      detail: "The app now reads the author ids from these rows before rendering anything.",
+    },
+    {
+      id: "authors-batch",
+      from: "app",
+      to: "db",
+      title: "Load all authors at once",
+      payload: "WHERE id IN (7, 12, 31, …)",
+      detail: "One query with the distinct ids. The primary-key index answers each id as a quick lookup.",
+    },
+    {
+      id: "authors-batch-rows",
+      from: "db",
+      to: "app",
+      title: "Return each author once",
+      payload: "41 distinct users",
+      variant: "response",
+      detail: "The app puts them in a map by id and attaches each one to its posts in memory.",
+    },
+    {
+      id: "fast-response",
+      from: "app",
+      to: "browser",
+      title: "Respond after two queries",
+      payload: "200 after 2 queries",
+      variant: "response",
+      detail: "Two round trips, however many posts are on the page. A join would do it in one.",
+    },
+  ],
+};

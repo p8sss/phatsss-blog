@@ -1,0 +1,99 @@
+---
+title: Terraform plan and apply
+sidebar_label: Terraform plan and apply
+sidebar_position: 5
+hide_table_of_contents: true
+description: How Terraform reads state, refreshes real resources, diffs them against your config and applies the result.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {terraformPlanApply} from '@site/src/data/learn/flows/terraform-plan-apply';
+
+# Terraform plan and apply
+
+**The question:** How does Terraform turn a config file into real infrastructure?
+
+**The short answer:** Terraform compares three things: your config, its saved state, and what really exists in the cloud. Plan works out the changes that close the gap. Apply makes them through provider plugins, then writes the new state.
+
+<FlowPlayer flow={terraformPlanApply} />
+
+## Three views of the same infrastructure
+
+| View | Where it lives | What it tells Terraform |
+| --- | --- | --- |
+| Config | Your `.tf` files in Git | What you want |
+| State | The backend, here an S3 object | What Terraform created and its real ids |
+| Real infrastructure | The cloud provider | What actually exists right now |
+
+Plan refreshes state from the real infrastructure, then diffs it against the config. Without state, Terraform could not tell which bucket in your account is `aws_s3_bucket.logs`.
+
+## A minimal setup
+
+```hcl title="main.tf"
+terraform {
+  required_version = ">= 1.11"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 6.0"
+    }
+  }
+
+  backend "s3" {
+    bucket       = "example-tfstate"
+    key          = "shop/prod.tfstate"
+    region       = "us-east-1"
+    use_lockfile = true # S3-native locking, no DynamoDB table needed
+  }
+}
+
+provider "aws" {
+  region = "us-east-1"
+}
+
+resource "aws_s3_bucket" "logs" {
+  bucket = "logs-example"
+  tags   = {team = "platform"} # the console edit set "ops", so plan shows ~1 to change
+}
+
+resource "aws_sqs_queue" "orders" {
+  name = "orders" # not in state yet, so plan shows +1 to add
+}
+```
+
+```bash title="terminal"
+terraform init
+terraform plan -out=tfplan
+terraform apply tfplan
+```
+
+## Useful plan modes
+
+| Command | What it does |
+| --- | --- |
+| `terraform plan` | Refresh, diff and show the changes. Changes nothing. |
+| `terraform plan -out=tfplan` | Save the plan so apply runs exactly what you reviewed. |
+| `terraform plan -refresh-only` | Plan only the state updates that match reality. Shows drift without changing infrastructure. |
+| `terraform plan -refresh=false` | Skip the refresh. Faster, but blind to changes made outside Terraform. |
+| `terraform plan -destroy` | Show what destroying everything would remove. |
+
+## Pitfalls
+
+- **Applying an unsaved plan in CI.** A plain `terraform apply` plans again. If someone merged in between, it may do more than the plan you reviewed. Apply the saved file.
+- **Secrets in state and plan files.** Both can hold sensitive values in plain text. Encrypt the backend, restrict who can read it, and treat `tfplan` as a secret.
+- **Editing state by hand.** Use `terraform state mv`, `moved` blocks or `import` blocks instead.
+- **Forcing an unlock too early.** `terraform force-unlock` is for a lock left behind by a crashed run, never one held by a run still going.
+- **Changes in the console.** Every manual change becomes drift that the next plan will try to undo.
+
+## Related flows
+
+- [A commit becomes a deployment with Argo CD](/learn/devops/argocd-sync) shows the same desired-state diff, run continuously inside a cluster.
+- [GitHub Actions vs GitLab CI vs Jenkins](/learn/devops/github-actions-gitlab-jenkins) compares the pipelines that usually run plan and apply.
+
+## Go deeper
+
+- [DevOps roadmap on roadmap.sh](https://roadmap.sh/devops), under Provisioning
+- [terraform plan command reference](https://developer.hashicorp.com/terraform/cli/commands/plan)
+- [terraform apply command reference](https://developer.hashicorp.com/terraform/cli/commands/apply)
+- [S3 backend configuration](https://developer.hashicorp.com/terraform/language/backend/s3)

@@ -1,0 +1,140 @@
+import type { FlowDefinition } from "../../../lib/flow/types";
+
+/** AI Engineer roadmap → Model Context Protocol (MCP). */
+export const mcpToolCall: FlowDefinition = {
+  id: "mcp-tool-call",
+  title: "From connecting an MCP server to one tool call",
+  actors: [
+    { id: "user", label: "User", sublabel: "in the chat", kind: "client", col: 0, row: 0 },
+    { id: "host", label: "Host", sublabel: "chat app or IDE", kind: "server", col: 1, row: 0 },
+    { id: "model", label: "Model", sublabel: "LLM API", kind: "model", col: 2, row: 0 },
+    { id: "client", label: "MCP client", sublabel: "one per server", kind: "service", col: 1, row: 1 },
+    { id: "server", label: "MCP server", sublabel: "issue tracker", kind: "external", col: 2, row: 1 },
+  ],
+  steps: [
+    {
+      id: "connect",
+      from: "host",
+      to: "client",
+      title: "Start a client for a configured server",
+      payload: "stdio: npx issues-server",
+      detail:
+        "The host runs one MCP client per server. A local server is a subprocess speaking over stdio. A remote one is a URL using Streamable HTTP.",
+    },
+    {
+      id: "discover",
+      from: "client",
+      to: "server",
+      title: "Discover the server",
+      payload: "server/discover",
+      detail:
+        "The 2026-07-28 revision has no initialize handshake, and this first call is optional. Every request carries its protocol version and client capabilities in _meta.",
+    },
+    {
+      id: "discovered",
+      from: "server",
+      to: "client",
+      title: "Versions and capabilities",
+      payload: 'versions + { tools: {} }',
+      variant: "response",
+      detail: "The server lists the protocol versions it supports and says it offers tools. It may add instructions for the model.",
+    },
+    {
+      id: "list",
+      from: "client",
+      to: "server",
+      title: "Ask for the tools",
+      payload: "tools/list",
+      detail: "A JSON-RPC request. Long lists are paginated with a cursor.",
+    },
+    {
+      id: "tools",
+      from: "server",
+      to: "client",
+      title: "Return tool definitions",
+      payload: "[search_issues, create_issue]",
+      variant: "response",
+      detail:
+        "Each tool has a name, a description and an inputSchema in JSON Schema. The host may prefix names so two servers' tools never clash.",
+    },
+    {
+      id: "ask",
+      from: "user",
+      to: "host",
+      title: "Ask a question",
+      payload: "Any open bugs about login?",
+      detail: "The user does not need to know which server can answer.",
+    },
+    {
+      id: "prompt",
+      from: "host",
+      to: "model",
+      title: "Send the prompt with the tools",
+      payload: "tools: [search_issues, …]",
+      detail:
+        "The host converts MCP tool definitions into the model API's function format. The model never talks MCP itself.",
+    },
+    {
+      id: "tool-use",
+      from: "model",
+      to: "host",
+      title: "The model picks a tool",
+      payload: 'search_issues {q: "login"}',
+      variant: "response",
+      detail: "An ordinary function call, as far as the model knows.",
+    },
+    {
+      id: "consent",
+      from: "host",
+      to: "user",
+      title: "Ask before running it",
+      payload: "Allow search_issues?",
+      detail:
+        "Tools can run arbitrary code. The spec says a human should be able to see and deny tool calls. The user clicks Allow.",
+    },
+    {
+      id: "call",
+      from: "client",
+      to: "server",
+      title: "Call the tool",
+      payload: "tools/call search_issues",
+      detail: "The host hands the call to the client that owns this server, which sends it as JSON-RPC.",
+    },
+    {
+      id: "result",
+      from: "server",
+      to: "client",
+      title: "Return the result",
+      payload: 'content: [{type: "text", …}]',
+      variant: "response",
+      detail:
+        "Results come back as content blocks, and optionally structuredContent. A failure inside the tool comes back with isError: true so the model can react.",
+    },
+    {
+      id: "tool-result",
+      from: "host",
+      to: "model",
+      title: "Pass the result to the model",
+      payload: "tool_result: 3 issues",
+      detail: "The host turns the MCP result back into the model API's tool result format.",
+    },
+    {
+      id: "answer",
+      from: "model",
+      to: "host",
+      title: "Write the answer",
+      payload: '"3 open bugs: #81, #94, #97"',
+      variant: "response",
+      detail: "Text again, so the turn ends.",
+    },
+    {
+      id: "reply",
+      from: "host",
+      to: "user",
+      title: "Show the answer",
+      payload: "3 open login bugs",
+      variant: "response",
+      detail: "The same server now works in any host that speaks MCP, with no custom integration.",
+    },
+  ],
+};

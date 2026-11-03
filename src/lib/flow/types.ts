@@ -11,7 +11,13 @@ export type ActorKind =
   | "cache"
   | "queue"
   | "service"
-  | "external";
+  | "external"
+  /** A language model, hosted or local. */
+  | "model"
+  /** Someone acting in bad faith, in security flows. */
+  | "attacker"
+  /** A control that inspects or stops traffic: WAF, API gateway, rate limiter. */
+  | "guard";
 
 export interface FlowActor {
   readonly id: string;

@@ -54,8 +54,13 @@ function TopicStatus({ topic, roadmapHref }: { readonly topic: LearnTopic; reado
   );
 }
 
-function TopicCard({ topic, roadmapHref }: { readonly topic: LearnTopic; readonly roadmapHref: string }) {
+function TopicCard({ topic, roadmapHref, roadmapTitles }: {
+  readonly topic: LearnTopic;
+  readonly roadmapHref: string;
+  readonly roadmapTitles: Readonly<Record<string, string>>;
+}) {
   const Icon = FORMAT_ICON[topic.format];
+  const borrowedFrom = topic.crossListFrom ? roadmapTitles[topic.crossListFrom] ?? topic.crossListFrom : null;
   const body = (
     <>
       <span className="flex items-center justify-between gap-3">
@@ -67,6 +72,11 @@ function TopicCard({ topic, roadmapHref }: { readonly topic: LearnTopic; readonl
       </span>
       <span className="text-base font-semibold leading-snug text-foreground">{topic.title}</span>
       <span className="text-sm leading-relaxed text-muted-foreground">{topic.question}</span>
+      {borrowedFrom && (
+        <span className="text-xs font-medium text-muted-foreground">
+          {translate({ id: "learn.topic.sharedFrom", message: "Shared from {roadmap}" }, { roadmap: borrowedFrom })}
+        </span>
+      )}
     </>
   );
   if (topic.to) {
@@ -86,7 +96,11 @@ function TopicCard({ topic, roadmapHref }: { readonly topic: LearnTopic; readonl
 }
 
 /** One roadmap as a vertical path: numbered sections on a spine, picked topics beside each. */
-export default function TopicIndex({ roadmap }: { readonly roadmap: Roadmap }): JSX.Element {
+export default function TopicIndex({ roadmap, roadmapTitles = {} }: {
+  readonly roadmap: Roadmap;
+  /** Titles by roadmap id, to name the roadmap a cross-listed topic comes from. */
+  readonly roadmapTitles?: Readonly<Record<string, string>>;
+}): JSX.Element {
   return (
     // div + list roles: the prose styles underline every link inside an <li>,
     // which would underline the whole topic card
@@ -114,7 +128,7 @@ export default function TopicIndex({ roadmap }: { readonly roadmap: Roadmap }): 
                 {section.title}
               </span>
               {section.topics.map((topic) => (
-                <TopicCard key={topic.id} topic={topic} roadmapHref={roadmap.href} />
+                <TopicCard key={topic.id} topic={topic} roadmapHref={roadmap.href} roadmapTitles={roadmapTitles} />
               ))}
             </div>
           </div>

@@ -1,0 +1,77 @@
+---
+title: 'React: render, reconcile, commit'
+sidebar_label: 'React: render and commit'
+sidebar_position: 5
+hide_table_of_contents: true
+description: What React does between a setState call and the DOM changing, phase by phase.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {reactRenderCommit} from '@site/src/data/learn/flows/react-render-commit';
+
+# React: render, reconcile, commit
+
+**The question:** What happens between setState and the DOM changing?
+
+**The short answer:** setState only queues an update. React then renders by calling your components, compares the result with the previous tree, and commits the smallest set of DOM changes in one pass. Layout effects run before the browser paints. Regular effects usually run after paint, but for a click React may run them first.
+
+<FlowPlayer flow={reactRenderCommit} />
+
+## The phases at a glance
+
+| Phase | What React does | Can it be interrupted? | Your code that runs |
+| --- | --- | --- | --- |
+| Trigger | Queues the update and schedules a render | Not applicable | The event handler that called setState |
+| Render | Calls components and diffs the new elements | Yes, for transitions and other concurrent updates | Component bodies, which must be pure |
+| Commit | Writes DOM changes and attaches refs | No | Ref callbacks and `useLayoutEffect` |
+| Passive effects | Runs effects after the commit | Not applicable | `useEffect` setup and cleanup |
+
+## Watch the order yourself
+
+```tsx title="Counter.tsx"
+import {useEffect, useLayoutEffect, useState} from 'react';
+
+export function Counter() {
+  const [count, setCount] = useState(0);
+  console.log('render', count);
+
+  useLayoutEffect(() => {
+    console.log('layout effect', count);
+  }, [count]);
+
+  useEffect(() => {
+    console.log('effect', count);
+  }, [count]);
+
+  function handleClick() {
+    setCount((c) => c + 1);
+    console.log('handler still sees', count);
+  }
+
+  return <button onClick={handleClick}>Count: {count}</button>;
+}
+```
+
+One click logs `handler still sees 0`, then `render 1`, `layout effect 1` and `effect 1`. In development, Strict Mode calls the component twice per render to catch impure code, so `render 1` can appear twice.
+
+## Pitfalls
+
+- **Reading state right after setting it.** The handler keeps the value from its own render. Use an updater function such as `c => c + 1`, or compute the next value once and reuse it.
+- **Side effects during render.** Fetching, subscribing or mutating outside variables in a component body breaks when React renders twice or throws a render away. Move that work into an event handler or an effect.
+- **Unstable keys.** Using the array index as a key lets state follow the position, not the item, when the list is reordered. Use an id from your data.
+- **Defining a component inside another.** Each render creates a new component type, so React remounts it and loses its state.
+- **Mutating state in place.** React compares old and new state with `Object.is`. Mutating an object keeps the same reference, so React may skip the render. Create a new object.
+- **Rendering more than you need.** A parent's render re-renders its children by default. React Compiler, stable since October 2025, memoizes components and values automatically once you enable it, so you rarely need `memo` and `useMemo` by hand.
+
+## Related flows
+
+- [Server rendering and hydration](/learn/frontend/ssr-hydration) shows the first render happening on the server instead.
+- [How a browser renders a page](/learn/frontend/browser-rendering) explains the style, layout and paint work after the commit.
+- [The event loop](/learn/frontend/event-loop) explains when the click handler and effects get their turn.
+
+## Go deeper
+
+- [Frontend roadmap on roadmap.sh](https://roadmap.sh/frontend), under Learn a Framework
+- [React: render and commit](https://react.dev/learn/render-and-commit)
+- [React: preserving and resetting state](https://react.dev/learn/preserving-and-resetting-state)
+- [React: useLayoutEffect](https://react.dev/reference/react/useLayoutEffect)

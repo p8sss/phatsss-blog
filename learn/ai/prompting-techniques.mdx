@@ -1,0 +1,76 @@
+---
+title: Zero-shot, few-shot and chain of thought
+sidebar_label: Zero-shot, few-shot, CoT
+sidebar_position: 2
+hide_table_of_contents: true
+description: What zero-shot, few-shot and chain-of-thought prompts are, what each costs, and which task each one fits.
+---
+
+import CompareTable from '@site/src/components/learn/CompareTable';
+import {promptingTechniques} from '@site/src/data/learn/comparisons/prompting-techniques';
+
+# Zero-shot, few-shot and chain of thought
+
+**The question:** Which prompting technique fits which task?
+
+**The short answer:** Start zero-shot with clear instructions. Add a few examples when the output must match a precise format or style. Ask for reasoning, or turn on a model's built-in thinking, when the task has several steps that depend on each other.
+
+<CompareTable comparison={promptingTechniques} />
+
+## One task, three prompts
+
+The task: label a support ticket. Each version adds something the previous one lacked.
+
+```text title="zero-shot.txt"
+Classify the support ticket as one of: billing, bug, feature_request.
+Reply with the label only.
+
+Ticket: I was charged twice for March.
+```
+
+```text title="few-shot.txt"
+Classify the support ticket as one of: billing, bug, feature_request.
+Reply with the label only.
+
+<examples>
+<example>Ticket: The export button does nothing in Safari.
+Label: bug</example>
+<example>Ticket: Could you add a dark mode?
+Label: feature_request</example>
+<example>Ticket: Why did my invoice go up this month?
+Label: billing</example>
+</examples>
+
+Ticket: I was charged twice for March.
+```
+
+```text title="chain-of-thought.txt"
+A customer on the annual plan upgraded from 5 to 8 seats on day 120 of 365.
+Seats cost $10 per month each. How much should the prorated charge be?
+
+Work through the calculation step by step first.
+Then give only the final amount inside <answer> tags.
+```
+
+The first two are a good fit for classification. The third needs several dependent steps, which is where reasoning pays off. On a model with built-in thinking, drop the "step by step" line and turn thinking on.
+
+## A working order
+
+1. **Write a clear zero-shot prompt.** State the task, the constraints and the exact output format.
+2. **Build a small test set.** Twenty real inputs with known answers tell you more than intuition.
+3. **Add examples only for failures you can see.** Make them diverse, so the model learns the rule and not one example's wording.
+4. **Add reasoning only for multi-step failures.** Measure whether accuracy improves enough to pay for the extra tokens and latency.
+5. **Re-test after a model change.** A technique that helped one model can be unnecessary, or harmful, on the next.
+
+## Related flows
+
+- [From prompt to next token](/learn/ai/llm-next-token) shows why reasoning tokens cost output time.
+- [What fills the context window](/learn/ai/context-window) shows where examples sit in the request.
+- [How an eval suite gates a prompt change](/learn/ai/eval-gate) turns step 2 into an automated check.
+
+## Go deeper
+
+- [AI Engineer roadmap on roadmap.sh](https://roadmap.sh/ai-engineer), under Prompt Engineering
+- [Claude prompting best practices](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices), Anthropic docs
+- [Reasoning best practices](https://developers.openai.com/api/docs/guides/reasoning-best-practices), OpenAI docs
+- [Chain-of-Thought Prompting Elicits Reasoning in Large Language Models](https://arxiv.org/abs/2201.11903), Wei et al.

@@ -1,0 +1,72 @@
+---
+title: Single sign-on with OIDC
+sidebar_label: Single sign-on with OIDC
+sidebar_position: 15
+hide_table_of_contents: true
+description: How one login at an OpenID Provider signs a user in to many apps, and what each app must check.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {oidcSso} from '@site/src/data/learn/flows/oidc-sso';
+
+# Single sign-on with OIDC
+
+**The question:** how does one login work across many apps?
+
+**The short answer:** every app sends the user to the same OpenID Provider, the IdP. The first time, the user signs in and the IdP sets its own session cookie. After that, each app's redirect finds that session, so the IdP issues a code without asking again, and each app gets its own ID token and session.
+
+<FlowPlayer flow={oidcSso} />
+
+## OAuth and OIDC are not the same thing
+
+| | OAuth 2.0 | OpenID Connect |
+| --- | --- | --- |
+| Answers | What may this app access? | Who is this user? |
+| Main token | Access token, for an API | ID token, for the app itself |
+| Token audience | The resource server | The app's client id |
+| Signal to request it | Any scope | The `openid` scope |
+| Extra endpoints | Authorize, token | Discovery, JWKS, UserInfo, logout |
+
+OIDC is a thin identity layer on OAuth's authorization code flow. That is why the redirects look the same as in the OAuth PKCE flow.
+
+## Verifying the ID token
+
+```ts title="verify-id-token.ts"
+import {createRemoteJWKSet, jwtVerify} from 'jose';
+
+const ISSUER = 'https://login.example.com';
+const CLIENT_ID = 'mail-app';
+// take jwks_uri from the IdP's /.well-known/openid-configuration document
+const jwks = createRemoteJWKSet(new URL('https://login.example.com/oauth2/jwks'));
+
+export async function verifyIdToken(idToken: string, expectedNonce: string) {
+  // checks the signature, iss, aud, exp and nbf
+  const {payload} = await jwtVerify(idToken, jwks, {
+    issuer: ISSUER,
+    audience: CLIENT_ID,
+    algorithms: ['RS256', 'ES256'],
+  });
+  // the nonce ties this token to the login request this browser started
+  if (payload.nonce !== expectedNonce) throw new Error('nonce mismatch');
+  return {userId: `${payload.iss}|${payload.sub}`};
+}
+```
+
+## Pitfalls
+
+- **Keying users by email.** Emails change and can be reassigned. The stable identifier is the pair of `iss` and `sub`.
+- **Skipping the audience check.** An ID token minted for another app on the same IdP is still validly signed. Only `aud` tells you it was meant for you.
+- **Using the ID token to call APIs.** APIs should accept access tokens with their own audience, not ID tokens.
+- **Assuming logout is single too.** Ending one app's session leaves the IdP session and the other apps alive. Use RP-initiated logout to end the IdP session, and back-channel logout so the IdP can tell each app to drop its session.
+
+## Related flows
+
+- [OAuth login with PKCE](/learn/frontend/oauth-pkce) is the same redirect dance, seen from a single browser app.
+- [JWT authentication](/learn/backend/jwt-authentication) shows how a signed token like the ID token is checked.
+- [Sessions vs JWT vs opaque tokens](/learn/security/sessions-jwt-opaque) helps choose what each app issues after login.
+
+## Go deeper
+
+- [Security roadmap on roadmap.sh](https://roadmap.sh/devsecops), under Identity Basics
+- [OpenID Connect Core 1.0](https://openid.net/specs/openid-connect-core-1_0.html)
+- [OpenID Connect Back-Channel Logout 1.0](https://openid.net/specs/openid-connect-backchannel-1_0.html)

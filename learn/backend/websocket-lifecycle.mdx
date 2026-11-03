@@ -1,0 +1,116 @@
+---
+title: A WebSocket from upgrade to message
+sidebar_label: WebSocket lifecycle
+sidebar_position: 10
+hide_table_of_contents: true
+description: How an HTTP request becomes a two-way WebSocket connection, carries frames, stays alive and closes.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {websocketLifecycle} from '@site/src/data/learn/flows/websocket-lifecycle';
+
+# A WebSocket from upgrade to message
+
+**The question:** How does an HTTP request turn into a two-way connection?
+
+**The short answer:** the browser sends an ordinary HTTP GET asking to upgrade. The server answers `101 Switching Protocols`, and from then on the same TCP connection carries small WebSocket frames in both directions. Either side can send at any time until one of them sends a close frame.
+
+<FlowPlayer flow={websocketLifecycle} />
+
+## The handshake on the wire
+
+This is the sample key from RFC 6455. The accept value is the base64 SHA-1 of the key joined to the fixed GUID `258EAFA5-E914-47DA-95CA-C5AB0DC85B11`.
+
+```http title="handshake.http"
+GET /ws HTTP/1.1
+Host: chat.example.com
+Upgrade: websocket
+Connection: Upgrade
+Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==
+Sec-WebSocket-Version: 13
+Origin: https://chat.example.com
+
+HTTP/1.1 101 Switching Protocols
+Upgrade: websocket
+Connection: Upgrade
+Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
+```
+
+## A server in code
+
+This uses the `ws` package for Node.js. It rejects unknown origins before the upgrade and drops peers that stop answering pings.
+
+```ts title="ws-server.ts"
+import {createServer} from 'node:http';
+import WebSocket, {WebSocketServer} from 'ws';
+
+// `logger` stands for your logger
+const ALLOWED_ORIGINS = new Set(['https://chat.example.com']);
+const HEARTBEAT_MS = 30_000;
+
+const server = createServer();
+const wss = new WebSocketServer({noServer: true});
+const alive = new WeakMap<WebSocket, boolean>();
+
+function onSocketError(err: Error) {
+  logger.warn({err}, 'socket error during upgrade');
+}
+
+server.on('upgrade', (req, socket, head) => {
+  socket.on('error', onSocketError);
+  if (!ALLOWED_ORIGINS.has(req.headers.origin ?? '')) {
+    socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
+    socket.destroy();
+    return;
+  }
+  socket.removeListener('error', onSocketError);
+  wss.handleUpgrade(req, socket, head, (ws) => wss.emit('connection', ws, req));
+});
+
+wss.on('connection', (ws) => {
+  alive.set(ws, true);
+  ws.on('pong', () => alive.set(ws, true));
+  ws.on('error', (err) => logger.warn({err}, 'websocket error'));
+  ws.on('message', (data, isBinary) => {
+    // this server's clients only; publish to a broker to reach other servers
+    for (const client of wss.clients) {
+      if (client.readyState === WebSocket.OPEN) client.send(data, {binary: isBinary});
+    }
+  });
+});
+
+const heartbeat = setInterval(() => {
+  for (const ws of wss.clients) {
+    if (!alive.get(ws)) {
+      ws.terminate(); // no pong since the last ping
+      continue;
+    }
+    alive.set(ws, false);
+    ws.ping();
+  }
+}, HEARTBEAT_MS);
+
+wss.on('close', () => clearInterval(heartbeat));
+server.listen(8080);
+```
+
+## Pitfalls
+
+- **Proxies that drop the upgrade.** `Upgrade` and `Connection` are hop-by-hop headers. Each reverse proxy must be told to pass them on, and to allow long idle times.
+- **No Origin check.** Browsers send cookies with the handshake and CORS does not apply. Check `Origin`, or authenticate with a short-lived token in the first message.
+- **Expecting reconnects for free.** The browser API never reconnects. Reconnect with backoff and jitter, and resume from the last message id you saw.
+- **State that lives on one server.** Connections stick to one process. Broadcasts need a broker, and deploys must drain sockets so thousands of clients do not reconnect at the same moment.
+- **No backpressure in the browser API.** `WebSocket` has no way to slow the sender down. Watch `bufferedAmount` before sending more, and keep messages small.
+
+## Related flows
+
+- [WebSockets vs SSE vs long polling](/learn/backend/websockets-sse-polling) helps decide whether you need a WebSocket at all.
+- [The TLS handshake](/learn/devops/tls-handshake) runs first on every `wss://` connection.
+- [Reverse proxy and load balancer](/learn/devops/reverse-proxy-load-balancer) is where upgrades usually break.
+
+## Go deeper
+
+- [Backend roadmap on roadmap.sh](https://roadmap.sh/backend), under Real-Time Data
+- [RFC 6455, the WebSocket protocol](https://www.rfc-editor.org/rfc/rfc6455)
+- [The WebSocket API on MDN](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API)
+- [ws, a WebSocket library for Node.js](https://github.com/websockets/ws)

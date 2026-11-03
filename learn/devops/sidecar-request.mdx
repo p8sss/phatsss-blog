@@ -1,0 +1,88 @@
+---
+title: What a sidecar does to one request
+sidebar_label: Service mesh sidecar
+sidebar_position: 12
+hide_table_of_contents: true
+description: How Istio's Envoy sidecars intercept, encrypt, authorize and measure one call between two services.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {sidecarRequest} from '@site/src/data/learn/flows/sidecar-request';
+
+# What a sidecar does to one request
+
+**The question:** What happens to a call between two services in a mesh?
+
+**The short answer:** A proxy in each pod catches the call on both ends. The caller's proxy picks an endpoint and opens mutual TLS to the callee's proxy. The callee's proxy checks policy and hands the request to the app. Both record metrics on the way.
+
+<FlowPlayer flow={sidecarRequest} />
+
+## What the mesh adds, and what it costs
+
+| You get | Without changing app code? | The price |
+| --- | --- | --- |
+| Mutual TLS and workload identity | Yes | Certificates to manage, handled by istiod |
+| Identity-based authorization | Yes | Policies to write and review |
+| Retries, timeouts, traffic splitting | Yes | Hidden retries can multiply load |
+| Request metrics for every service | Yes | More series in Prometheus |
+| Distributed traces | Partly. Apps must forward trace headers | Spans to store |
+
+Every feature rides on the same cost: an extra proxy hop on each side of every call, plus CPU and memory in every pod.
+
+## Allowing only one caller
+
+```yaml title="orders-authz.yaml"
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: orders-allow-web
+  namespace: shop
+spec:
+  selector:
+    matchLabels:
+      app: orders
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            principals: ["cluster.local/ns/shop/sa/web"]
+      to:
+        - operation:
+            methods: ["GET"]
+---
+apiVersion: security.istio.io/v1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: shop
+spec:
+  mtls:
+    mode: STRICT
+```
+
+Once an ALLOW policy selects a workload, any request it does not match is denied. `STRICT` refuses plaintext. The default, `PERMISSIVE`, accepts both mutual TLS and plaintext, which helps during a migration.
+
+## Pitfalls
+
+- **Retries on top of retries.** Istio retries failed HTTP requests twice by default. If the app also retries, one failure can turn into many calls.
+- **No timeout by default.** Istio leaves the HTTP request timeout off. Set timeouts per route so a slow service cannot pin every caller.
+- **Startup races.** An app that calls out before its proxy is ready fails. Running the proxy as a Kubernetes native sidecar, or setting `holdApplicationUntilProxyStarts`, fixes this.
+- **Broken traces.** The proxies create spans, but only the app can copy `traceparent` and `x-request-id` from an incoming request to its outgoing ones.
+- **Ports the proxy owns.** Ports such as 15001, 15006 and 15090 belong to the proxy. Do not run your app on them.
+
+## Without sidecars
+
+Istio's ambient mode, generally available since Istio 1.24, drops the per-pod proxy. A shared node proxy called ztunnel handles mutual TLS and layer 4 policy. Optional waypoint proxies add layer 7 features where you need them. Sidecar mode remains fully supported.
+
+## Related flows
+
+- [The TLS handshake](/learn/devops/tls-handshake) shows the handshake the two proxies perform, with both sides presenting certificates.
+- [Reverse proxy and load balancer](/learn/devops/reverse-proxy-load-balancer) shows the same proxy ideas at the edge of a system.
+- [From a Prometheus scrape to an alert](/learn/devops/prometheus-alert) shows where the proxies' metrics go next.
+
+## Go deeper
+
+- [DevOps roadmap on roadmap.sh](https://roadmap.sh/devops), under Service Mesh
+- [Istio security concepts](https://istio.io/latest/docs/concepts/security/)
+- [Istio traffic management](https://istio.io/latest/docs/concepts/traffic-management/)
+- [Istio ambient mode reaches general availability](https://istio.io/latest/blog/2024/ambient-reaches-ga/)

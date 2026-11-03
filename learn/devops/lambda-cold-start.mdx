@@ -1,0 +1,79 @@
+---
+title: A Lambda cold start
+sidebar_label: Lambda cold start
+sidebar_position: 4
+hide_table_of_contents: true
+description: What AWS Lambda does before your handler's first line runs, and how to make that wait shorter.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {lambdaColdStart} from '@site/src/data/learn/flows/lambda-cold-start';
+
+# A Lambda cold start
+
+**The question:** What happens before your function's first line runs?
+
+**The short answer:** When no warm environment is free, Lambda starts a new microVM, loads your code, boots the runtime and runs everything outside your handler. Only then does the handler see the event. Later requests reuse that environment and skip straight to the handler.
+
+<FlowPlayer flow={lambdaColdStart} />
+
+## Where the time goes
+
+| Phase | What runs | How to make it shorter |
+| --- | --- | --- |
+| Environment and code | A new microVM, then your package or image | Ship fewer dependencies. Bundle and tree-shake. |
+| Extension init | Each extension's process | Remove extensions you do not need. |
+| Runtime init | The language runtime itself | Pick a runtime that starts fast for your workload. |
+| Function init | Your imports and code outside the handler | Import only what you use. Lazy-load rare paths. |
+| Invoke | Your handler | The same work on cold and warm requests. |
+
+Cold starts typically hit under 1% of requests in production. They are more common in development, where traffic is sparse.
+
+## Ways to avoid the wait
+
+- **Provisioned concurrency** keeps a set number of environments initialized ahead of time. It costs extra, and it must target a published version or alias, never `$LATEST`.
+- **SnapStart** runs Init once when you publish a version and saves a snapshot. New environments resume from it. It supports Java 11 and later, Python 3.12 and later, and .NET 8 and later.
+- **More memory** brings more CPU, which speeds up Init too.
+- **Less work in Init** helps every cold start. Defer clients used on rare paths until a request needs them.
+
+## In code
+
+In Node.js, ES modules let top-level `await` finish inside Init, before the first event arrives.
+
+```js title="index.mjs"
+import pg from 'pg';
+
+// Init phase: runs once per execution environment
+const db = new pg.Client({connectionString: process.env.DATABASE_URL});
+await db.connect();
+
+// Invoke phase: runs on every request, cold or warm
+export const handler = async (event) => {
+  const {rows} = await db.query('SELECT id, status FROM orders WHERE id = $1', [
+    event.pathParameters.id,
+  ]);
+  return rows.length > 0
+    ? {statusCode: 200, body: JSON.stringify(rows[0])}
+    : {statusCode: 404, body: 'not found'};
+};
+```
+
+## Pitfalls
+
+- **Assuming state lasts.** Globals and `/tmp` survive between warm requests, but Lambda recycles environments every few hours. Treat them as a cache only.
+- **Unique values made in Init.** With SnapStart, every environment resumes from the same snapshot. Create IDs, secrets and random seeds in the handler.
+- **Too many database connections.** Each environment holds its own connection, so a burst of scale-out can exhaust the database. RDS Proxy or a pooler in front helps.
+- **Stale connections after a freeze.** A connection can drop while the environment is frozen. Reconnect when a query fails on a closed socket.
+- **Init is not free.** Lambda bills Init time for on-demand functions in every configuration since August 2025, so slow startup costs money as well as latency.
+
+## Related flows
+
+- [From Dockerfile to running container](/learn/devops/dockerfile-to-container) shows the container path, where you start and keep the process yourself.
+- [Reverse proxy and load balancer](/learn/devops/reverse-proxy-load-balancer) shows the always-on servers that Lambda replaces.
+
+## Go deeper
+
+- [DevOps roadmap on roadmap.sh](https://roadmap.sh/devops), under Serverless
+- [Understanding the Lambda execution environment lifecycle](https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtime-environment.html)
+- [Improving startup performance with Lambda SnapStart](https://docs.aws.amazon.com/lambda/latest/dg/snapstart.html)
+- [Configuring provisioned concurrency](https://docs.aws.amazon.com/lambda/latest/dg/provisioned-concurrency.html)

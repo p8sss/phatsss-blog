@@ -42,6 +42,11 @@ export function stepDuration(step: FlowStep): number {
   return step.duration ?? (step.to ? TRAVEL_STEP_SECONDS : LOCAL_STEP_SECONDS);
 }
 
+/** The same steps played `factor` times as long: below 1 for a quicker overview. */
+export function pacedSteps(steps: readonly FlowStep[], factor: number): readonly FlowStep[] {
+  return steps.map((step) => ({ ...step, duration: stepDuration(step) * factor }));
+}
+
 export function buildTimeline(steps: readonly FlowStep[]): FlowTimeline {
   const segments = steps.reduce<StepSegment[]>((acc, step, index) => {
     const start = acc.length > 0 ? acc[acc.length - 1].end : 0;

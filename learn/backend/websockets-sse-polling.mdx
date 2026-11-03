@@ -1,0 +1,87 @@
+---
+title: WebSockets vs SSE vs long polling
+sidebar_label: WebSockets vs SSE vs polling
+sidebar_position: 11
+hide_table_of_contents: true
+description: Three ways for a server to push data to a browser, and which real-time transport fits the job.
+---
+
+import CompareTable from '@site/src/components/learn/CompareTable';
+import {websocketsSsePolling} from '@site/src/data/learn/comparisons/websockets-sse-polling';
+
+# WebSockets vs SSE vs long polling
+
+**The question:** Which real-time transport fits the job?
+
+**The short answer:** if only the server pushes, server-sent events are the simplest choice and reconnect on their own. If both sides talk often, use WebSockets. Long polling is the fallback that works through anything, at the cost of a full request per message.
+
+<CompareTable comparison={websocketsSsePolling} />
+
+## Server-sent events in a few lines
+
+SSE is often overlooked because it looks too simple. The server keeps one response open and writes events to it.
+
+```ts title="sse-server.ts"
+import {createServer} from 'node:http';
+
+const server = createServer((req, res) => {
+  if (req.url !== '/events') {
+    res.writeHead(404).end();
+    return;
+  }
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'X-Accel-Buffering': 'no', // asks nginx not to buffer this response
+  });
+
+  // on a reconnect the browser sends the last id it saw; resume after it
+  let id = Number(req.headers['last-event-id']) || 0;
+  const tick = setInterval(() => {
+    id += 1;
+    res.write(`id: ${id}\nevent: score\ndata: ${JSON.stringify({home: 2, away: 1})}\n\n`);
+  }, 5_000);
+  // a comment line keeps idle proxies from closing the connection
+  const keepAlive = setInterval(() => res.write(': keep-alive\n\n'), 15_000);
+
+  req.on('close', () => {
+    clearInterval(tick);
+    clearInterval(keepAlive);
+  });
+});
+
+server.listen(8080);
+```
+
+```js title="score.js"
+const events = new EventSource('/events');
+events.addEventListener('score', (event) => renderScore(JSON.parse(event.data)));
+```
+
+## Questions to ask before choosing
+
+1. Does the client send more than the occasional action? If not, SSE plus ordinary POST requests is usually enough.
+2. Do you need binary data or the lowest latency in both directions? That points to WebSockets.
+3. What sits between the browser and your servers? Corporate proxies and some load balancers handle plain HTTP best.
+4. Can you serve over HTTP/2? Without it, SSE and long polling share the browser's six connections per domain.
+
+## Pitfalls
+
+- **Buffering proxies.** A proxy that buffers responses holds SSE events back until the buffer fills. Turn buffering off for the stream.
+- **Thundering reconnects.** After a deploy, every client reconnects at once. Add jitter on the client and drain connections slowly on the server.
+- **Lost messages on reconnect.** None of the three replays history for you. Give every message an id and keep enough recent messages to resume from it.
+- **One connection per tab.** Ten open tabs means ten connections per user. Share one through a shared worker, or plan capacity for it.
+- **Treating the stream as the source of truth.** Pushes can be missed. Reload the current state on reconnect, then apply new events.
+
+## Related flows
+
+- [A WebSocket from upgrade to message](/learn/backend/websocket-lifecycle) walks through one WebSocket connection step by step.
+- [RabbitMQ vs Kafka](/learn/backend/rabbitmq-vs-kafka) covers the brokers that often feed these pushes from the backend.
+- [Streaming a response](/learn/ai/llm-streaming) shows a language model streaming its answer, a common use of server-sent events.
+
+## Go deeper
+
+- [Backend roadmap on roadmap.sh](https://roadmap.sh/backend), under Real-Time Data
+- [HTML Living Standard: server-sent events](https://html.spec.whatwg.org/multipage/server-sent-events.html)
+- [MDN: using server-sent events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events)
+- [RFC 6202: long polling and streaming](https://www.rfc-editor.org/rfc/rfc6202)

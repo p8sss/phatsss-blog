@@ -220,3 +220,18 @@ function clampChipX(x: number, size: Size, canvasWidth: number): number {
   const maxX = canvasWidth - size.w / 2 - CHIP_MARGIN;
   return Math.min(Math.max(x, minX), Math.max(minX, maxX));
 }
+
+/**
+ * The same layout centered in a canvas of at least `size`, so several diagrams
+ * can share one frame and render at one scale.
+ */
+export function fitLayout(layout: FlowLayout, size: Size): FlowLayout {
+  const width = Math.max(layout.width, size.w);
+  const height = Math.max(layout.height, size.h);
+  const dx = (width - layout.width) / 2;
+  const dy = (height - layout.height) / 2;
+  const placements = Object.fromEntries(
+    Object.entries(layout.placements).map(([id, p]) => [id, { x: p.x + dx, y: p.y + dy }]),
+  );
+  return { ...layout, width, height, placements };
+}

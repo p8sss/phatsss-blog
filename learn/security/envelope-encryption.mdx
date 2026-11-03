@@ -1,0 +1,98 @@
+---
+title: Envelope encryption with a KMS
+sidebar_label: Envelope encryption
+sidebar_position: 12
+hide_table_of_contents: true
+description: How a data key is generated, wrapped by a KMS key, stored next to the data and unwrapped again.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {envelopeEncryption} from '@site/src/data/learn/flows/envelope-encryption';
+
+# Envelope encryption with a KMS
+
+**The question:** how does a data key get wrapped, stored and unwrapped?
+
+**The short answer:** the KMS hands your app a fresh data key twice: once in plaintext and once encrypted under a key that never leaves the KMS. The app encrypts locally, throws the plaintext key away and stores the wrapped key next to the data. To read, it asks the KMS to unwrap the key, which only works if the caller is allowed.
+
+<FlowPlayer flow={envelopeEncryption} />
+
+## Why not send the data to the KMS?
+
+AWS KMS `Encrypt` accepts at most 4,096 bytes of plaintext, and every call is a network round trip. Envelope encryption keeps the KMS on the small, rare job of wrapping keys, while fast local AES does the bulk work.
+
+It also gives you control in one place. The KMS key policy decides who can unwrap, every unwrap is logged, and disabling the KMS key makes every record it protects unreadable at once.
+
+## The keys involved
+
+| Key | Where it lives | Job |
+| --- | --- | --- |
+| KMS key, also called root key or key-encryption key | Inside the KMS hardware, never exported in plaintext | Wraps and unwraps data keys |
+| Plaintext data key | App memory, for milliseconds | Encrypts and decrypts one record, file or batch |
+| Wrapped data key | Next to the ciphertext | Lets an authorized caller recover the data key |
+| Encryption context | Sent with each call, not secret | Binds a wrapped key to its owner, such as a tenant id |
+
+## In code
+
+```ts title="envelope.ts"
+import {KMSClient, GenerateDataKeyCommand, DecryptCommand} from '@aws-sdk/client-kms';
+import {createCipheriv, createDecipheriv, randomBytes} from 'node:crypto';
+
+const kms = new KMSClient({});
+const KEY_ID = 'alias/app-data';
+
+export interface Envelope {
+  wrappedKey: Uint8Array;
+  iv: Buffer;
+  tag: Buffer;
+  data: Buffer;
+}
+
+export async function seal(plaintext: Buffer, context: Record<string, string>): Promise<Envelope> {
+  const {Plaintext: key, CiphertextBlob: wrappedKey} = await kms.send(
+    new GenerateDataKeyCommand({KeyId: KEY_ID, KeySpec: 'AES_256', EncryptionContext: context}),
+  );
+  if (!key || !wrappedKey) throw new Error('KMS returned no data key');
+
+  const iv = randomBytes(12); // a fresh 96-bit nonce for every encryption
+  const cipher = createCipheriv('aes-256-gcm', key, iv);
+  const data = Buffer.concat([cipher.update(plaintext), cipher.final()]);
+  key.fill(0); // best effort: drop the plaintext key from memory
+  return {wrappedKey, iv, tag: cipher.getAuthTag(), data};
+}
+
+export async function open(env: Envelope, context: Record<string, string>): Promise<Buffer> {
+  const {Plaintext: key} = await kms.send(
+    new DecryptCommand({KeyId: KEY_ID, CiphertextBlob: env.wrappedKey, EncryptionContext: context}),
+  );
+  if (!key) throw new Error('KMS returned no data key');
+
+  const decipher = createDecipheriv('aes-256-gcm', key, env.iv);
+  decipher.setAuthTag(env.tag); // final() throws if the data or tag was altered
+  const plaintext = Buffer.concat([decipher.update(env.data), decipher.final()]);
+  key.fill(0);
+  return plaintext;
+}
+```
+
+For production, the AWS Encryption SDK packages this pattern with a standard message format, key caching and algorithm choices made for you.
+
+## Pitfalls
+
+- **Rotation does not re-encrypt your data.** Rotating a KMS key changes the material used for new wraps. KMS keeps the old material, so old wrapped keys still unwrap. A leaked data key is not fixed by rotation.
+- **Deleting a KMS key is permanent.** Every record wrapped by it becomes unreadable. AWS forces a waiting period before deletion for this reason. Disable the key first if you are unsure.
+- **Always pass an encryption context.** Without one, a wrapped key copied from tenant A's row can be unwrapped while serving tenant B. With one, the KMS refuses the mismatch.
+- **Do not cache plaintext data keys for long.** Caching cuts KMS calls and cost, but widens what a memory dump exposes. Bound the cache by time and by number of uses.
+
+## Related flows
+
+- [Symmetric vs asymmetric vs hashing](/learn/security/crypto-primitives) explains AES-GCM and why it detects tampering.
+- [A secret from Vault to a pod](/learn/devops/vault-to-pod) shows another way to keep keys out of application config.
+- [How a cloud API call is authorised](/learn/security/iam-request) shows the policy checks behind each KMS call.
+
+## Go deeper
+
+- [Security roadmap on roadmap.sh](https://roadmap.sh/devsecops), under Encryption
+- [AWS KMS cryptography essentials, envelope encryption](https://docs.aws.amazon.com/kms/latest/developerguide/kms-cryptography.html)
+- [AWS KMS GenerateDataKey API](https://docs.aws.amazon.com/kms/latest/APIReference/API_GenerateDataKey.html)
+- [Google Cloud KMS: envelope encryption](https://cloud.google.com/kms/docs/envelope-encryption)

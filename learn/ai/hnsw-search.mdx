@@ -1,0 +1,79 @@
+---
+title: A vector search, step by step
+sidebar_label: HNSW vector search
+sidebar_position: 7
+hide_table_of_contents: true
+description: How an HNSW index finds near neighbours by hopping down a stack of graphs, shown with pgvector.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {hnswSearch} from '@site/src/data/learn/flows/hnsw-search';
+
+# A vector search, step by step
+
+**The question:** How does an HNSW index find near neighbours without scanning everything?
+
+**The short answer:** HNSW links every vector to its nearest neighbours in a graph, with sparser copies of the graph stacked on top. A search starts at the sparse top, hops greedily towards the query, and drops down a layer each time it stops improving. On the bottom layer it widens the search to a short list of candidates, so it only measures a small fraction of the vectors.
+
+<FlowPlayer flow={hnswSearch} />
+
+## The knobs, in pgvector
+
+| Setting | Default | Raise it for | It costs |
+| --- | --- | --- | --- |
+| `m` | 16 | Better recall on hard data | Memory and build time. Set when the index is built. |
+| `ef_construction` | 64 | A better-connected graph | Build time. Set when the index is built. |
+| `hnsw.ef_search` | 40 | Better recall per query | Query latency. Set per session or transaction. |
+| `hnsw.iterative_scan` | off | Filtered queries that return too few rows | Extra scanning, capped by `hnsw.max_scan_tuples` |
+
+Other engines use the same ideas with slightly different names. Qdrant, for example, calls the build setting `ef_construct`.
+
+## In SQL
+
+```sql title="hnsw.sql"
+CREATE EXTENSION IF NOT EXISTS vector;
+
+CREATE TABLE chunks (
+  id        bigserial PRIMARY KEY,
+  tenant_id int NOT NULL,
+  body      text NOT NULL,
+  embedding vector(768) NOT NULL
+);
+
+-- load the initial data first, then build the index; the WITH values are the defaults
+CREATE INDEX ON chunks USING hnsw (embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);
+
+-- $1 is the query vector, bound by your database driver
+BEGIN;
+SET LOCAL hnsw.ef_search = 100;
+SET LOCAL hnsw.iterative_scan = strict_order;
+SELECT id, body, embedding <=> $1 AS distance
+FROM chunks
+WHERE tenant_id = 7
+ORDER BY embedding <=> $1
+LIMIT 5;
+COMMIT;
+```
+
+The operator class must match the operator. `vector_cosine_ops` serves `<=>`. A query that uses `<->` for Euclidean distance would ignore this index.
+
+## Pitfalls
+
+- **Approximate means approximate.** HNSW can miss a true nearest neighbour. Measure recall against an exact search on a sample before you tune.
+- **Filters run after the index.** With the defaults, a filter that matches 10% of rows returns about 4 rows on average, not 5. Turn on iterative scans, or use a partial index or a partition per tenant.
+- **A very selective filter may skip HNSW.** If a B-tree index on `tenant_id` finds a few hundred rows, an exact scan of those can be faster and fully accurate.
+- **Builds need memory.** Building is much faster when the graph fits in `maintenance_work_mem`. Bulk-load first, then create the index.
+- **Vacuum is slow on HNSW.** Heavy updates and deletes leave work for vacuum, which can take a while on these indexes. pgvector suggests reindexing first to speed it up.
+
+## Related flows
+
+- [Text to vector to similarity](/learn/ai/embeddings-similarity) explains what the distances mean.
+- [pgvector vs Qdrant vs Pinecone](/learn/ai/vector-databases-compare) compares engines that use HNSW.
+- [How a B-tree index answers a query](/learn/backend/btree-index) shows the exact index that HNSW trades away for speed.
+
+## Go deeper
+
+- [AI Engineer roadmap on roadmap.sh](https://roadmap.sh/ai-engineer), under Vector Databases
+- [Efficient and robust approximate nearest neighbor search using HNSW graphs](https://arxiv.org/abs/1603.09320), Malkov and Yashunin
+- [pgvector README](https://github.com/pgvector/pgvector), for index options and iterative scans
+- [Qdrant indexing](https://qdrant.tech/documentation/manage-data/indexing/), for filter-aware HNSW

@@ -1,0 +1,68 @@
+---
+title: Replication and failover
+sidebar_label: Replication and failover
+sidebar_position: 12
+hide_table_of_contents: true
+description: How a PostgreSQL replica keeps up by streaming the write-ahead log, and what happens when the primary dies.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {replicationFailover} from '@site/src/data/learn/flows/replication-failover';
+
+# Replication and failover
+
+**The question:** How does a replica keep up, and what happens when the primary dies?
+
+**The short answer:** the primary streams its write-ahead log to each replica, which replays the same changes. When the primary fails, a separate manager fences it off and promotes a replica to take writes. With asynchronous replication, the last few commits can be lost in that switch.
+
+<FlowPlayer flow={replicationFailover} />
+
+## How much a commit waits
+
+In PostgreSQL, replication is asynchronous unless `synchronous_standby_names` lists at least one standby. Then `synchronous_commit` decides what a commit waits for.
+
+| `synchronous_commit` | The commit waits until | If the primary dies right after |
+| --- | --- | --- |
+| `local` | The primary has flushed its own WAL | Recent commits may be missing on the replica |
+| `remote_write` | The standby has received the WAL and handed it to its OS | Safe unless the standby's OS crashes too |
+| `on`, the default | The standby has flushed the WAL to disk | Safe unless both servers fail together |
+| `remote_apply` | The standby has replayed it, so reads there see it | Safe, and reads on that standby see your own writes |
+
+Each step down the table adds latency to every commit, because the primary waits for a round trip to the standby. The setting can be changed per transaction, so only important writes need to pay for it.
+
+## A minimal setup
+
+```ini title="primary: postgresql.conf"
+# wait for any one of two standbys to flush each commit
+synchronous_standby_names = 'ANY 1 (replica_a, replica_b)'
+```
+
+```ini title="replica_a: postgresql.conf"
+# replica_a also needs an empty standby.signal file in its data directory
+# create its slot on the primary first: SELECT pg_create_physical_replication_slot('replica_a');
+# the password comes from ~/.pgpass, never from this file
+primary_conninfo = 'host=198.51.100.10 port=5432 user=replicator application_name=replica_a'
+primary_slot_name = 'replica_a'
+```
+
+## Pitfalls
+
+- **Synchronous with one standby.** If the only synchronous standby goes down, every commit on the primary waits. Use `ANY 1` over two or more standbys.
+- **Split brain.** If the old primary comes back still accepting writes, two servers diverge. Fence it before promoting, and let a tool with a consensus store decide who leads.
+- **Failing over too eagerly.** A network blip that triggers a failover causes more downtime than it saves. Require several missed checks.
+- **Replication slots that fill the disk.** A slot keeps WAL until its replica reads it. A replica that is gone for good can fill the primary's disk, so set `max_slot_wal_keep_size`.
+- **A replica is not a backup.** A dropped table is replicated within a second. Keep real backups with point-in-time recovery.
+- **Never testing it.** Run planned switchovers regularly, so the first failover is not during an outage.
+
+## Related flows
+
+- [How a B-tree index answers a query](/learn/backend/btree-index) shows the pages that the write-ahead log keeps in sync.
+- [Cache-aside with Redis](/learn/backend/cache-aside) takes read load off the primary in a different way.
+- [The circuit breaker](/learn/backend/circuit-breaker) keeps callers from piling up while a failover is in progress.
+
+## Go deeper
+
+- [Backend roadmap on roadmap.sh](https://roadmap.sh/backend), under Scaling Databases
+- [PostgreSQL: log-shipping standby servers](https://www.postgresql.org/docs/current/warm-standby.html)
+- [PostgreSQL: failover](https://www.postgresql.org/docs/current/warm-standby-failover.html)
+- [Patroni documentation](https://patroni.readthedocs.io/en/latest/)

@@ -1,0 +1,73 @@
+---
+title: How an MCP server gets its tools into a chat
+sidebar_label: MCP tool call
+sidebar_position: 13
+hide_table_of_contents: true
+description: The host, client and server in the Model Context Protocol, from discovery to a tool call and back.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {mcpToolCall} from '@site/src/data/learn/flows/mcp-tool-call';
+
+# How an MCP server gets its tools into a chat
+
+**The question:** Host, client and server: what happens from initialize to a tool call?
+
+**The short answer:** The host starts one client per server. The client discovers the server, lists its tools, and the host offers them to the model as ordinary functions. When the model picks one, the client sends `tools/call` and the result goes back to the model.
+
+<FlowPlayer flow={mcpToolCall} />
+
+## The three roles
+
+| Role | What it is | What it does |
+| --- | --- | --- |
+| Host | The app the user sees: a chat app, an IDE, an agent | Talks to the model, asks the user for consent, owns the clients |
+| Client | A connector inside the host, one per server | Speaks JSON-RPC to exactly one server |
+| Server | A program that exposes tools, resources and prompts | Runs the tool and returns content |
+
+## Where did initialize go?
+
+Protocol revisions up to 2025-11-25 opened every connection with a handshake. The client sent `initialize`, the server answered with its capabilities, and the client sent `notifications/initialized`. After that it could call `tools/list`.
+
+The 2026-07-28 revision made MCP stateless. There is no handshake. Every request carries its protocol version and the client's capabilities in `_meta`, and `server/discover` is an optional first call. Servers built on older revisions still expect the handshake. Clients that support both eras detect which one a server speaks, and fall back to `initialize` for older servers.
+
+## A tool call on the wire
+
+```json title="tools-call.json"
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "method": "tools/call",
+  "params": {
+    "name": "search_issues",
+    "arguments": { "q": "login", "state": "open" },
+    "_meta": {
+      "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+      "io.modelcontextprotocol/clientCapabilities": {}
+    }
+  }
+}
+```
+
+The server answers with `"resultType": "complete"` and a `content` array. If the tool itself failed, it still returns a result, with `"isError": true` and a message the model can read.
+
+## Pitfalls
+
+- **Trusting tool descriptions.** A description is text that goes straight into the model's context. A malicious server can hide instructions there. Only connect servers you trust, and treat descriptions and annotations as untrusted otherwise.
+- **Logging to stdout.** A stdio server may write only MCP messages to stdout. Send logs to stderr, or the client sees broken JSON.
+- **Name clashes.** Two servers can both expose `search`. Hosts should prefix tool names with a server identifier.
+- **Too many tools.** Every tool definition costs prompt tokens on every turn and makes choosing harder. Connect what the task needs.
+- **Local servers run as you.** A stdio server is a program on your machine with your file and network access. Install it like any other dependency.
+
+## Related flows
+
+- [How function calling works](/learn/ai/function-calling) is what the host does with the tools MCP provides.
+- [The agent loop](/learn/ai/agent-loop) repeats the tool step until the task is done.
+- [A prompt injection, and the guardrails that catch it](/learn/ai/prompt-injection) explains why consent and untrusted descriptions matter.
+
+## Go deeper
+
+- [AI Engineer roadmap on roadmap.sh](https://roadmap.sh/ai-engineer), under Model Context Protocol (MCP)
+- [MCP specification](https://modelcontextprotocol.io/specification/latest)
+- [MCP tools](https://modelcontextprotocol.io/specification/latest/server/tools)
+- [MCP versioning and compatibility](https://modelcontextprotocol.io/specification/2026-07-28/basic/versioning)

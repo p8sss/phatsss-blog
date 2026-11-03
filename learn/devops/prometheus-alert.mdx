@@ -1,0 +1,97 @@
+---
+title: From a Prometheus scrape to an alert
+sidebar_label: Prometheus scrape to alert
+sidebar_position: 8
+hide_table_of_contents: true
+description: How a counter scraped by Prometheus becomes an alert, and how Alertmanager turns it into one page for the right person.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {prometheusAlert} from '@site/src/data/learn/flows/prometheus-alert';
+
+# From a Prometheus scrape to an alert
+
+**The question:** How does a metric become a page on someone's phone?
+
+**The short answer:** Prometheus scrapes numbers from your app, stores them, and runs alert rules against them on a timer. An alert that stays true long enough fires and goes to Alertmanager. Alertmanager routes, groups and deduplicates it, then calls the paging service.
+
+<FlowPlayer flow={prometheusAlert} />
+
+## The rule and the route
+
+```yaml title="rules/shop.yml"
+groups:
+  - name: shop
+    rules:
+      - alert: HighErrorRate
+        expr: |
+          sum by (job) (rate(requests_total{code=~"5.."}[5m]))
+            / sum by (job) (rate(requests_total[5m])) > 0.05
+        for: 10m
+        labels:
+          severity: page
+        annotations:
+          summary: "{{ $labels.job }}: more than 5% of requests are failing"
+```
+
+```yaml title="alertmanager.yml"
+route:
+  receiver: team-chat
+  group_by: [alertname, cluster]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    - matchers:
+        - severity = page
+      receiver: pagerduty
+
+receivers:
+  - name: team-chat
+    webhook_configs:
+      - url: https://chat.example/hooks/alerts
+  - name: pagerduty
+    pagerduty_configs:
+      - routing_key_file: /etc/alertmanager/secrets/pagerduty-key
+
+inhibit_rules:
+  # while a whole cluster is down, don't also page for each service in it
+  - source_matchers: [alertname = ClusterDown]
+    target_matchers: [severity = page]
+    equal: [cluster]
+```
+
+## How long until the phone rings
+
+Each setting adds delay. Together they decide how fast you hear about a problem, and how much noise you get.
+
+| Setting | Where | Default | What it delays |
+| --- | --- | --- | --- |
+| `scrape_interval` | Prometheus | 1m | How old the newest sample can be |
+| `evaluation_interval` | Prometheus | 1m | How often rules run |
+| `for` | Alert rule | none | How long the condition must hold before firing |
+| `group_wait` | Alertmanager | 30s | The first notification for a new group |
+| `group_interval` | Alertmanager | 5m | Updates when new alerts join a group |
+| `repeat_interval` | Alertmanager | 4h | Reminders while an alert keeps firing |
+
+With the rule above, if every request suddenly starts failing, the page arrives in about 11 to 12 minutes. Crossing the threshold takes a scrape and an evaluation, `for` adds ten minutes, and `group_wait` adds 30 seconds. A two-minute blip never pages. The 5-minute rate window keeps it above the threshold for only about seven minutes. If the app crashes outright, it exposes no metrics at all, so this rule stays silent. Add an `up == 0` alert for that case.
+
+## Pitfalls
+
+- **Alerting on causes, not symptoms.** Page on what users feel, such as errors and latency. Send high CPU to a dashboard or a ticket.
+- **Flapping alerts.** A value hovering at the threshold fires and resolves over and over. `keep_firing_for` holds the alert for a while after the condition clears.
+- **Silent monitoring.** If Prometheus or Alertmanager dies, nothing pages. Run an always-firing watchdog alert that an outside service expects to see.
+- **A load balancer in front of Alertmanager.** Point Prometheus at every Alertmanager instance. The instances share a notification log over gossip, so normally only one of them sends each notification. During a network split they may both send, since a duplicate beats a missed page.
+- **High-cardinality labels.** A label such as a user id creates a new series per value and can exhaust Prometheus's memory.
+
+## Related flows
+
+- [Logs vs metrics vs traces](/learn/devops/logs-metrics-traces) explains where metrics fit among the other signals.
+- [What a sidecar does to one request](/learn/devops/sidecar-request) shows a mesh proxy producing request metrics without code changes.
+
+## Go deeper
+
+- [DevOps roadmap on roadmap.sh](https://roadmap.sh/devops), under Infrastructure Monitoring
+- [Prometheus alerting rules](https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/)
+- [Alertmanager overview](https://prometheus.io/docs/alerting/latest/alertmanager/)
+- [Alertmanager configuration](https://prometheus.io/docs/alerting/latest/configuration/)

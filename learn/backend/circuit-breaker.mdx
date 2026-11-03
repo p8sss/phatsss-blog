@@ -1,0 +1,85 @@
+---
+title: The circuit breaker
+sidebar_label: The circuit breaker
+sidebar_position: 13
+hide_table_of_contents: true
+description: How a circuit breaker stops a service from hammering a dependency that is already down, and lets it recover.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {circuitBreaker} from '@site/src/data/learn/flows/circuit-breaker';
+
+# The circuit breaker
+
+**The question:** How does a service stop hammering a dependency that is already down?
+
+**The short answer:** a circuit breaker wraps calls to the dependency and counts failures. When too many fail, it opens and rejects calls instantly for a while. Then it lets a trial call through and closes again only if that call succeeds.
+
+<FlowPlayer flow={circuitBreaker} />
+
+## The three states
+
+| State | What happens to a call | How it leaves this state |
+| --- | --- | --- |
+| Closed | Passes through. Successes and failures are counted. | Opens when failures pass a threshold within a time window. |
+| Open | Rejected at once, or handed to a fallback. | Moves to half-open when the reset timeout expires. |
+| Half-open | A limited number of trial calls pass through. | Closes if the trials succeed, opens again if one fails. |
+
+## In code
+
+This uses [opossum](https://github.com/nodeshift/opossum) for Node.js. Libraries such as Resilience4j for Java and Polly for .NET follow the same model.
+
+```ts title="payments-client.ts"
+import CircuitBreaker from 'opossum';
+
+// `queue` and `logger` stand for your job queue and your logger
+async function charge(orderId: string, amountCents: number) {
+  const res = await fetch('https://payments.example.com/charges', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json', 'Idempotency-Key': `order-${orderId}`},
+    body: JSON.stringify({orderId, amountCents}),
+    signal: AbortSignal.timeout(3_000), // really stop the request, not just stop waiting
+  });
+  if (!res.ok) throw new Error(`payments responded ${res.status}`);
+  return res.json();
+}
+
+const breaker = new CircuitBreaker(charge, {
+  timeout: 3_000, // a slow call counts as a failure
+  errorThresholdPercentage: 50, // open when more than half the calls in the window fail
+  volumeThreshold: 10, // but only after at least 10 calls
+  rollingCountTimeout: 10_000, // the window is 10 seconds
+  resetTimeout: 30_000, // try again after 30 seconds
+});
+
+// runs when the circuit is open, and when a call fails or times out
+breaker.fallback((orderId: string, amountCents: number) => queue.add('charge', {orderId, amountCents}));
+
+breaker.on('open', () => logger.warn('payments circuit open'));
+breaker.on('halfOpen', () => logger.info('payments circuit half-open'));
+breaker.on('close', () => logger.info('payments circuit closed'));
+
+export const chargeOrder = (orderId: string, amountCents: number) => breaker.fire(orderId, amountCents);
+```
+
+## Pitfalls
+
+- **Counting client errors.** A `400 Bad Request` means your input was wrong, not that the dependency is sick. Leave such errors out of the failure count. opossum has an `errorFilter` option for this.
+- **Retries without a breaker.** Retrying every failed call multiplies load on a struggling service. Retry a few times with backoff and jitter, and stop as soon as the breaker reports open.
+- **Retrying calls that are not idempotent.** A timed-out charge may have gone through. Send an idempotency key so a retry cannot charge twice.
+- **One breaker for everything.** A single breaker across several hosts or shards opens for all of them when one fails. Use one breaker per dependency, and per host when that matters.
+- **No timeout.** A breaker only notices failures it can see. A call that hangs forever never counts as one.
+- **A silent breaker.** If nobody is alerted when it opens, the fallback hides an outage. Export state changes as metrics.
+
+## Related flows
+
+- [Replication and failover](/learn/backend/replication-failover) is the kind of outage a breaker helps you ride out.
+- [RabbitMQ vs Kafka](/learn/backend/rabbitmq-vs-kafka) covers the queues a fallback can hand work to.
+- [What a sidecar does to one request](/learn/devops/sidecar-request) shows a proxy next to your service that can apply timeouts and retries outside your code.
+
+## Go deeper
+
+- [Backend roadmap on roadmap.sh](https://roadmap.sh/backend), under Building For Scale
+- [Circuit Breaker pattern, Azure Architecture Center](https://learn.microsoft.com/en-us/azure/architecture/patterns/circuit-breaker)
+- [Circuit Breaker by Martin Fowler](https://martinfowler.com/bliki/CircuitBreaker.html)
+- [opossum documentation](https://nodeshift.dev/opossum/)

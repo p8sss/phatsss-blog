@@ -1,0 +1,62 @@
+---
+title: An authorization check with a policy engine
+sidebar_label: Policy engine check
+sidebar_position: 6
+hide_table_of_contents: true
+description: How an API asks a policy engine like OPA whether a user may act, then enforces the answer.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {policyCheck} from '@site/src/data/learn/flows/policy-check';
+
+# An authorization check with a policy engine
+
+**The question:** what happens between "can this user edit this doc?" and yes or no?
+
+**The short answer:** the API gathers facts about the user, the action and the document, and sends them to a policy engine. The engine evaluates its rules and answers allow or deny. The API enforces that answer.
+
+<FlowPlayer flow={policyCheck} />
+
+## Who does what
+
+| Role | Short name | In this flow |
+| --- | --- | --- |
+| Policy enforcement point | PEP | The API server |
+| Policy decision point | PDP | OPA |
+| Policy information point | PIP | The database the API reads attributes from |
+
+## The policy
+
+```rego title="docs_authz.rego"
+package docs.authz
+
+default allow := false
+
+allow if {
+    input.action == "edit"
+    input.resource.owner == input.user.id
+}
+
+allow if {
+    input.action == "edit"
+    "editor" in input.user.roles
+    input.resource.org == input.user.org
+}
+```
+
+## Pitfalls
+
+- **Treat no answer as deny.** A timeout, an error or a missing result must all fail closed.
+- **Check every path.** A policy only protects the endpoints that ask it.
+- **Filter lists in the query.** For "show me my docs", do not fetch every row and check each one. Push the rule into the query.
+
+## Related flows
+
+- [RBAC vs ABAC vs ReBAC](/learn/security/rbac-abac-rebac) compares the models a policy can express.
+- [What a sidecar does to one request](/learn/devops/sidecar-request) shows where a local engine often runs.
+
+## Go deeper
+
+- [Security roadmap on roadmap.sh](https://roadmap.sh/devsecops), under Authorization
+- [OPA policy language](https://www.openpolicyagent.org/docs/policy-language)
+- [OPA REST API](https://www.openpolicyagent.org/docs/rest-api)
