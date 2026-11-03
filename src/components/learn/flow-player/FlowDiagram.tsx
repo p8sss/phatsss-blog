@@ -1,4 +1,4 @@
-import { useMemo, type JSX } from "react";
+import { useMemo, type JSX, type ReactNode } from "react";
 import { edgeKey, latestStepOnEdge, travelEdges } from "@/lib/flow/edges";
 import {
   chipSize,
@@ -38,6 +38,16 @@ interface FlowDiagramProps {
   readonly layout: FlowLayout;
   readonly sample: FlowSample;
   readonly label: string;
+  /** Draw edges and boxes only, without the travelling packet, for overlays that bring their own motion. */
+  readonly quiet?: boolean;
+  /** Drawn on top, in the diagram's coordinates. */
+  readonly children?: ReactNode;
+}
+
+/** The drawn edge between two actors, in the same lanes the diagram uses. */
+export function diagramSegment(layout: FlowLayout, from: string, to: string): Segment {
+  const box = { halfW: layout.metrics.boxW / 2, halfH: layout.metrics.boxH / 2 };
+  return edgeSegment(layout.placements[from], layout.placements[to], box, { lane: LANE, gap: EDGE_GAP });
 }
 
 function arrowHead(segment: Segment): string {
@@ -252,24 +262,19 @@ function TravellingPacket({ packet, segment, payload, color, canvasWidth, beside
 }
 
 /** Presentational: draws one moment of a flow. Every input is derived from flow time. */
-export function FlowDiagram({ flow, layout, sample, label }: FlowDiagramProps): JSX.Element {
+export function FlowDiagram({ flow, layout, sample, label, quiet = false, children }: FlowDiagramProps): JSX.Element {
   const { metrics, placements, width, height } = layout;
   const edges = useMemo(() => travelEdges(flow.steps), [flow.steps]);
-  const segments = useMemo(() => {
-    const box = { halfW: metrics.boxW / 2, halfH: metrics.boxH / 2 };
-    return new Map(
-      edges.map((edge) => [
-        edge.key,
-        edgeSegment(placements[edge.from], placements[edge.to], box, { lane: LANE, gap: EDGE_GAP }),
-      ]),
-    );
-  }, [edges, placements, metrics]);
+  const segments = useMemo(
+    () => new Map(edges.map((edge) => [edge.key, diagramSegment(layout, edge.from, edge.to)])),
+    [edges, layout],
+  );
   const kindOf = useMemo(() => new Map(flow.actors.map((a) => [a.id, a.kind])), [flow.actors]);
   const colorOf = (actorId: string) => actorStyle(kindOf.get(actorId) ?? "external").color;
 
   const active = flow.steps[sample.index];
   const eased = easeInOutCubic(sample.progress);
-  const activeKey = active.to ? edgeKey(active.from, active.to) : null;
+  const activeKey = active.to && !quiet ? edgeKey(active.from, active.to) : null;
   const activeSegment = activeKey ? segments.get(activeKey) ?? null : null;
   const packet = activeSegment ? pointAlong(activeSegment, eased) : null;
   const senderColor = colorOf(active.from);
@@ -300,14 +305,14 @@ export function FlowDiagram({ flow, layout, sample, label }: FlowDiagramProps): 
         );
       })}
       {flow.actors.map((actor) => {
-        const localActive = !active.to && active.from === actor.id;
+        const localActive = !quiet && !active.to && active.from === actor.id;
         return (
           <DiagramActor
             key={actor.id}
             actor={actor}
             center={placements[actor.id]}
             layout={layout}
-            involved={active.from === actor.id || active.to === actor.id}
+            involved={!quiet && (active.from === actor.id || active.to === actor.id)}
             localBadge={latestLocalStep(flow.steps, actor.id, sample.index)}
             localActive={localActive}
             ringProgress={eased}
@@ -324,7 +329,7 @@ export function FlowDiagram({ flow, layout, sample, label }: FlowDiagramProps): 
           besideGap={metrics.boxH / 2 - LANE + CHIP_BOX_CLEARANCE}
         />
       )}
-      {!active.to && active.payload && (
+      {!quiet && !active.to && active.payload && (
         <PayloadChip
           text={active.payload}
           color={senderColor}
@@ -338,6 +343,7 @@ export function FlowDiagram({ flow, layout, sample, label }: FlowDiagramProps): 
           )}
         />
       )}
+      {children}
     </svg>
   );
 }

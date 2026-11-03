@@ -1,0 +1,136 @@
+import type { FlowDefinition } from "../../../lib/flow/types";
+
+/** AI Engineer roadmap → Context Engineering. */
+export const contextWindow: FlowDefinition = {
+  id: "context-window",
+  title: "Filling the context window for one support question",
+  actors: [
+    { id: "user", label: "User", sublabel: "chat UI", kind: "client", col: 0, row: 0 },
+    { id: "app", label: "App server", sublabel: "builds context", kind: "server", col: 1, row: 0 },
+    { id: "model", label: "LLM", sublabel: "fixed size limit", kind: "model", col: 2, row: 0 },
+    { id: "search", label: "Retriever", sublabel: "vector search", kind: "database", col: 0, row: 1 },
+    { id: "history", label: "History", sublabel: "past turns", kind: "database", col: 1, row: 1 },
+    { id: "tool", label: "Orders API", sublabel: "a tool", kind: "service", col: 2, row: 1 },
+  ],
+  steps: [
+    {
+      id: "ask",
+      from: "user",
+      to: "app",
+      title: "Ask a question",
+      payload: "\"Is order 42 late?\"",
+      detail: "The question itself is tiny. Everything the app adds around it is what fills the window.",
+    },
+    {
+      id: "fixed",
+      from: "app",
+      title: "Start with the fixed part",
+      payload: "system prompt + tool schemas",
+      detail:
+        "Instructions and tool definitions are sent on every request and count like any other input. A long tool list costs tokens before the user says a word.",
+    },
+    {
+      id: "load-history",
+      from: "app",
+      to: "history",
+      title: "Load the conversation",
+      payload: "last turns for chat 9f2",
+      detail: "The model API is stateless. Earlier turns only exist for the model if the app sends them again.",
+    },
+    {
+      id: "history-back",
+      from: "history",
+      to: "app",
+      title: "History comes back",
+      payload: "18 turns, 9k tokens",
+      variant: "response",
+      detail: "History grows with every turn. Left alone, it becomes the biggest part of the window.",
+    },
+    {
+      id: "retrieve",
+      from: "app",
+      to: "search",
+      title: "Retrieve relevant text",
+      payload: "top 5 chunks for the query",
+      detail: "Retrieved documents give the model facts it was never trained on. More chunks means more recall, and more tokens.",
+    },
+    {
+      id: "chunks",
+      from: "search",
+      to: "app",
+      title: "Chunks come back",
+      payload: "5 chunks, 4k tokens",
+      variant: "response",
+      detail: "The app decides how many to keep. Five relevant chunks usually beat twenty loosely related ones.",
+    },
+    {
+      id: "budget",
+      from: "app",
+      title: "Check the budget",
+      payload: "input + max_tokens ≤ window",
+      detail:
+        "The reply is generated inside the same window, so room for output must be left over. If the input alone is too long, the request fails.",
+    },
+    {
+      id: "call",
+      from: "app",
+      to: "model",
+      title: "Send the assembled context",
+      payload: "system, tools, history, chunks",
+      detail:
+        "Order matters. Models tend to use the start and end of a long context better than the middle, so the question usually goes last.",
+    },
+    {
+      id: "tool-use",
+      from: "model",
+      to: "app",
+      title: "The model asks for a tool",
+      payload: "get_order({ id: 42 })",
+      variant: "response",
+      detail: "The model cannot call the API itself. It returns a structured request and the app runs it.",
+    },
+    {
+      id: "run-tool",
+      from: "app",
+      to: "tool",
+      title: "Run the tool",
+      payload: "GET /orders/42",
+      detail: "The app calls the real API. In agents, tool results often grow faster than anything else in the context.",
+    },
+    {
+      id: "tool-result",
+      from: "tool",
+      to: "app",
+      title: "A large result comes back",
+      payload: "12 KB JSON",
+      variant: "response",
+      detail:
+        "Raw API responses are full of fields the model does not need. Trimming to status and ETA saves tokens on this call and every later one.",
+    },
+    {
+      id: "resend",
+      from: "app",
+      to: "model",
+      title: "Send everything again, plus the result",
+      payload: "same context + tool_result",
+      detail: "Each round trip resends the whole context. Prompt caching can cut the cost of that repeated prefix, but it still fills the window.",
+    },
+    {
+      id: "answer",
+      from: "model",
+      to: "app",
+      title: "Answer",
+      payload: "\"It ships Thursday.\"",
+      variant: "response",
+      detail: "The answer and the tool exchange now join the history for the next turn.",
+    },
+    {
+      id: "compact",
+      from: "app",
+      title: "Compact old turns",
+      payload: "summarize turns 1 to 12",
+      detail:
+        "When history passes a threshold, the app replaces old turns with a short summary or drops stale tool results. The window stays focused on what still matters.",
+    },
+  ],
+};

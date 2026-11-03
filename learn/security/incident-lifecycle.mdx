@@ -1,0 +1,61 @@
+---
+title: The incident lifecycle
+sidebar_label: The incident lifecycle
+sidebar_position: 20
+hide_table_of_contents: true
+description: What happens at each stage of a security incident, from preparation to lessons learned.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {incidentLifecycle} from '@site/src/data/learn/flows/incident-lifecycle';
+
+# The incident lifecycle
+
+**The question:** prepare, identify, contain, eradicate, recover, learn: what happens at each stage?
+
+**The short answer:** you prepare logs, runbooks and on-call before anything happens. When an alert fires you confirm it and declare an incident, then stop the spread, remove the attacker's foothold and restore clean systems. Finally, a blameless review turns what you learned into better preparation.
+
+<FlowPlayer flow={incidentLifecycle} />
+
+## The same lifecycle, three names
+
+The six stages above are the SANS model. NIST groups the same work differently, and its 2025 revision maps it onto the Cybersecurity Framework.
+
+| SANS stage | NIST SP 800-61 Rev. 2, 2012 | NIST SP 800-61 Rev. 3, 2025 |
+| --- | --- | --- |
+| Preparation | Preparation | Govern, Identify, Protect |
+| Identification | Detection and analysis | Detect |
+| Containment | Containment, eradication and recovery | Respond |
+| Eradication | Containment, eradication and recovery | Respond |
+| Recovery | Containment, eradication and recovery | Recover |
+| Lessons learned | Post-incident activity | Improvement, under Identify |
+
+Watch the word "Identify". In SANS it means spotting an incident. In the NIST framework it means knowing your assets and risks.
+
+## What good looks like at each stage
+
+- **Preparation:** central logs kept long enough to investigate, an on-call rotation, runbooks for likely incidents, and contacts for legal and your cloud provider.
+- **Identification:** a clear severity scale, one incident commander, and a written timeline from the first minute.
+- **Containment:** short-term moves such as revoking keys and isolating hosts, taken after capturing evidence where possible.
+- **Eradication:** the root cause is found and every foothold removed, not just the one you noticed.
+- **Recovery:** systems rebuilt from known-good sources and watched closely as they return.
+- **Lessons learned:** a blameless review within days, with owned action items that feed back into preparation.
+
+## Pitfalls
+
+- **Wiping before looking.** Rebuilding the host first destroys the evidence that tells you how they got in.
+- **Containing too early, or too loudly.** Against a skilled attacker, a half-finished containment warns them. Scope the intrusion before you move, unless damage is ongoing.
+- **Rotating only the obvious secret.** Assume everything reachable from the compromised system is exposed.
+- **Postmortems that blame people.** Blame makes people hide mistakes. Ask what made the mistake easy and fix that.
+
+## Related flows
+
+- [From a Prometheus scrape to an alert](/learn/devops/prometheus-alert) shows how alerts are produced in the first place.
+- [Logs vs metrics vs traces](/learn/devops/logs-metrics-traces) covers the telemetry an investigation depends on.
+- [How a malicious package reaches production](/learn/security/supply-chain) is a common incident that starts outside your systems.
+
+## Go deeper
+
+- [Security roadmap on roadmap.sh](https://roadmap.sh/devsecops), under Incident Response
+- [NIST SP 800-61 Rev. 3, Incident Response Recommendations](https://csrc.nist.gov/pubs/sp/800/61/r3/final)
+- [CISA incident and vulnerability response playbooks](https://www.cisa.gov/resources-tools/resources/federal-government-cybersecurity-incident-and-vulnerability-response-playbooks)

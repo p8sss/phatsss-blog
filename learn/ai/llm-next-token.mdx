@@ -1,0 +1,91 @@
+---
+title: From prompt to next token
+sidebar_label: From prompt to next token
+sidebar_position: 1
+hide_table_of_contents: true
+description: What happens inside one chat completion call, from tokenizing the prompt to sampling each output token.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {llmNextToken} from '@site/src/data/learn/flows/llm-next-token';
+
+# From prompt to next token
+
+**The question:** What happens inside one chat completion call, from tokens to sampling?
+
+**The short answer:** Your messages become token ids, and one big pass through the model scores every possible next token. A sampler picks one, the token is fed back in, and the loop repeats until an end token or the output limit. A cache of earlier work makes every step after the first one cheap.
+
+<FlowPlayer flow={llmNextToken} />
+
+## The knobs on a request
+
+| Parameter | What it changes | Use it for |
+| --- | --- | --- |
+| `temperature` | Divides the scores before softmax. Low is focused, high is varied. | Low for extraction and code, higher for brainstorming |
+| `top_p` | Samples only from the smallest set of tokens whose probabilities add up to p | Cutting off the unlikely tail without making output rigid |
+| `top_k` | Samples only from the k highest-scoring tokens | Same idea as top_p. Not every API exposes it. |
+| `max_tokens` | Caps how many tokens the loop may generate | Bounding cost and latency |
+| `stop` | Ends the loop when a given string appears | Stopping at a delimiter in structured output |
+
+Vendors usually suggest changing temperature or top_p, not both. Some reasoning models fix these values and reject changes.
+
+## The same loop, in code
+
+This is what a sampler does with one step's scores. Real servers run it on the GPU over the whole vocabulary.
+
+```ts title="sample-token.ts"
+interface Candidate {
+  readonly id: number;
+  readonly p: number;
+}
+
+/** Picks one token id from raw scores, using temperature and top-p. */
+export function sampleToken(logits: readonly number[], temperature = 0.7, topP = 0.9): number {
+  const max = logits.reduce((a, b) => Math.max(a, b), -Infinity);
+  if (temperature <= 0) return logits.indexOf(max); // greedy: always the top token
+
+  // subtracting the max keeps Math.exp from overflowing; it does not change the result
+  const weights = logits.map((score) => Math.exp((score - max) / temperature));
+  const total = weights.reduce((a, b) => a + b, 0);
+  const ranked: Candidate[] = weights
+    .map((w, id) => ({ id, p: w / total }))
+    .sort((a, b) => b.p - a.p);
+
+  // top-p: keep the most likely tokens until their probabilities reach topP
+  const kept: Candidate[] = [];
+  let mass = 0;
+  for (const candidate of ranked) {
+    kept.push(candidate);
+    mass += candidate.p;
+    if (mass >= topP) break;
+  }
+
+  let r = Math.random() * mass;
+  for (const candidate of kept) {
+    r -= candidate.p;
+    if (r <= 0) return candidate.id;
+  }
+  return kept[kept.length - 1].id;
+}
+```
+
+## Pitfalls
+
+- **Tokens are not words.** Prices, context limits and `max_tokens` all count tokens. Code, numbers and non-English text often take more tokens per word.
+- **The model never sees letters.** Counting characters or reversing a word is hard for it, because "strawberry" arrives as a few tokens, not ten letters.
+- **Temperature 0 is not a determinism promise.** Hosted APIs batch requests on shared GPUs, and tiny floating-point differences can change a token. Test with that in mind.
+- **A length stop cuts the answer.** Check the finish reason. A stop on `max_tokens` means the output is incomplete, which breaks JSON.
+- **Long prompts cost time before the first token.** The prefill reads the whole prompt, so time to first token grows with prompt length.
+
+## Related flows
+
+- [Streaming a response](/learn/ai/llm-streaming) follows the fragments from the loop to the browser.
+- [What fills the context window](/learn/ai/context-window) shows what goes into the prompt before tokenizing.
+- [How prompt caching cuts cost](/learn/ai/prompt-caching) reuses the prefill work across requests.
+
+## Go deeper
+
+- [AI Engineer roadmap on roadmap.sh](https://roadmap.sh/ai-engineer), under How LLMs Work
+- [Attention Is All You Need](https://arxiv.org/abs/1706.03762), the paper that introduced the transformer
+- [Byte-pair encoding tokenization](https://huggingface.co/learn/llm-course/chapter6/5), from the Hugging Face LLM course
+- [Generation strategies](https://huggingface.co/docs/transformers/main/en/generation_strategies), Hugging Face Transformers docs

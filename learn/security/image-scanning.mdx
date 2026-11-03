@@ -1,0 +1,64 @@
+---
+title: Image scanning in the pipeline
+sidebar_label: Image scanning
+sidebar_position: 19
+hide_table_of_contents: true
+description: Where a vulnerable base image gets caught on its way from git push to a running pod.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {imageScanning} from '@site/src/data/learn/flows/image-scanning';
+
+# Image scanning in the pipeline
+
+**The question:** where does a vulnerable base image get caught before production?
+
+**The short answer:** CI scans each image right after building it and fails the build on fixable critical findings. The registry keeps rescanning stored images as new CVEs appear. At deploy time, an admission controller only admits images that CI signed, so nothing skips the gate.
+
+<FlowPlayer flow={imageScanning} />
+
+## Where scanning happens
+
+| Stage | Catches | Misses |
+| --- | --- | --- |
+| Pull request | Vulnerable dependencies in the lockfile, Dockerfile misconfigurations | OS packages, which only exist once the image is built |
+| CI, after build | Everything in the final image, before it is pushed | CVEs published after the build |
+| Registry | New CVEs in images you already built | Images pulled from elsewhere |
+| Admission | Unsigned images, images that skipped CI | Vulnerabilities in signed images, unless a policy checks scan attestations |
+| Runtime | What is actually running and loaded | Nothing it can prevent; it can only alert |
+
+## In the pipeline
+
+```bash title="scan-image.sh"
+IMAGE=registry.example/shop:1f3c
+
+# fail the job on CRITICAL or HIGH findings that have a fix available
+trivy image --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 "$IMAGE"
+
+# write a CycloneDX SBOM, so the image can be rechecked later without pulling it
+trivy image --format cyclonedx --output sbom.cdx.json "$IMAGE"
+
+# later: rescan the stored SBOM against today's vulnerability data
+trivy sbom sbom.cdx.json
+```
+
+## Pitfalls
+
+- **Scanning a tag, deploying a different digest.** Tags move. Scan, sign and deploy by `sha256` digest so the thing you checked is the thing that runs.
+- **Blocking on everything.** Hundreds of unfixable low findings teach teams to ignore the scanner. Gate on what is fixable and serious, track the rest.
+- **Big base images.** Every package is attack surface and scanner noise. Slim, distroless or minimal images often cut findings dramatically.
+- **Trusting the scanner blindly.** Security tools are dependencies too. In March 2026 attackers moved most version tags of the trivy-action GitHub Action to malicious commits. Pin CI actions and tool images by SHA or digest.
+- **Scanning only at build time.** A clean image can turn vulnerable without changing. Rebuild regularly so you pick up patched base images.
+
+## Related flows
+
+- [From Dockerfile to running container](/learn/devops/dockerfile-to-container) shows how layers and base images end up in your image.
+- [How a malicious package reaches production](/learn/security/supply-chain) covers malicious packages, which scanners for known CVEs do not catch.
+- [A commit becomes a deployment with Argo CD](/learn/devops/argocd-sync) is where a signed digest gets deployed.
+
+## Go deeper
+
+- [Security roadmap on roadmap.sh](https://roadmap.sh/devsecops), under Container Security
+- [Trivy documentation](https://trivy.dev/docs/latest/)
+- [Sigstore: verifying signatures with cosign](https://docs.sigstore.dev/cosign/verifying/verify/)
+- [Kyverno: ImageValidatingPolicy](https://kyverno.io/docs/policy-types/image-validating-policy/)

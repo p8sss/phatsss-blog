@@ -358,19 +358,28 @@
     "message": "ປະສົບການທີ່ຜ່ານມາ"
   },
   "workExperience.description": {
-    "message": "ຈາກປະສົບການຫຼາຍກວ່າ {years} ປີ ໃນການພັດທະນາ web application ໃຫ້ຫຼາຍອົງກອນ, ຮັບຜິດຊອບໜ້າວຽກທັງ Front-end ແລະ Back-end."
+    "message": "ປະສົບການຫຼາຍກວ່າ {years} ປີ ໃນການພັດທະນາແບບ Full-stack ສ້າງ web platform ຕັ້ງແຕ່ໜ້າ Front-end, ລະບົບ Back-end ຈົນເຖິງມາດຕະຖານທີ່ເຮັດໃຫ້ລະບົບປອດໄພ ແລະ ດູແລຮັກສາງ່າຍ.",
+    "description": "Work experience section description"
+  },
+  "workExperience.tsdDescription": {
+    "message": "ສ້າງ platform ແລະ ມາດຕະຖານລະດັບອົງກອນ (enterprise standard) ໃຫ້ທີມອື່ນນຳໃຊ້ຕໍ່ຍອດ ເຊັ່ນ: ສະຖາປັດຕະຍະກຳກາງ, ມາດຕະຖານດ້ານຄວາມປອດໄພ ແລະ ຄຸນນະພາບ, ພື້ນຖານ UI ທີ່ໃຊ້ຊ້ຳໄດ້ ແລະ pipeline ການສົ່ງມອບລະບົບ. ໂຄງການປະກອບມີ: web application ດ້ານການເງິນ, ລະບົບຈັດການເອກະສານ, payment gateway, ເຄື່ອງມືສ້າງ theme ເພື່ອໃຫ້ໜ້າຕາລະບົບສອດຄ່ອງກັບແບຣນ ແລະ AI loop workflow ທີ່ໃຫ້ AI agent ວາງແຜນ, ພັດທະນາ, ທົດສອບ ແລະ ກວດທານວຽກເປັນຮອບວຽນຊ້ຳໆ (loop engineering). ເຮັດວຽກທັງ Front-end ດ້ວຍ Next.js, React ແລະ TypeScript ແລະ Back-end ດ້ວຍ NestJS, Node.js ແລະ Go ເທິງ PostgreSQL ແລະ Redis ໂດຍວາງລະບົບຢືນຢັນຕົວຕົນດ້ວຍ OAuth 2.0 / OIDC, CI/CD ໄປສູ່ Kubernetes ແລະ ການຕິດຕາມລະບົບໄວ້ຕັ້ງແຕ່ເລີ່ມຕົ້ນ. ເປັນພີ່ລ້ຽງໃຫ້ນັກພັດທະນາໃນທີມ ຜ່ານການ review code ແລະ ມາດຕະຖານການພັດທະນາຮ່ວມກັນ.",
+    "description": "TSD, Senior Developer role description"
   },
   "workExperience.content1Description": {
-    "message": "ພັດທະນາລະບົບທີຫຼາກຫຼາຍຮັບໃຊ້ຫຼາຍອົງກອນເຊັ່ນ: E-Wallet ທີ່ມີ features ໃນການ Top-up, transaction history ພັດທະນາໂດຍໃຊ້ Next.JS ແລະ Tanstack Query, Crypto Investment Platforms ທີ່ມີການເຊື່ອມຕໍ່ກັບ Binance API ໃນການສ້າງອໍເດີ, ລະບົບບໍລິຫານຈັດການດ້ານການຂົນສົ່ງໄປສະນີ ສຳລັບບັນທຶກ ແລະ ຕິດຕາມການຂົນສົ່ງພັດສະດຸ, ລະບົບບໍລິຫານຈັດການປະກັນໄພ ສຳລັບການບັນທຶກຂໍ້ມູນການຊື້-ຂາຍປະກັນໄພ, ການເຄລມເງິນປະກັນໄພ, ການຄິດໄລ່ຄ່າປະກັນຕ່າງໆ, Education platforms ທີ່ເປັນລະບົບສຳລັບການລົງທະບຽນຕ່າງໆຂອງນັກສຶກສາ, ການໃຫ້ຄະແນນ, ອອກບັດນັກສຶກສາ,​ອອກໃບຄະແນນ ແລະ ອື່ນໆ."
+    "message": "ພັດທະນາ Front-end ໃຫ້ລູກຄ້າອົງກອນໃນຫຼາຍຂະແໜງ ເຊັ່ນ: ການເງິນ, ການຂົນສົ່ງ, ປະກັນໄພ ແລະ ການສຶກສາ ປະກອບມີ: ລະບົບ e-wallet ທີ່ມີການເຕີມເງິນ ແລະ ປະຫວັດທຸລະກຳ, platform ລົງທຶນ crypto ທີ່ສົ່ງອໍເດີຜ່ານ Binance API, ລະບົບໄປສະນີ ສຳລັບບັນທຶກ ແລະ ຕິດຕາມພັດສະດຸ, ລະບົບປະກັນໄພ ທີ່ຄອບຄຸມການຂາຍປະກັນ, ການຄິດໄລ່ຄ່າປະກັນ ແລະ ການເຄລມ, ແລະ platform ການສຶກສາ ສຳລັບການລົງທະບຽນ, ການໃຫ້ຄະແນນ, ບັດນັກສຶກສາ ແລະ ການຊຳລະເງິນ. ໃຊ້ Next.js ແລະ React ຮ່ວມກັບ TanStack Query ເປັນຫຼັກ, ປ່ຽນ design ໃຫ້ເປັນໜ້າຈໍທີ່ຮອງຮັບທຸກອຸປະກອນ ແລະ ເຊື່ອມຕໍ່ REST API.",
+    "description": "Lao IT Dev, Front-End Developer role description"
   },
   "workExperience.content2Description": {
-    "message": "ພັດທະນາລະບົບບໍລິຫານຈັດການສະຖາບັນການສຶກສາເຊິ່ງປະກອບດ້ວຍຫຼາຍໂມດູນເຊັ່ນ: ການລົງທະບຽນນັກສຶກສາ, ການລົງທະບຽນຮຽນ, ການຕິດຕາມຄະແນນ, ການຈັດການຫຼັກສູດ, ການອອກໃບຄະແນນ, ການຈັດການບົດໂຄງການຈົບຊັ້ນ ແລະ ການແຈ້ງເຕືອນ. ພັດທະນາໂດຍນຳໃຊ້ Laravel(PHP) ແລະ ຖານຂໍ້ມູນເປັນ MySQL."
+    "message": "ພັດທະນາລະບົບບໍລິຫານຈັດການສະຖາບັນການສຶກສາ ທີ່ປະກອບດ້ວຍຫຼາຍໂມດູນ ເຊັ່ນ: ການລົງທະບຽນນັກສຶກສາ, ການລົງທະບຽນຮຽນ, ການຕິດຕາມຄະແນນ, ການຈັດການຫຼັກສູດ, ການອອກໃບຄະແນນ, ການຈັດການບົດໂຄງການຈົບຊັ້ນ ແລະ ການແຈ້ງເຕືອນ. ພັດທະນາດ້ວຍ Laravel (PHP) ແລະ MySQL ໂດຍໃສ່ໃຈທັງການອອກແບບໜ້າຈໍ ແລະ ຂັ້ນຕອນການໃຊ້ງານ ເພື່ອໃຫ້ພະນັກງານ ແລະ ນັກສຶກສາເຂົ້າເຖິງຂໍ້ມູນການຮຽນໄດ້ງ່າຍ.",
+    "description": "Lao IT Dev, Software Engineer role description"
   },
   "workExperience.content3Description": {
-    "message": "ສຳເລັດການສຶກສາສາຂາ ການພັດທະນາເວັບໄຊ, ຄະນະວິທະຍາສາດທຳມະຊາດ ດ້ວຍເກຣດສະເລ່ຍ 3.95/4.00. ບົດໂຄງການຈົບຊັ້ນ: NUOL Football Management System ເປັນລະບົບຈັດການລີກການແຂ່ງຂັນກິລາບານເຕະຂອງ ມຊ, ໃນນັ້ນມີ features ທີ່ຫຼາກຫຼາຍເຊັ່ນ: ການຈັດການທີມແຂ່ງຂັນ, ການຈັດການໂຄດ,​ການຈັດການນັກເຕະ, ການຈັດການຂໍ້ມູນກຳມະການ, ການຈັດການຂໍ້ມູນລີກການແຂ່ງຂັນ, ການລົງຄະແນນໃນລະຫວ່າງການແຂ່ງ, ການໃຫ້ໃບເຫຼືອງ/ໃບແດງ, ການລົງໂທດແບນນັກເຕະ ແລະ ການຈັດນັດແຂ່ງຂັນແບບອັດຕະໂນມັດເປັນຕົ້ນ. ພັດທະນາໂດຍນຳໃຊ້ Laravel(PHP) ແລະ ຖານຂໍ້ມູນເປັນ MySQL."
+    "message": "ສຳເລັດການສຶກສາສາຂາການພັດທະນາເວັບໄຊ, ຄະນະວິທະຍາສາດທຳມະຊາດ ດ້ວຍເກຣດສະເລ່ຍ 3.95/4.00. ບົດໂຄງການຈົບຊັ້ນ: ລະບົບຈັດການລີກການແຂ່ງຂັນບານເຕະຂອງມະຫາວິທະຍາໄລ ມີ features ເຊັ່ນ: ການຈັດການທີມ, ຄູຝຶກ, ນັກເຕະ ແລະ ກຳມະການ, ການບັນທຶກຄະແນນລະຫວ່າງການແຂ່ງ, ໃບເຫຼືອງ/ໃບແດງ, ການລົງໂທດແບນນັກເຕະ ແລະ ການຈັດຕາຕະລາງແຂ່ງຂັນອັດຕະໂນມັດ. ພັດທະນາດ້ວຍ Laravel (PHP) ແລະ MySQL.",
+    "description": "NUOL education description"
   },
   "workExperience.content4Description": {
-    "message": "ຂ້ອຍໄດ້ອອກແບບ ແລະ ໄດ້ສົ່ງມອບ web application ຫຼາຍລະບົບເຊັ່ນ: ລະບົບຈັດການຫ້ອງສະໝຸດ(Laravel); ລະບົບຈັດການສາງນ້ຳມັນ(Laravel, NextJS) ສຳລັບບັນທຶກຂໍ້ມູນການຊື້-ຂາຍ ແລະ ຕິດຕາມນ້ຳມັນໃນສາງ; ລະບົບຕິດຕາມໂຄງການ(Laravel) ສຳລັບຕິດຕາມການດຳເນີນການຂອງແຕ່ລະໂຄງການ; ລະບົບ HRMS(NestJS, NodeJS, Vite, React, Tailwind CSS) ສຳລັບຕິດຕາມຂໍ້ມູນພະນັກງານ, ຄຳນວນເງິນເດືອນ, ບັກທຶກເວລາເຂົ້າ-ອອກວຽກ, ບັນທຶກວັນຂາດ/ລາ, ຈັດການຂໍ້ມູນອົງກອນ ແລະ ອື່ນໆ; ລະບົບ POS (React) ສຳລັບບັນທຶກຂໍ້ມູນການຊື້-ຂາຍ, ຕິດຕາມການຊື້-ຂາຍ ແລະ ສະຫຼຸບຍອດຂາຍ"
+    "message": "ອອກແບບ ແລະ ສົ່ງມອບ web application ແບບ Full-stack ໃຫ້ລູກຄ້າໃນຫຼາຍຂົງເຂດ ເຊັ່ນ: ລະບົບຈັດການຫ້ອງສະໝຸດ, ລະບົບຈັດການສາງນ້ຳມັນ ສຳລັບບັນທຶກການຊື້-ຂາຍ ແລະ ຕິດຕາມສິນຄ້າໃນສາງ, ລະບົບຕິດຕາມບົດໂຄງການຈົບຊັ້ນ, ລະບົບລົງທະບຽນນັກສຶກສາ, ລະບົບ HR ແລະ ເງິນເດືອນ ທີ່ມີການບັນທຶກເວລາເຂົ້າ-ອອກວຽກ, ວັນລາ ແລະ ຂໍ້ມູນອົງກອນ, ແລະ ລະບົບ POS ສຳລັບບັນທຶກ ແລະ ສະຫຼຸບຍອດຂາຍ. Front-end ດ້ວຍ React ແລະ Next.js, Back-end ດ້ວຍ Laravel, Node.js ແລະ NestJS.",
+    "description": "Freelance role description"
   },
   "service.title": {
     "message": "ບໍລິການ"
@@ -414,13 +423,109 @@
     "message": "ໂຫຼດບົດຄວາມເພີ່ມ",
     "description": "Label of the load-more button"
   },
-  "factory.title": {
-    "message": "ບ່ອນທີ່ໄອເດຍຖືກຜະລິດ",
-    "description": "Factory section title"
+  "journey.eyebrow": {
+    "message": "ເສັ້ນທາງຂອງຄຳຂໍ",
+    "description": "Request Journey eyebrow"
   },
-  "factory.description": {
-    "message": "ມຸມມອງ 3D ສົດຂອງກົນໄກເບື້ອງຫຼັງບລັອກ — ສາຍພານລຳລຽງ ແຂນຫຸ່ນຍົນ ແລະ ເຊັນເຊີເລເຊີ",
-    "description": "Factory section description"
+  "journey.title": {
+    "message": "ຈາກເຊີບເວີເຄື່ອງດຽວ ສູ່ລະບົບລະດັບອົງກອນ",
+    "description": "Request Journey section title"
+  },
+  "journey.description": {
+    "message": "ຕິດຕາມການເປີດໜ້າເວັບທີ່ເຣັນເດີຝັ່ງເຊີບເວີໜຶ່ງຄັ້ງ ແລະ ການເອີ້ນ API ຈາກແອັບໜຶ່ງຄັ້ງ ຜ່ານການເຕີບໂຕຫ້າຂັ້ນ. ແຕ່ລະຂັ້ນເພີ່ມທຣາຟຟິກຈົນມີບາງຢ່າງພັງ, ແລ້ວຂັ້ນຕໍ່ໄປຈະແກ້ໄຂ ລວມທັງເລື່ອງຄວາມປອດໄພນຳ.",
+    "description": "Request Journey section description"
+  },
+  "journey.stages": {
+    "message": "ຂັ້ນຕອນ",
+    "description": "Label of the stage rail"
+  },
+  "journey.practices": {
+    "message": "ສິ່ງທີ່ມີໃນຂັ້ນນີ້",
+    "description": "Label of the practices list"
+  },
+  "journey.new": {
+    "message": "ໃໝ່",
+    "description": "Tag on boxes a stage adds"
+  },
+  "journey.surge.load": {
+    "message": "ໂຫຼດ {percent}%",
+    "description": "Load meter on the bottleneck box"
+  },
+  "journey.metric.rps": {
+    "message": "ຄຳຂໍ/ວິນາທີ",
+    "description": "Requests per second metric"
+  },
+  "journey.metric.p95": {
+    "message": "ຄວາມໜ່ວງ p95",
+    "description": "p95 latency metric"
+  },
+  "journey.metric.errors": {
+    "message": "ຂໍ້ຜິດພາດ",
+    "description": "Error rate metric"
+  },
+  "journey.metric.blocked": {
+    "message": "ຖືກບລັອກ",
+    "description": "Blocked traffic metric"
+  },
+  "journey.metric.illustrative": {
+    "message": "ຕົວເລກເພື່ອການອະທິບາຍ",
+    "description": "Note that metrics are not real measurements"
+  },
+  "journey.walk.eyebrow": {
+    "message": "ໜຶ່ງຄຳຂໍ · ຂັ້ນທີ {n} ຈາກ {total}",
+    "description": "Narration eyebrow while one request plays"
+  },
+  "journey.surge.eyebrow": {
+    "message": "ທຣາຟຟິກພຸ່ງ",
+    "description": "Narration eyebrow during the surge"
+  },
+  "journey.surge.hint.bottleneck": {
+    "message": "ເບິ່ງກ່ອງ {name}: ເມື່ອຮັບບໍ່ໄຫວ ຄຳຂໍຈະລົ້ມເຫຼວຢູ່ບ່ອນນັ້ນ.",
+    "description": "Surge hint naming the bottleneck"
+  },
+  "journey.surge.hint.headroom": {
+    "message": "ທຸກຊັ້ນຍັງມີກຳລັງເຫຼືອ.",
+    "description": "Surge hint when nothing saturates"
+  },
+  "journey.surge.hint.guarded": {
+    "message": "ຈຸດສີແດງແມ່ນການໂຈມຕີ, ວົງສີຂຽວແມ່ນບ່ອນທີ່ດ່ານປ້ອງກັນຢຸດມັນໄວ້.",
+    "description": "Surge hint when guards stop attacks"
+  },
+  "journey.surge.hint.unguarded": {
+    "message": "ຈຸດສີແດງແມ່ນບອັດ, ແລະ ບໍ່ມີຫຍັງຢູ່ໜ້າ API ທີ່ແຍກມັນອອກໄດ້.",
+    "description": "Surge hint when attacks get through"
+  },
+  "journey.verdict.holds": {
+    "message": "ຮັບໄຫວ",
+    "description": "Verdict eyebrow when the stage survives"
+  },
+  "journey.verdict.breaks": {
+    "message": "ຫຍັງພັງ",
+    "description": "Verdict eyebrow when the stage fails"
+  },
+  "journey.action.surge": {
+    "message": "ຂ້າມໄປເບິ່ງທຣາຟຟິກ",
+    "description": "Button that jumps to the surge"
+  },
+  "journey.action.restart": {
+    "message": "ເລີ່ມໃໝ່",
+    "description": "Button that restarts from stage one"
+  },
+  "journey.action.fix": {
+    "message": "ແກ້ດ້ວຍ: {stage}",
+    "description": "Button that opens the next stage"
+  },
+  "journey.announce.stage": {
+    "message": "ຂັ້ນທີ {n}: {label}. {title}",
+    "description": "Screen reader announcement when a new stage starts"
+  },
+  "learn.flow.activityLog": {
+    "message": "ບັນທຶກກິດຈະກຳ",
+    "description": "Disclosure that reveals a flow's steps"
+  },
+  "learn.flow.activityLog.count": {
+    "message": "{count} ຂັ້ນ",
+    "description": "Number of steps in the activity log"
   },
   "hero.cta.blog": {
     "message": "ອ່ານບລັອກ",

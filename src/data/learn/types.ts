@@ -14,6 +14,11 @@ export interface LearnTopic {
   readonly format: TopicFormat;
   /** Site path once the topic is published; absent while planned or for reading topics. */
   readonly to?: string;
+  /**
+   * Id of the roadmap whose page this topic borrows, such as Security listing
+   * Backend's JWT page. The page lives in that roadmap's folder.
+   */
+  readonly crossListFrom?: string;
 }
 
 export interface RoadmapSection {

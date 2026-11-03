@@ -1,4 +1,5 @@
 import React, { useRef, type JSX } from "react";
+import Link from "@docusaurus/Link";
 import { translate } from "@docusaurus/Translate";
 import {
   useNavbarMobileSidebar,
@@ -17,7 +18,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/glass/sheet";
-import { ArrowLeft01Icon } from "@/components/ui/icons";
+import { ArrowLeft01Icon, Search01Icon } from "@/components/ui/icons";
 import { NavbarBrand } from "./NavbarBrand";
 import { NavLinks } from "./NavLinks";
 
@@ -40,12 +41,17 @@ export function MobileNavSheet(): JSX.Element {
   const setOpen = (open: boolean) => {
     if (open !== mobileSidebar.shown) mobileSidebar.toggle();
   };
+  const closeOnNavigate = () => {
+    closedByNavigation.current = true;
+    setOpen(false);
+  };
 
   return (
     <Sheet open={mobileSidebar.shown} onOpenChange={setOpen}>
       <SheetContent
         id={MOBILE_MENU_ID}
-        side="left"
+        // from the right: the menu button sits at the bar's right end
+        side="right"
         // denser frost than the default sheet: page content (cover images,
         // headings) must not read through behind the menu rows
         className="[--glass-liquid-blur:28px] [--glass-liquid-opacity:88%]"
@@ -86,14 +92,14 @@ export function MobileNavSheet(): JSX.Element {
             </>
           ) : (
             <>
-              <NavLinks
-                orientation="vertical"
-                onNavigate={() => {
-                  closedByNavigation.current = true;
-                  setOpen(false);
-                }}
-                className="w-full"
-              />
+              {/* the bar has no room for the inline search on mobile; the search page does the same job */}
+              <Button variant="outline" size="lg" className="w-full justify-start text-muted-foreground" asChild>
+                <Link to="/search" onClick={closeOnNavigate}>
+                  <Search01Icon size={16} />
+                  {translate({ id: "theme.SearchBar.label", message: "Search" })}
+                </Link>
+              </Button>
+              <NavLinks orientation="vertical" onNavigate={closeOnNavigate} className="w-full" />
               <LocaleDropdownNavbarItem mobile />
               <div className="flex items-center justify-between px-1">
                 <span className="text-xs font-medium text-muted-foreground">

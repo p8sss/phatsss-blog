@@ -1,5 +1,6 @@
 import type { ActorKind } from "@/lib/flow/types";
 import {
+  Alert02Icon,
   ApiIcon,
   CubeIcon,
   DatabaseIcon,
@@ -7,6 +8,8 @@ import {
   GlobeIcon,
   LaptopIcon,
   Layers02Icon,
+  SecurityLockIcon,
+  SparklesIcon,
 } from "@/components/ui/icons";
 
 type IconComponent = typeof LaptopIcon;
@@ -26,6 +29,9 @@ const ACTOR_STYLES: Readonly<Record<ActorKind, ActorStyle>> = {
   queue: { icon: Layers02Icon, color: "var(--galaxy-rose)" },
   service: { icon: CubeIcon, color: "var(--galaxy-violet)" },
   external: { icon: GlobeIcon, color: "var(--muted-foreground)" },
+  model: { icon: SparklesIcon, color: "var(--galaxy-rose)" },
+  attacker: { icon: Alert02Icon, color: "var(--destructive)" },
+  guard: { icon: SecurityLockIcon, color: "var(--success)" },
 };
 
 export function actorStyle(kind: ActorKind): ActorStyle {

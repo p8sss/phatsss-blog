@@ -1,0 +1,71 @@
+---
+title: npm vs pnpm vs Yarn
+sidebar_label: npm vs pnpm vs Yarn
+sidebar_position: 4
+hide_table_of_contents: true
+description: How npm, pnpm and Yarn lay out node_modules, how they guard installs, and which one to pick.
+---
+
+import CompareTable from '@site/src/components/learn/CompareTable';
+import {npmPnpmYarn} from '@site/src/data/learn/comparisons/npm-pnpm-yarn';
+
+# npm vs pnpm vs Yarn
+
+**The question:** How do they lay out node_modules, and which should you pick?
+
+**The short answer:** npm copies packages into a flat, hoisted node_modules. pnpm stores each file once on disk and links it in, exposing only what you declared. Yarn skips node_modules by default and resolves imports through a loader file. All three now block dependency install scripts unless you allow them.
+
+<CompareTable comparison={npmPnpmYarn} />
+
+## The same install, two layouts
+
+Here is `express` installed with npm and then with pnpm. Most of its dependencies are left out.
+
+```text title="npm: flat and hoisted"
+node_modules/
+├── express/
+├── body-parser/   ← a dependency of express, hoisted to the top
+└── debug/         ← so your code can import it without declaring it
+```
+
+```text title="pnpm: symlinks into a hidden store folder"
+node_modules/
+├── express -> .pnpm/express@5.3.0/node_modules/express
+└── .pnpm/
+    ├── express@5.3.0/node_modules/
+    │   ├── express/       ← files hard-linked from the global store
+    │   └── body-parser -> ../../body-parser@2.4.0/node_modules/body-parser
+    └── body-parser@2.4.0/node_modules/
+        └── body-parser/
+```
+
+With npm, `import debug from 'debug'` works even though you never added it. It breaks later, when express stops depending on it. pnpm and Yarn's Plug'n'Play make that import fail on day one.
+
+## Commands that map across
+
+| Task | npm | pnpm | Yarn |
+| --- | --- | --- | --- |
+| Install from the lockfile in CI | `npm ci` | `pnpm install --frozen-lockfile` | `yarn install --immutable` |
+| Add a dependency | `npm install zod` | `pnpm add zod` | `yarn add zod` |
+| Run a script | `npm run build` | `pnpm build` | `yarn build` |
+| Run a one-off binary | `npx eslint .` | `pnpm dlx eslint .` | `yarn dlx eslint .` |
+| Explain why a package is installed | `npm explain debug` | `pnpm why debug` | `yarn why debug` |
+
+## Pitfalls
+
+- **Mixing lockfiles.** Commit exactly one lockfile. Two lockfiles mean two dependency trees, and CI may not use the one you tested.
+- **Pin the package manager.** Set the `packageManager` field in package.json so every machine uses the same tool and version. Corepack, which reads that field, no longer ships with Node.js 25 and later, so install it yourself if you rely on it.
+- **Migrating to pnpm exposes phantom imports.** Code that imported undeclared packages under npm now fails. Add those packages to package.json; do not reach for hoisting first.
+- **Blocked scripts look like broken packages.** A package that compiles a native binary, or downloads one in `postinstall`, fails at runtime if its script never ran. Review it, then allow it by name.
+
+## Related flows
+
+- [Vite, Rollup and esbuild](/learn/frontend/vite-rollup-esbuild) covers what consumes node_modules next.
+- [How a malicious package reaches production](/learn/security/supply-chain) shows why install scripts and fresh releases are now gated.
+
+## Go deeper
+
+- [Frontend roadmap on roadmap.sh](https://roadmap.sh/frontend), under Package Managers
+- [npm: folders and hoisting](https://docs.npmjs.com/cli/v12/configuring-npm/folders)
+- [pnpm: motivation and node_modules layout](https://pnpm.io/motivation)
+- [Yarn: install linkers](https://yarnpkg.com/features/linkers)

@@ -1,0 +1,79 @@
+---
+title: How a cloud API call is authorised
+sidebar_label: Cloud API authorisation
+sidebar_position: 18
+hide_table_of_contents: true
+description: The authentication and policy checks AWS runs on a request before an S3 bucket returns an object.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {iamRequest} from '@site/src/data/learn/flows/iam-request';
+
+# How a cloud API call is authorised
+
+**The question:** what checks a request before an S3 bucket answers?
+
+**The short answer:** the SDK signs every request with short-lived credentials, and AWS first checks that signature. Then it gathers every policy that applies. Any explicit Deny wins, organization guardrails must allow, and some identity or bucket policy must grant the action. Anything not allowed is denied by default.
+
+<FlowPlayer flow={iamRequest} />
+
+## The policy types, in evaluation order
+
+| Policy type | Attached to | Can grant access? | Typical use |
+| --- | --- | --- | --- |
+| Explicit Deny, in any policy | Anywhere | No, it only blocks | Hard rules such as "TLS only" |
+| Resource control policy, RCP | Accounts in an organization | No, it sets a ceiling on resources | "Only principals from our organization" |
+| Service control policy, SCP | Accounts in an organization | No, it sets a ceiling on principals | "No one may disable CloudTrail" |
+| Resource-based policy | The bucket, key or queue | Yes | Cross-account or service access |
+| Identity-based policy | The user or role | Yes | What a workload is allowed to do |
+| Permissions boundary | The user or role | No, it sets a ceiling | Limits what delegated admins can create |
+| Session policy | One assumed-role session | No, it narrows further | Scoping a session to one task |
+
+Same-account access to S3 needs an Allow from the bucket policy or the identity policy. Cross-account access needs both: the other account's identity policy and your bucket policy.
+
+## A bucket policy with a guardrail
+
+```json title="bucket-policy.json"
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowReportsApp",
+      "Effect": "Allow",
+      "Principal": {"AWS": "arn:aws:iam::111122223333:role/reports-app"},
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::example-reports/*"
+    },
+    {
+      "Sid": "DenyWithoutTLS",
+      "Effect": "Deny",
+      "Principal": "*",
+      "Action": "s3:*",
+      "Resource": ["arn:aws:s3:::example-reports", "arn:aws:s3:::example-reports/*"],
+      "Condition": {"Bool": {"aws:SecureTransport": "false"}}
+    }
+  ]
+}
+```
+
+The Deny applies to everyone, including admins, whatever their other policies allow.
+
+## Pitfalls
+
+- **403 for a missing object.** Without `s3:ListBucket`, S3 returns 403 instead of 404 for an object that does not exist, so callers cannot probe for names. Check the key before you check the policy.
+- **Wildcard principals.** `"Principal": "*"` on an Allow makes data public. Keep S3 Block Public Access on at the account level so a mistake cannot take effect.
+- **Long-lived access keys.** Keys in code or CI variables are the most common way in. Use roles and OIDC federation so every credential expires.
+- **Forgetting the key policy.** With SSE-KMS, the KMS key policy must also let the role decrypt. Otherwise S3 says AccessDenied even though the bucket policy allows the read.
+
+## Related flows
+
+- [An authorization check with a policy engine](/learn/security/policy-check) applies the same allow and deny logic to your own app.
+- [RBAC vs ABAC vs ReBAC](/learn/security/rbac-abac-rebac) explains the models behind conditions like tags and organization ids.
+- [Envelope encryption with a KMS](/learn/security/envelope-encryption) shows the KMS calls that SSE-KMS makes for you.
+
+## Go deeper
+
+- [Security roadmap on roadmap.sh](https://roadmap.sh/devsecops), under Cloud Security
+- [AWS IAM: policy evaluation logic](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html)
+- [AWS Signature Version 4 for API requests](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_sigv.html)
+- [Amazon S3: Block Public Access](https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html)

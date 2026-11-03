@@ -42,15 +42,21 @@ export default function DocRootLayoutSidebar({
   return (
     <aside
       className={clsx(
-        'hidden shrink-0 min-[997px]:block min-[997px]:w-64',
+        // mt-12 matches Main's py-12 so the card lines up with the article
+        // instead of butting against the navbar logo; self-stretch overrides
+        // the row's items-start so the aside spans the article and the
+        // sticky child below has room to stick
+        'hidden shrink-0 min-[997px]:mt-12 min-[997px]:block min-[997px]:w-64 min-[997px]:self-stretch',
         hiddenSidebarContainer && 'min-[997px]:hidden',
       )}>
       <ResetOnSidebarChange>
         <div
           className={clsx(
             // p-10/-m-10 gives the glass card's shadow room inside the
-            // scroll box, so overflow-y-auto doesn't clip it to a hard edge
-            'min-[997px]:sticky min-[997px]:top-14 min-[997px]:-m-10 min-[997px]:max-h-[calc(100vh-3.5rem)] min-[997px]:overflow-y-auto min-[997px]:p-10',
+            // scroll box, so overflow-y-auto doesn't clip it to a hard edge.
+            // Sticky top = navbar height + (mt-12 - p-10), so the card holds
+            // its resting position on scroll rather than sliding under the logo
+            'min-[997px]:sticky min-[997px]:top-[calc(var(--ifm-navbar-height)+0.5rem)] min-[997px]:-m-10 min-[997px]:max-h-[calc(100vh-var(--ifm-navbar-height)-0.5rem)] min-[997px]:overflow-y-auto min-[997px]:p-10',
             hiddenSidebar && 'min-[997px]:hidden',
           )}>
           <DocSidebar

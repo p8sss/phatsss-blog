@@ -1,0 +1,109 @@
+---
+title: A secret from Vault to a pod
+sidebar_label: Vault secret to a pod
+sidebar_position: 7
+hide_table_of_contents: true
+description: How a pod proves who it is to HashiCorp Vault and receives a short-lived database password that never touches Git.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {vaultToPod} from '@site/src/data/learn/flows/vault-to-pod';
+
+# A secret from Vault to a pod
+
+**The question:** How does a database password reach a container without living in Git?
+
+**The short answer:** The pod proves its identity with its Kubernetes service account token. Vault checks that token with the cluster, then creates a database user just for that pod. Vault Agent writes the password to an in-memory file the app reads.
+
+<FlowPlayer flow={vaultToPod} />
+
+## What lives in Git
+
+Only annotations and a role name. No password, and no Vault token.
+
+```yaml title="deployment.yaml"
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orders
+  namespace: shop
+spec:
+  selector:
+    matchLabels: {app: orders}
+  template:
+    metadata:
+      labels: {app: orders}
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "orders"
+        vault.hashicorp.com/agent-inject-secret-db-creds: "database/creds/orders"
+        vault.hashicorp.com/agent-inject-template-db-creds: |
+          {{- with secret "database/creds/orders" -}}
+          postgresql://{{ .Data.username }}:{{ .Data.password }}@orders-db.example:5432/orders
+          {{- end }}
+    spec:
+      serviceAccountName: orders  # never bind a Vault role to "default"
+      containers:
+        - name: orders
+          image: registry.example/orders:v3
+```
+
+## What an operator sets up once in Vault
+
+```bash title="vault-setup.sh"
+vault auth enable kubernetes
+vault write auth/kubernetes/config \
+  kubernetes_host="https://kubernetes.default.svc:443"
+
+vault write auth/kubernetes/role/orders \
+  bound_service_account_names=orders \
+  bound_service_account_namespaces=shop \
+  policies=orders-db \
+  ttl=1h
+
+vault policy write orders-db - <<'EOF'
+path "database/creds/orders" {
+  capabilities = ["read"]
+}
+EOF
+
+vault secrets enable database
+vault write database/roles/orders \
+  db_name=orders-db \
+  creation_statements="CREATE ROLE \"{{name}}\" WITH LOGIN PASSWORD '{{password}}' VALID UNTIL '{{expiration}}'; GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA public TO \"{{name}}\";" \
+  default_ttl=1h \
+  max_ttl=24h
+```
+
+The `kubernetes_host` shown works when Vault runs inside the same cluster. The `orders-db` connection itself is configured with `vault write database/config/orders-db`, using an admin account only Vault knows.
+
+## Four ways to get Vault secrets into pods
+
+| Approach | What the app sees | Notes |
+| --- | --- | --- |
+| Vault Agent Injector | A file in `/vault/secrets` | The flow above. A sidecar renews leases and re-renders files. |
+| Vault CSI provider | A file on a CSI volume | Uses the Secrets Store CSI driver. No sidecar per pod. |
+| Vault Secrets Operator | A Kubernetes Secret | Syncs Vault data into native Secrets, as env vars or files. |
+| External Secrets Operator | A Kubernetes Secret | A community project that works with many secret stores, not only Vault. |
+
+Syncing to a Kubernetes Secret is the most convenient. It also means the value sits in etcd, so turn on encryption at rest and keep RBAC on Secrets tight.
+
+## Pitfalls
+
+- **Binding roles to the default service account.** Every pod in the namespace could then claim the role. Give each app its own service account.
+- **Reading the file once at startup.** Dynamic credentials change when a lease cannot be renewed. Reload when the file changes, or let Agent signal the app.
+- **Policies that are too wide.** A policy on `database/creds/*` lets one app mint credentials for every database role.
+- **Secrets in environment variables.** Every child process inherits them, and they often end up in crash reports and debug output.
+
+## Related flows
+
+- [A Kubernetes rolling update](/learn/devops/kubernetes-rolling-update) shows the pod start-up that Vault Agent hooks into.
+- [Envelope encryption with a KMS](/learn/security/envelope-encryption) shows how secrets are protected at rest.
+- [A commit becomes a deployment with Argo CD](/learn/devops/argocd-sync) shows why GitOps needs secrets that stay out of the repo.
+
+## Go deeper
+
+- [DevOps roadmap on roadmap.sh](https://roadmap.sh/devops), under Secret Management
+- [Vault Agent Injector](https://developer.hashicorp.com/vault/docs/deploy/kubernetes/injector)
+- [Kubernetes auth method](https://developer.hashicorp.com/vault/docs/auth/kubernetes)
+- [PostgreSQL database secrets engine](https://developer.hashicorp.com/vault/docs/secrets/databases/postgresql)

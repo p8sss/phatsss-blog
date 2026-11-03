@@ -1,0 +1,70 @@
+---
+title: How Elasticsearch answers a search
+sidebar_label: Elasticsearch search
+sidebar_position: 9
+hide_table_of_contents: true
+description: How a full-text query fans out across shards, gets scored with BM25 and comes back as one ranked list.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {elasticsearchQuery} from '@site/src/data/learn/flows/elasticsearch-query';
+
+# How Elasticsearch answers a search
+
+**The question:** How does a full-text query fan out across shards and come back ranked?
+
+**The short answer:** the node that receives the search sends it to one copy of every shard. Each shard finds and scores its own best matches and returns only ids and scores. The coordinator merges them into one ranking, then fetches just the winning documents.
+
+<FlowPlayer flow={elasticsearchQuery} />
+
+## The request and the response
+
+```bash title="search.sh"
+curl -s "https://search.example.com:9200/products/_search" \
+  -H "Authorization: ApiKey $ES_API_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "query": {"match": {"title": "wireless mouse"}},
+    "size": 10,
+    "_source": ["title", "price"]
+  }'
+```
+
+```json title="response.json"
+{
+  "took": 12,
+  "timed_out": false,
+  "_shards": {"total": 2, "successful": 2, "skipped": 0, "failed": 0},
+  "hits": {
+    "total": {"value": 1284, "relation": "eq"},
+    "max_score": 7.2,
+    "hits": [
+      {"_index": "products", "_id": "41", "_score": 7.2, "_source": {"title": "Wireless mouse M2", "price": 24}}
+    ]
+  }
+}
+```
+
+`_shards.failed` above zero means some results are missing. By default the search still succeeds with partial results.
+
+## Pitfalls
+
+- **Scores differ between shards.** Each shard scores with its own term statistics, so a small index can rank oddly. Use one shard for small data, or `search_type=dfs_query_then_fetch` to gather global statistics first at some extra cost.
+- **Deep pagination.** Every shard must return `from + size` hits, and `from + size` is capped at 10,000 by default. Page deeper with `search_after` and a point in time.
+- **Text versus keyword.** A `text` field is analyzed into terms, so a `term` query for `"Wireless Mouse"` finds nothing. Map exact values such as SKUs as `keyword` and put them in a `filter` clause, which skips scoring and can be cached.
+- **Too many small shards.** Every search touches every shard of the index, and each shard costs memory and threads. Fewer, larger shards usually search faster.
+- **New documents are not searchable at once.** A document becomes visible after the next refresh, about once a second by default, or every 5 seconds on Elastic Cloud Serverless. Search is near real time, not instant.
+- **Counting every hit is not free.** By default the total is exact only up to 10,000. Beyond that `relation` reads `gte`.
+
+## Related flows
+
+- [How a B-tree index answers a query](/learn/backend/btree-index) is the database index built for exact and range lookups, where an inverted index is built for words.
+- [Replication and failover](/learn/backend/replication-failover) covers the same primary and replica idea for databases.
+- [Text to vector to similarity](/learn/ai/embeddings-similarity) shows the semantic search that often runs beside keyword search.
+
+## Go deeper
+
+- [Backend roadmap on roadmap.sh](https://roadmap.sh/backend), under Search Engines
+- [Elasticsearch: search shard routing](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/search-shard-routing)
+- [Elasticsearch: the search API](https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-search)
+- [Elasticsearch: similarity settings](https://www.elastic.co/docs/reference/elasticsearch/index-settings/similarity)

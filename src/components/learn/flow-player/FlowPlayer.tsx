@@ -1,63 +1,23 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type JSX, type KeyboardEvent } from "react";
+import { useCallback, useMemo, useRef, useState, type JSX, type KeyboardEvent } from "react";
 import { translate } from "@docusaurus/Translate";
 import { Card } from "@/components/glass/card";
 import { useElementWidth } from "@/hooks/use-element-width";
 import { useInView } from "@/hooks/use-in-view";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
-import { layoutFlow, type Orientation } from "@/lib/flow/geometry";
 import { buildTimeline, sampleAt, stepHoldTime, stepStartTime } from "@/lib/flow/timeline";
 import type { FlowDefinition } from "@/lib/flow/types";
 import { validateFlow } from "@/lib/flow/validate";
 import { DataError } from "../DataError";
-import { actorStyle } from "./actor-style";
 import { FlowControls } from "./FlowControls";
 import { FlowDiagram } from "./FlowDiagram";
 import { FlowLegend } from "./FlowLegend";
 import { FlowStepList } from "./FlowStepList";
 import { useFlowClock } from "./use-flow-clock";
-
-/**
- * Smallest scale the wide layout may shrink to before the grid transposes into
- * a column. Below it, 14px labels drop under about 11px.
- */
-const MIN_WIDE_SCALE = 0.8;
+import { useColorOf, useFlowLayout } from "./use-flow-layout";
+import { useScrollAutoplay } from "./use-scroll-autoplay";
 
 interface FlowPlayerProps {
   readonly flow: FlowDefinition;
-}
-
-function useColorOf(flow: FlowDefinition) {
-  return useMemo(() => {
-    const kinds = new Map(flow.actors.map((a) => [a.id, a.kind]));
-    return (actorId: string) => actorStyle(kinds.get(actorId) ?? "external").color;
-  }, [flow.actors]);
-}
-
-/** Starts the flow the first time it scrolls into view; pauses it off screen and resumes on return. */
-function useScrollAutoplay(
-  inView: boolean,
-  reducedMotion: boolean,
-  clock: ReturnType<typeof useFlowClock>,
-) {
-  const autoplayed = useRef(false);
-  const pausedByScroll = useRef(false);
-  const { playing, play, pause, resume } = clock;
-  useEffect(() => {
-    if (reducedMotion) {
-      pause();
-      return;
-    }
-    if (inView && !autoplayed.current) {
-      autoplayed.current = true;
-      play();
-    } else if (!inView && playing) {
-      pausedByScroll.current = true;
-      pause();
-    } else if (inView && pausedByScroll.current) {
-      pausedByScroll.current = false;
-      resume();
-    }
-  }, [inView, reducedMotion, playing, play, pause, resume]);
 }
 
 function announce(flow: FlowDefinition, index: number): string {
@@ -80,12 +40,8 @@ function ValidFlowPlayer({ flow }: FlowPlayerProps): JSX.Element {
   const clock = useFlowClock(timeline.total);
   useScrollAutoplay(inView, reducedMotion, clock);
 
-  const wideLayout = useMemo(() => layoutFlow(flow.actors, "wide"), [flow.actors]);
-  const narrowLayout = useMemo(() => layoutFlow(flow.actors, "narrow"), [flow.actors]);
-  const orientation: Orientation =
-    width !== null && width < wideLayout.width * MIN_WIDE_SCALE ? "narrow" : "wide";
-  const layout = orientation === "wide" ? wideLayout : narrowLayout;
-  const colorOf = useColorOf(flow);
+  const layout = useFlowLayout(flow.actors, width);
+  const colorOf = useColorOf(flow.actors);
 
   const sample = sampleAt(timeline, clock.time);
   // reduced motion skips travel: every step is shown in its finished state

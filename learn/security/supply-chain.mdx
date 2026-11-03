@@ -1,0 +1,73 @@
+---
+title: How a malicious package reaches production
+sidebar_label: Supply chain attacks
+sidebar_position: 14
+hide_table_of_contents: true
+description: Where a poisoned dependency gets into your build, and the controls that stop it at each step.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {supplyChain} from '@site/src/data/learn/flows/supply-chain';
+
+# How a malicious package reaches production
+
+**The question:** where does a poisoned dependency get in, and what stops it?
+
+**The short answer:** an attacker takes over a maintainer account or publishes a look-alike package. Your build pulls the new version through a loose version range, runs its install script with your CI secrets, and ships it. Lockfiles, a release-age delay, disabled install scripts and short-lived credentials each break a different link.
+
+<FlowPlayer flow={supplyChain} />
+
+## Ways in, and what stops each one
+
+| Way in | Example | Control |
+| --- | --- | --- |
+| Hijacked maintainer account | Phished password and one-time code | Phishing-resistant 2FA, trusted publishing from CI |
+| Look-alike name | A typo of a popular package | Review new dependencies, allowlists in a private registry |
+| Dependency confusion | A public package with your internal package's name | Scoped names, and a registry that never falls back to public for them |
+| Loose version range | `^4.2.0` picks up 4.2.1 on the next install | Commit the lockfile, install with `npm ci` |
+| Brand-new release | Minutes old, not yet reviewed by anyone | A minimum release age before installing |
+| Install scripts | `postinstall` reads environment variables | Disable dependency scripts, allow a short list |
+| Stolen CI secrets | Long-lived publish or cloud tokens | OIDC short-lived credentials, narrow scopes, egress limits |
+
+## Safer defaults
+
+```ini title=".npmrc"
+# never run lifecycle scripts from dependencies
+ignore-scripts=true
+# only install versions published at least 3 days ago
+min-release-age=3
+```
+
+`min-release-age` is measured in days and needs a recent npm 11 release. Note that `ignore-scripts` also skips your own project's install scripts, and packages with native builds may need you to run their build step yourself.
+
+```yaml title="pnpm-workspace.yaml"
+# minutes: wait three days before installing a new version
+minimumReleaseAge: 4320
+# dependency build scripts only run for packages listed here
+allowBuilds:
+  esbuild: true
+```
+
+Since pnpm 11, the release age defaults to one day, and `allowBuilds` replaced the older build-script settings.
+
+In CI, install with `npm ci` or `pnpm install --frozen-lockfile`, so the lockfile is the only source of versions. Run `npm audit signatures` to check registry signatures and provenance attestations for what you installed.
+
+## Pitfalls
+
+- **Treating the lockfile as noise.** Review lockfile changes in pull requests. A new transitive dependency is a new party you trust.
+- **Publishing from a laptop.** npm revoked all classic tokens in December 2025. Trusted publishing from GitHub Actions, GitLab CI/CD or CircleCI removes publish tokens altogether.
+- **Pinning actions by tag.** CI plugins are dependencies too. A tag can be moved to malicious code; a full commit SHA cannot.
+- **Rotating too little after an incident.** If a bad version ran in CI, assume every secret that job could read is stolen.
+
+## Related flows
+
+- [npm vs pnpm vs Yarn](/learn/frontend/npm-pnpm-yarn) compares how each package manager installs and locks dependencies.
+- [Image scanning in the pipeline](/learn/security/image-scanning) catches known-vulnerable packages, the other half of dependency risk.
+- [GitHub Actions vs GitLab CI vs Jenkins](/learn/devops/github-actions-gitlab-jenkins) covers the CI systems these attacks target.
+
+## Go deeper
+
+- [Security roadmap on roadmap.sh](https://roadmap.sh/devsecops), under Secure Coding
+- [npm: trusted publishing](https://docs.npmjs.com/trusted-publishers)
+- [npm: generating provenance statements](https://docs.npmjs.com/generating-provenance-statements)
+- [SLSA specification](https://slsa.dev/spec/v1.2/)

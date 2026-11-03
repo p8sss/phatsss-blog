@@ -1,0 +1,72 @@
+---
+title: Symmetric vs asymmetric vs hashing
+sidebar_label: Symmetric, asymmetric, hashing
+sidebar_position: 11
+hide_table_of_contents: true
+description: Which cryptographic primitive solves which problem, and how real systems combine all three.
+---
+
+import CompareTable from '@site/src/components/learn/CompareTable';
+import {cryptoPrimitives} from '@site/src/data/learn/comparisons/crypto-primitives';
+
+# Symmetric vs asymmetric vs hashing
+
+**The question:** which primitive solves which problem?
+
+**The short answer:** symmetric encryption keeps bulk data secret with one shared key. Asymmetric cryptography lets strangers agree on that key and lets anyone check a signature. Hashing proves data has not changed, and a slow, salted hash is how you store passwords.
+
+<CompareTable comparison={cryptoPrimitives} />
+
+## Real systems use all three together
+
+Each primitive covers a weakness of another. A TLS connection is the classic example:
+
+1. **Asymmetric key exchange.** Client and server run an ephemeral key exchange such as X25519. A listener sees the public halves but cannot compute the shared secret.
+2. **Asymmetric signature.** The server signs the handshake with its certificate's private key, so the client knows it is talking to the real site.
+3. **Hashing.** A transcript hash binds every handshake message together, and the key schedule derives keys from it.
+4. **Symmetric encryption.** All application data then flows under AES-GCM or ChaCha20-Poly1305, because it is fast.
+
+A digital signature is itself a combination: you hash the message, then sign the digest with a private key.
+
+## Pitfalls
+
+- **Encryption without integrity.** Unauthenticated modes such as CBC on their own let an attacker flip bits in ways your code may not notice. Use an AEAD mode like AES-GCM.
+- **Nonce reuse.** Encrypting two messages with the same key and nonce in GCM leaks their relationship and can let an attacker forge messages. Use a random 96-bit nonce per message, or a library that handles it.
+- **A hash is not a password store.** SHA-256 is designed to be fast, so attackers can try billions of guesses. Use Argon2id, scrypt or bcrypt.
+- **A hash is not a signature.** Anyone can recompute a plain hash. To prove who sent something, use an HMAC with a shared secret or a signature with a private key.
+- **Rolling your own.** Use a well-reviewed library such as libsodium, the Web Crypto API or your platform's standard crypto module.
+
+## In code
+
+```ts title="integrity.ts"
+import {createHash, createHmac, timingSafeEqual} from 'node:crypto';
+
+// A plain hash: anyone can recompute it, so it only detects accidental change
+export const checksum = (data: Buffer): string => createHash('sha256').update(data).digest('hex');
+
+// An HMAC: only holders of the secret can produce a valid tag
+export function sign(body: string, secret: string): string {
+  return createHmac('sha256', secret).update(body).digest('hex');
+}
+
+export function verify(body: string, tag: string, secret: string): boolean {
+  const expected = Buffer.from(sign(body, secret), 'hex');
+  const given = Buffer.from(tag, 'hex');
+  // compare in constant time so the check does not leak how many bytes matched
+  return given.length === expected.length && timingSafeEqual(given, expected);
+}
+```
+
+## Related flows
+
+- [The TLS handshake](/learn/devops/tls-handshake) shows all three primitives working in one connection.
+- [Envelope encryption with a KMS](/learn/security/envelope-encryption) shows symmetric keys protecting other symmetric keys.
+- [Password login with bcrypt](/learn/security/password-hashing) shows why passwords need a slow hash.
+- [JWT authentication](/learn/backend/jwt-authentication) shows HMAC and signature algorithms protecting a token.
+
+## Go deeper
+
+- [Security roadmap on roadmap.sh](https://roadmap.sh/devsecops), under Encryption
+- [NIST SP 800-38D, GCM mode](https://csrc.nist.gov/pubs/sp/800/38/d/final)
+- [NIST FIPS 203, ML-KEM](https://csrc.nist.gov/pubs/fips/203/final)
+- [OWASP Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html)

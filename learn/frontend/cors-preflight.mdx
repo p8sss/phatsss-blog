@@ -1,0 +1,81 @@
+---
+title: CORS and the preflight request
+sidebar_label: CORS and preflight
+sidebar_position: 10
+hide_table_of_contents: true
+description: Why the browser sends an OPTIONS request before a cross-origin call, and which headers make it pass.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {corsPreflight} from '@site/src/data/learn/flows/cors-preflight';
+
+# CORS and the preflight request
+
+**The question:** Why does the browser send an OPTIONS request before your real one?
+
+**The short answer:** Old servers never expected a web page to send them a PUT, a JSON body or custom headers from another site. So for anything beyond what an HTML form could already send, the browser first asks the server with an OPTIONS request. Only if the reply allows it does the real request go out.
+
+<FlowPlayer flow={corsPreflight} />
+
+## What triggers a preflight
+
+| Request | Preflight? | Why |
+| --- | --- | --- |
+| `GET` with no custom headers | No | A link or image could already do this |
+| `POST` with `Content-Type: application/x-www-form-urlencoded`, `multipart/form-data` or `text/plain` | No | An HTML form could already do this |
+| `POST` with `Content-Type: application/json` | Yes | That content type is not safelisted |
+| Any request with `Authorization` or a custom `X-` header | Yes | Not a safelisted header |
+| `PUT`, `PATCH` or `DELETE` | Yes | Not a simple method |
+| A request body sent as a `ReadableStream` | Yes | Streams are never simple |
+
+A request with no preflight still needs `Access-Control-Allow-Origin` on its response, or the script cannot read it.
+
+## A correct handler
+
+```js title="cors.js (Express 5)"
+import express from 'express';
+
+const ALLOWED_ORIGINS = new Set(['https://app.example.com']);
+const app = express();
+
+app.use((req, res, next) => {
+  const origin = req.get('Origin');
+  res.vary('Origin'); // the response differs per origin, so caches must key on it
+  if (origin && ALLOWED_ORIGINS.has(origin)) {
+    res.set('Access-Control-Allow-Origin', origin);
+    res.set('Access-Control-Allow-Credentials', 'true');
+  }
+  if (req.method === 'OPTIONS') {
+    res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.set('Access-Control-Max-Age', '600');
+    res.sendStatus(204); // answer before any auth middleware runs
+    return;
+  }
+  next();
+});
+```
+
+The `cors` package on npm does the same with less code. Whichever you use, register it before authentication.
+
+## Pitfalls
+
+- **CORS is not access control.** It stops other sites' scripts from reading responses in a browser. curl, servers and attackers' own tools ignore it. Protect the API with authentication.
+- **The request still runs.** A simple request reaches your server even when the response is blocked. Make state-changing endpoints require a preflighted request or a CSRF defence.
+- **Reflecting any Origin.** Echoing the request's Origin back with credentials allowed lets every site read your users' data. Check it against an allowlist.
+- **Wildcards with credentials.** `Access-Control-Allow-Origin: *` cannot be used with cookies. The browser rejects the response.
+- **A 401 on OPTIONS.** Auth middleware that rejects the preflight blocks every real request. The preflight never carries credentials.
+- **Missing `Vary: Origin`.** A CDN may cache the answer for one origin and serve it to another.
+
+## Related flows
+
+- [CSRF and SameSite cookies](/learn/security/csrf-samesite) covers the attack that simple requests still allow.
+- [OAuth login with PKCE](/learn/frontend/oauth-pkce) makes cross-origin token requests that depend on CORS.
+- [JWT authentication](/learn/backend/jwt-authentication) uses the Authorization header that triggers a preflight.
+
+## Go deeper
+
+- [Frontend roadmap on roadmap.sh](https://roadmap.sh/frontend), under Web Security
+- [MDN: Cross-Origin Resource Sharing](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS)
+- [MDN: Access-Control-Max-Age](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Access-Control-Max-Age)
+- [Fetch Standard: the CORS protocol](https://fetch.spec.whatwg.org/#http-cors-protocol)

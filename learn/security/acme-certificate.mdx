@@ -1,0 +1,70 @@
+---
+title: How a Let's Encrypt certificate is issued
+sidebar_label: Let's Encrypt and ACME
+sidebar_position: 13
+hide_table_of_contents: true
+description: What happens during an ACME HTTP-01 challenge, how the certificate is issued, and how renewal works as lifetimes shrink.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {acmeCertificate} from '@site/src/data/learn/flows/acme-certificate';
+
+# How a Let's Encrypt certificate is issued
+
+**The question:** what happens during the ACME challenge, and how does renewal work?
+
+**The short answer:** your ACME client asks the CA for a certificate, and the CA replies with a challenge. The client proves control of the domain by serving a token at a known URL or publishing it in DNS. The CA checks from several places, then signs your CSR. Renewal is the same process again, run automatically well before expiry.
+
+<FlowPlayer flow={acmeCertificate} />
+
+## Choosing a challenge
+
+| Challenge | Proof | Works for wildcards | Good for |
+| --- | --- | --- | --- |
+| http-01 | A file at `/.well-known/acme-challenge/` on port 80 | No | One server that is reachable from the internet |
+| dns-01 | A TXT record at `_acme-challenge.example.com` | Yes | Wildcards, internal hosts, many servers behind a load balancer |
+| tls-alpn-01 | A special certificate served on port 443 | No | TLS-terminating proxies when port 80 is closed |
+
+dns-01 needs an API token for your DNS provider on the machine running the client. Scope that token to TXT records in one zone if your provider allows it.
+
+## Renewal, and shorter lifetimes
+
+Let's Encrypt certificates have lasted 90 days, and that is shrinking across the industry:
+
+- **Since May 2026**, the opt-in `tlsserver` profile issues 45-day certificates.
+- **From February 2027**, the default `classic` profile moves to 64 days, and a validated domain can only be reused for 10 days instead of 30.
+- **From February 2028**, the default moves to 45 days, and domain validation reuse drops to 7 hours.
+- **A `shortlived` profile** already issues 6-day certificates for those who opt in.
+
+A hardcoded "renew every 60 days" job will break. Let your client decide: certbot 4.0 and later renews when less than a third of the lifetime remains. Better still, use a client that supports ACME Renewal Information, RFC 9773, as certbot 4.1 and later does. ARI lets the CA suggest a renewal window, and move it earlier if it must revoke certificates.
+
+```bash title="certbot.sh"
+# issue with the http-01 challenge, using the existing web root
+sudo certbot certonly --webroot -w /var/www/html -d example.com -d www.example.com
+
+# prove that unattended renewal works before you rely on it
+sudo certbot renew --dry-run
+
+# see the timer that runs renewal
+systemctl list-timers | grep certbot
+```
+
+## Pitfalls
+
+- **Port 80 is blocked.** http-01 always starts on port 80. A firewall rule, or a redirect to a port other than 80 or 443, makes validation fail. Use dns-01 or tls-alpn-01 instead.
+- **Forgetting the reload.** A renewed certificate on disk does nothing until the server reloads it. Use certbot's `--deploy-hook` to reload only after a successful renewal.
+- **Hitting rate limits while testing.** Use the staging environment, `--test-cert` in certbot, until your setup works.
+- **No CAA record.** A CAA record such as `example.com. CAA 0 issue "letsencrypt.org"` tells every other CA not to issue for your domain.
+- **Expecting OCSP.** Let's Encrypt shut down its OCSP service in 2025 and publishes revocations through CRLs.
+
+## Related flows
+
+- [The TLS handshake](/learn/devops/tls-handshake) shows the certificate being presented and checked.
+- [Reverse proxy and load balancer](/learn/devops/reverse-proxy-load-balancer) is where certificates usually terminate.
+
+## Go deeper
+
+- [Security roadmap on roadmap.sh](https://roadmap.sh/devsecops), under Encryption
+- [RFC 8555, the ACME protocol](https://www.rfc-editor.org/rfc/rfc8555)
+- [Let's Encrypt: challenge types](https://letsencrypt.org/docs/challenge-types/)
+- [Let's Encrypt: decreasing certificate lifetimes to 45 days](https://letsencrypt.org/2025/12/02/from-90-to-45)

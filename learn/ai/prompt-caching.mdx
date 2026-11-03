@@ -1,0 +1,89 @@
+---
+title: How prompt caching cuts cost
+sidebar_label: Prompt caching
+sidebar_position: 18
+hide_table_of_contents: true
+description: What a model API caches between requests, why only an identical prefix hits, and how to order a prompt so it does.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {promptCaching} from '@site/src/data/learn/flows/prompt-caching';
+
+# How prompt caching cuts cost
+
+**The question:** What gets cached, and why does the order of the prompt matter?
+
+**The short answer:** The provider keeps the model's processed state for the start of your prompt for a few minutes. A later request that begins with exactly the same tokens skips that work and pays a fraction of the input price. Because the match is on the prefix, stable content must come first and anything that changes must come last.
+
+<FlowPlayer flow={promptCaching} />
+
+## Order the prompt for the cache
+
+From most stable to least stable:
+
+1. **Tool definitions.** Same tools, same order, every request.
+2. **System prompt.** No dates, user names or request ids in it.
+3. **Large shared context.** Documents, examples, a codebase summary.
+4. **Conversation history.** It only grows at the end, so earlier turns stay a valid prefix.
+5. **The new message.** The only part that is new each time.
+
+## In code
+
+With the Anthropic API you mark where the cacheable prefix ends. OpenAI caches long prompts automatically, and reports hits in `usage.input_tokens_details.cached_tokens` in its Responses API.
+
+```ts title="cached-request.ts"
+import Anthropic from "@anthropic-ai/sdk";
+
+const client = new Anthropic();
+
+// `handbook` is a long, unchanging document; `question` changes every time
+export async function askHandbook(handbook: string, question: string) {
+  const response = await client.messages.create({
+    model: "claude-opus-5-5",
+    max_tokens: 2048,
+    system: [
+      { type: "text", text: "Answer questions using only the handbook below." },
+      { type: "text", text: handbook, cache_control: { type: "ephemeral" } }, // cache up to here
+    ],
+    messages: [{ role: "user", content: question }],
+  });
+
+  const { cache_creation_input_tokens, cache_read_input_tokens, input_tokens } = response.usage;
+  console.log({ cache_creation_input_tokens, cache_read_input_tokens, input_tokens });
+  return response;
+}
+```
+
+If `cache_read_input_tokens` stays at zero on repeated calls, something in the prefix is changing.
+
+## What silently breaks the cache
+
+| Cause | Why it misses | Fix |
+| --- | --- | --- |
+| A timestamp or request id in the system prompt | The prefix differs on every call | Put it in the last user message |
+| Tools in a different order, or a changed tool | Tools come first, so everything after misses | Sort tools and keep the set fixed |
+| JSON with unstable key order | Same data, different bytes | Serialise deterministically |
+| Switching model | Caches belong to one model | Keep one model per conversation |
+| Editing an earlier message | The prefix after the edit is new | Append instead of rewriting history |
+| A prompt below the minimum length | Short prefixes are never cached | Cache only large, shared blocks |
+| A gap longer than the TTL | The entry expired | Keep traffic flowing, or use a longer TTL where offered |
+
+## Pitfalls
+
+- **Expecting the answer to be cached.** Only the prompt processing is reused. The model still generates a fresh answer every time.
+- **Assuming it is free to write.** On Anthropic, cache writes cost more than plain input: 1.25 times for the 5-minute TTL and 2 times for the 1-hour TTL. A prefix used only once costs more with caching.
+- **Not measuring.** Log the cached token counts per request. A hit rate you never check is a hit rate you do not have.
+- **Worrying about leaks between customers.** Providers isolate caches per organisation or workspace. A hit only reuses prompt processing. It never returns a stored answer.
+
+## Related flows
+
+- [What fills the context window](/learn/ai/context-window) shows the prompt parts you are ordering.
+- [The agent loop](/learn/ai/agent-loop) re-sends a growing history every turn, which is where caching pays most.
+- [Tracing one agent run](/learn/ai/agent-tracing) shows where cached token counts appear in a trace.
+- [Cache-aside with Redis](/learn/backend/cache-aside) is the application-level caching pattern, for comparison.
+
+## Go deeper
+
+- [AI Engineer roadmap on roadmap.sh](https://roadmap.sh/ai-engineer), under Development Tools
+- [Claude prompt caching documentation](https://platform.claude.com/docs/en/build-with-claude/prompt-caching)
+- [OpenAI prompt caching guide](https://developers.openai.com/api/docs/guides/prompt-caching)

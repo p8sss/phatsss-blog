@@ -1,0 +1,79 @@
+---
+title: A commit becomes a deployment with Argo CD
+sidebar_label: Argo CD sync
+sidebar_position: 10
+hide_table_of_contents: true
+description: How Argo CD notices a Git merge, renders the manifests, diffs them against the cluster and syncs the difference.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {argocdSync} from '@site/src/data/learn/flows/argocd-sync';
+
+# A commit becomes a deployment with Argo CD
+
+**The question:** How does a Git merge change what runs in the cluster?
+
+**The short answer:** Argo CD runs inside the cluster and treats a Git repo as the desired state. When a commit lands, it renders the manifests, compares them with the live objects and applies the difference. Kubernetes then rolls out the change as usual.
+
+<FlowPlayer flow={argocdSync} />
+
+## Push versus pull
+
+| | CI pushes with kubectl | GitOps with Argo CD |
+| --- | --- | --- |
+| Who changes the cluster | The CI runner | A controller inside the cluster |
+| Cluster credentials | Stored in CI | Stay in the cluster |
+| Source of truth | Whatever ran last | The Git branch |
+| Manual drift | Stays until the next deploy | Reported, and reverted with self-heal |
+| Rollback | Re-run an old pipeline | Revert the commit |
+
+CI still builds and tests the image. It just stops at "push the image and update the tag in Git".
+
+## The Application resource
+
+```yaml title="shop-application.yaml"
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: shop
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://git.example/platform/deploy.git
+    targetRevision: main
+    path: shop/overlays/prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: shop
+  syncPolicy:
+    automated:
+      prune: true     # delete objects that were removed from Git
+      selfHeal: true  # revert changes made directly in the cluster
+    syncOptions:
+      - CreateNamespace=true
+```
+
+Both `prune` and `selfHeal` are off by default. Without `automated`, Argo CD only reports OutOfSync and waits for someone to press Sync.
+
+## Pitfalls
+
+- **Fighting an autoscaler.** If an HPA manages replicas, leave `replicas` out of the manifest. Otherwise self-heal and the HPA undo each other.
+- **Secrets in the repo.** GitOps puts everything in Git, so secrets need a different path. Use a secrets operator or encrypt them before committing.
+- **Synced is not healthy.** A sync can succeed while new pods crash-loop. Alert on health status, not only sync status.
+- **Turning on prune casually.** With `prune: true`, deleting a file deletes the live object, including anything stateful it owned.
+- **Relying on polling.** Without a webhook, changes can take a few minutes to show up. Configure one for each repo.
+
+## Related flows
+
+- [A Kubernetes rolling update](/learn/devops/kubernetes-rolling-update) shows what happens after Argo CD applies the new Deployment.
+- [A secret from Vault to a pod](/learn/devops/vault-to-pod) shows one way to keep secrets out of the Git repo.
+- [Terraform plan and apply](/learn/devops/terraform-plan-apply) shows the same desired-state diff for cloud resources.
+- [What happens on commit, push and merge](/learn/frontend/git-commit-push-merge) shows the Git side of the trigger.
+
+## Go deeper
+
+- [DevOps roadmap on roadmap.sh](https://roadmap.sh/devops), under GitOps
+- [Argo CD architecture](https://argo-cd.readthedocs.io/en/stable/operator-manual/architecture/)
+- [Automated sync policy](https://argo-cd.readthedocs.io/en/stable/user-guide/auto_sync/)
+- [Git webhook configuration](https://argo-cd.readthedocs.io/en/stable/operator-manual/webhook/)

@@ -1,0 +1,67 @@
+---
+title: One-time codes with TOTP
+sidebar_label: One-time codes with TOTP
+sidebar_position: 3
+hide_table_of_contents: true
+description: How an authenticator app and a server produce the same six-digit code without talking to each other.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {totp} from '@site/src/data/learn/flows/totp';
+
+# One-time codes with TOTP
+
+**The question:** how do your phone and the server agree on a six-digit code?
+
+**The short answer:** they share a secret once, through a QR code. After that, both turn the current time into a counter and run the same HMAC over it. Same secret, same clock, same code.
+
+<FlowPlayer flow={totp} />
+
+## The parameters
+
+| Parameter | Usual value | Note |
+| --- | --- | --- |
+| Algorithm | HMAC-SHA1 | The default in RFC 6238 and in most apps |
+| Time step | 30 seconds | Counted from the Unix epoch |
+| Digits | 6 | 8 is allowed, but not every app supports it |
+| Drift window | One step either side | Allows for clock skew and typing time |
+
+Stick to the defaults unless you control the app. Support for other values varies between authenticator apps.
+
+## Pitfalls
+
+- **Allow each code only once.** RFC 6238 and NIST both require the verifier to reject a second use of the same code.
+- **Rate limit attempts.** Six digits is a million possibilities. Lock or slow down after a few failures.
+- **Protect the secret.** It must be readable to verify codes, so encrypt it at rest rather than hashing it.
+- **Offer recovery codes.** People lose phones. Give single-use backup codes at enrollment.
+- **TOTP is not phishing-resistant.** A fake site can ask for the code and relay it at once. Passkeys close that gap.
+
+## In code
+
+```ts title="totp.ts"
+import {createHmac} from 'node:crypto';
+
+export function totp(secret: Buffer, unixSeconds: number, step = 30, digits = 6): string {
+  const counter = Buffer.alloc(8);
+  counter.writeBigUInt64BE(BigInt(Math.floor(unixSeconds / step)));
+
+  const mac = createHmac('sha1', secret).update(counter).digest();
+  const offset = mac[mac.length - 1] & 0x0f;
+  const code = (mac.readUInt32BE(offset) & 0x7fffffff) % 10 ** digits;
+  return code.toString().padStart(digits, '0');
+}
+
+// RFC 6238 test vector: secret "12345678901234567890", time 59
+console.log(totp(Buffer.from('12345678901234567890'), 59)); // 287082
+```
+
+## Related flows
+
+- [Password login with bcrypt](/learn/security/password-hashing) is usually the first factor.
+- [Passkey login with WebAuthn](/learn/security/passkey-webauthn) resists phishing where TOTP does not.
+
+## Go deeper
+
+- [Security roadmap on roadmap.sh](https://roadmap.sh/devsecops), under Authentication
+- [RFC 6238: TOTP](https://www.rfc-editor.org/rfc/rfc6238)
+- [RFC 4226: HOTP](https://www.rfc-editor.org/rfc/rfc4226)

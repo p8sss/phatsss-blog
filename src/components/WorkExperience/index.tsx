@@ -27,7 +27,7 @@ export default function WorkExperience(): JSX.Element {
           {
             id: "workExperience.description",
             message:
-              "{years}+ years of experience in front-end development creating intuitive, modern, and user-friendly web applications.",
+              "{years}+ years of full-stack experience building web platforms, from front-end interfaces to back-end services and the standards that keep them secure and maintainable.",
           },
           { years: yearsOfExperience(organisations, today) }
         )}

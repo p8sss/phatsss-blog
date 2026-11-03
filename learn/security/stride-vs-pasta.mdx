@@ -1,0 +1,55 @@
+---
+title: STRIDE vs PASTA
+sidebar_label: STRIDE vs PASTA
+sidebar_position: 17
+hide_table_of_contents: true
+description: Two threat modeling methods compared, and how to choose the one that fits your team.
+---
+
+import CompareTable from '@site/src/components/learn/CompareTable';
+import {strideVsPasta} from '@site/src/data/learn/comparisons/stride-vs-pasta';
+
+# STRIDE vs PASTA
+
+**The question:** which threat modeling method fits your team?
+
+**The short answer:** STRIDE is a lightweight checklist that developers apply to a data flow diagram, one feature at a time. PASTA is a seven-stage process that starts from business goals and ends with risks ranked by impact. Most teams start with STRIDE and bring in PASTA for their highest-value systems.
+
+<CompareTable comparison={strideVsPasta} />
+
+## PASTA's seven stages
+
+| Stage | Question it answers |
+| --- | --- |
+| 1. Define objectives | What does the business need, and what would a breach cost? |
+| 2. Define technical scope | Which components, data and dependencies are in play? |
+| 3. Decompose the application | How does data flow, and where are the trust boundaries? |
+| 4. Analyze threats | Who attacks systems like this, and how, according to threat intelligence? |
+| 5. Analyze vulnerabilities and weaknesses | Which known weaknesses exist in this design and code? |
+| 6. Model attacks | Which attack paths chain those weaknesses together? |
+| 7. Analyze risk and impact | Which risks matter most, and what should be fixed first? |
+
+Stages 3 and 4 are where the two methods overlap. You can use STRIDE inside PASTA's decomposition and threat analysis.
+
+## They are not rivals
+
+The methods sit at different heights. STRIDE answers "what can go wrong here?" for a component. PASTA answers "which of the things that can go wrong matter most to the business?" for a system.
+
+A common mix: every team runs STRIDE in design reviews, and the security team runs a PASTA-style analysis once a year on the systems that hold money or sensitive data.
+
+## Questions to ask before choosing
+
+1. Who will run it? Developers in a design review, or a dedicated security team?
+2. Who reads the output? Engineers want tickets. Leadership wants risk in business terms.
+3. How often does the system change? Fast-moving code needs a method light enough to repeat.
+4. What is at stake? The more a breach would cost, the more a deeper analysis pays for itself.
+
+## Related flows
+
+- [STRIDE on a login form](/learn/security/stride-login) works through STRIDE on one real feature.
+
+## Go deeper
+
+- [Security roadmap on roadmap.sh](https://roadmap.sh/devsecops), under Threat Modeling
+- [OWASP Threat Modeling Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Threat_Modeling_Cheat_Sheet.html)
+- [Threat Modeling Manifesto](https://www.threatmodelingmanifesto.org/)

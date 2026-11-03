@@ -1,0 +1,60 @@
+---
+title: Passkey login with WebAuthn
+sidebar_label: Passkey login with WebAuthn
+sidebar_position: 2
+hide_table_of_contents: true
+description: How a passkey signs you in with a key pair instead of a password, and why that stops phishing.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {passkeyWebauthn} from '@site/src/data/learn/flows/passkey-webauthn';
+
+# Passkey login with WebAuthn
+
+**The question:** how does a login work with no password at all?
+
+**The short answer:** the device creates a key pair for one site and gives the server only the public key. At login the server sends a fresh challenge, the device signs it after a fingerprint, face or PIN, and the server checks the signature.
+
+<FlowPlayer flow={passkeyWebauthn} />
+
+## What the server checks at login
+
+| Check | Why |
+| --- | --- |
+| The challenge matches the one it issued | Stops replay of an old signature |
+| The origin in clientDataJSON is yours | Stops a phishing site relaying the login |
+| The RP ID hash matches your domain | The key was made for this site |
+| The user-present and user-verified flags | A person was there and unlocked the device |
+| The signature verifies with the stored public key | Proves possession of the private key |
+
+## Why phishing fails
+
+The browser, not the page, writes the origin into the signed data. It also refuses an RP ID that is not the page's own domain or a parent domain of it. A page on login.example.com may use example.com. A page on example.net may not, unless example.com lists it as a related origin in a file it hosts at `/.well-known/webauthn`. A look-alike site cannot ask for your real site's passkey, and any signature it relays names the wrong origin.
+
+## In the browser
+
+```js title="passkey-login.js"
+const res = await fetch('/passkeys/login/options', {method: 'POST'});
+const publicKey = PublicKeyCredential.parseRequestOptionsFromJSON(await res.json());
+
+const credential = await navigator.credentials.get({publicKey});
+
+await fetch('/passkeys/login', {
+  method: 'POST',
+  headers: {'Content-Type': 'application/json'},
+  body: JSON.stringify(credential.toJSON()),
+});
+```
+
+On the server, use a maintained library such as SimpleWebAuthn for the checks above instead of writing them by hand.
+
+## Related flows
+
+- [Password login with bcrypt](/learn/security/password-hashing) shows the shared-secret login that passkeys replace.
+- [Single sign-on with OIDC](/learn/security/oidc-sso) often sits in front of a passkey login.
+
+## Go deeper
+
+- [Security roadmap on roadmap.sh](https://roadmap.sh/devsecops), under Authentication
+- [Web Authentication API on MDN](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API)
+- [Web Authentication Level 3, W3C](https://www.w3.org/TR/webauthn-3/)

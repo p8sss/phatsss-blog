@@ -1,0 +1,58 @@
+---
+title: RAG vs fine-tuning
+sidebar_label: RAG vs fine-tuning
+sidebar_position: 10
+hide_table_of_contents: true
+description: When to give a model knowledge at request time, and when to change the model itself.
+---
+
+import CompareTable from '@site/src/components/learn/CompareTable';
+import {ragVsFineTuning} from '@site/src/data/learn/comparisons/rag-vs-fine-tuning';
+
+# RAG vs fine-tuning
+
+**The question:** When do you retrieve, and when do you train?
+
+**The short answer:** Retrieve when the model is missing knowledge. Train when the model knows enough but behaves wrongly. Most teams need retrieval first, and many never need training at all.
+
+<CompareTable comparison={ragVsFineTuning} />
+
+## Try the prompt first
+
+Both options are more work than a better prompt. Go in this order, and measure at each step:
+
+1. **Write a clear prompt** with instructions and a few worked examples.
+2. **Add retrieval** if answers need facts the model does not have.
+3. **Fine-tune** only if a prompt with good examples still cannot hold the behaviour you need.
+
+Newer models follow formats and instructions much better than older ones. Check that the problem still exists on a current model before you train.
+
+## Using both
+
+They are not exclusive. A common split:
+
+- **Fine-tune for the shape** of the answer: the JSON schema, the tone, when to refuse.
+- **Retrieve for the content** of the answer: the policy text, the order record, the latest price.
+
+The tuned model then learns to use retrieved passages well. The facts still live in your index, where you can update and permission them.
+
+## Pitfalls
+
+- **Fine-tuning to add facts.** Training on a document does not make the model quote it reliably. It may mix it up with what it already knew. Use retrieval for facts.
+- **Blaming the model for a retrieval miss.** When a RAG answer is wrong, first check whether the right chunk was retrieved at all. Most fixes are in chunking, search and ranking.
+- **Training data that leaks.** A tuned model can repeat parts of its training set. Never train on data that some users of the model must not see.
+- **No eval set.** Without a fixed set of test questions you cannot tell whether retrieval or training helped. Build the eval first.
+
+## Related flows
+
+- [A RAG request from question to cited answer](/learn/ai/rag-request) walks through the retrieval path step by step.
+- [Text to vector to similarity](/learn/ai/embeddings-similarity) explains how retrieval finds relevant passages.
+- [What fills the context window](/learn/ai/context-window) shows why retrieved text competes for space.
+- [How an eval suite gates a prompt change](/learn/ai/eval-gate) shows how to prove either change helped.
+
+## Go deeper
+
+- [AI Engineer roadmap on roadmap.sh](https://roadmap.sh/ai-engineer), under What are RAGs?
+- [Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks](https://arxiv.org/abs/2005.11401), the paper that named RAG
+- [OpenAI model optimization guide](https://developers.openai.com/api/docs/guides/model-optimization)
+- [Hugging Face PEFT documentation](https://huggingface.co/docs/peft/index), for tuning open-weight models with LoRA and similar methods

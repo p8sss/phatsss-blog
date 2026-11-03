@@ -1,0 +1,64 @@
+---
+title: Vitest vs Jest
+sidebar_label: Vitest vs Jest
+sidebar_position: 8
+hide_table_of_contents: true
+description: How Vitest and Jest differ in setup, ES modules, mocking and browsers, and which runner fits your project.
+---
+
+import CompareTable from '@site/src/components/learn/CompareTable';
+import {vitestVsJest} from '@site/src/data/learn/comparisons/vitest-vs-jest';
+
+# Vitest vs Jest
+
+**The question:** Which unit test runner fits your project?
+
+**The short answer:** Their test APIs are nearly the same, so the real difference is the pipeline underneath. Vitest reuses Vite, so ESM and TypeScript just work. Jest brings its own transform step and still treats native ESM as experimental. For a new Vite project pick Vitest; keep a healthy Jest suite where it is.
+
+<CompareTable comparison={vitestVsJest} />
+
+## A minimal Vitest setup
+
+```ts title="vitest.config.ts"
+import {defineConfig} from 'vitest/config';
+
+export default defineConfig({
+  test: {
+    environment: 'jsdom', // install jsdom as a dev dependency
+    globals: true, // expose describe, it and expect like Jest does
+    setupFiles: ['./vitest.setup.ts'],
+  },
+});
+```
+
+If you already have a `vite.config.ts`, put the `test` block there instead, and the tests share its plugins and aliases.
+
+## Moving a Jest suite across
+
+| Jest | Vitest | Note |
+| --- | --- | --- |
+| `jest.fn()` | `vi.fn()` | Same mock API |
+| `jest.spyOn(obj, 'name')` | `vi.spyOn(obj, 'name')` | Same |
+| `jest.mock('./api')` | `vi.mock('./api')` | A factory mocking a default export must return a `default` key |
+| `jest.requireActual('./api')` | `await vi.importActual('./api')` | Async in Vitest |
+| `jest.useFakeTimers()` | `vi.useFakeTimers()` | Same idea |
+| `testEnvironment: 'jsdom'` | `environment: 'jsdom'` | Set in the config file |
+
+## Pitfalls
+
+- **Forgetting to await async assertions.** Since Vitest 5, an unawaited `expect(promise).resolves` fails the test. Always `await` it.
+- **Relying on mock history between tests.** Vitest 5 clears mock calls before each test by default. Set `clearMocks: false` only if a suite truly needs the old behaviour.
+- **Expecting the runner to type-check.** Vitest and babel-jest strip types without checking them. ts-jest reports type errors, but slows every run. Run `tsc --noEmit` in CI.
+- **Treating jsdom as a browser.** jsdom has no layout, so sizes and positions read as zero. Test layout in Vitest Browser Mode or an end-to-end tool.
+
+## Related flows
+
+- [Vite, Rollup and esbuild](/learn/frontend/vite-rollup-esbuild) explains the Vite pipeline Vitest runs on.
+- [Playwright vs Cypress](/learn/frontend/playwright-vs-cypress) covers the end-to-end tests that sit above unit tests.
+
+## Go deeper
+
+- [Frontend roadmap on roadmap.sh](https://roadmap.sh/frontend), under Testing
+- [Vitest: migrating from Jest](https://vitest.dev/guide/migration/jest)
+- [Announcing Vitest 5.0](https://vitest.dev/blog/vitest-5)
+- [Jest: ECMAScript modules](https://jestjs.io/docs/ecmascript-modules)

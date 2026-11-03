@@ -1,0 +1,39 @@
+---
+title: RBAC vs ABAC vs ReBAC
+sidebar_label: RBAC vs ABAC vs ReBAC
+sidebar_position: 5
+hide_table_of_contents: true
+description: Roles, attributes or relationships. How the three access control models differ and when each fits.
+---
+
+import CompareTable from '@site/src/components/learn/CompareTable';
+import {rbacAbacRebac} from '@site/src/data/learn/comparisons/rbac-abac-rebac';
+
+# RBAC vs ABAC vs ReBAC
+
+**The question:** roles, attributes or relationships: which model fits?
+
+**The short answer:** RBAC grants access by role and is simple to audit. ABAC evaluates rules over attributes and handles context. ReBAC follows relationships between users and objects, which suits sharing and hierarchies.
+
+<CompareTable comparison={rbacAbacRebac} />
+
+## They combine
+
+Real systems mix models. A role can be one attribute in an ABAC rule. A ReBAC graph can grant a role on a folder that every document inside inherits. Start with roles and add the next model when roles stop fitting.
+
+## Signs you have outgrown roles
+
+- **Roles named after exceptions,** such as `editor-eu-except-billing`.
+- **Per-object sharing** that roles cannot express.
+- **Checks scattered through code** that combine roles with ownership and status.
+
+## Related flows
+
+- [An authorization check with a policy engine](/learn/security/policy-check) shows one decision being made.
+- [How a cloud API call is authorised](/learn/security/iam-request) shows policy-based access in cloud IAM.
+
+## Go deeper
+
+- [Security roadmap on roadmap.sh](https://roadmap.sh/devsecops), under Authorization
+- [NIST SP 800-162: Guide to Attribute Based Access Control](https://csrc.nist.gov/pubs/sp/800/162/upd2/final)
+- [Zanzibar: Google's consistent, global authorization system](https://research.google/pubs/zanzibar-googles-consistent-global-authorization-system/)

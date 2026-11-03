@@ -1,0 +1,67 @@
+---
+title: Playwright vs Cypress
+sidebar_label: Playwright vs Cypress
+sidebar_position: 9
+hide_table_of_contents: true
+description: How Playwright and Cypress differ in architecture, browsers, parallel runs and debugging, and which fits your team.
+---
+
+import CompareTable from '@site/src/components/learn/CompareTable';
+import {playwrightVsCypress} from '@site/src/data/learn/comparisons/playwright-vs-cypress';
+
+# Playwright vs Cypress
+
+**The question:** Which end-to-end tool fits your team?
+
+**The short answer:** Playwright drives Chromium, Firefox and WebKit from outside the browser, so multi-tab, multi-user and multi-origin tests are easy, and parallel runs are free. Cypress runs inside the browser next to your app, which gives it a great interactive runner but limits it to one tab and mostly one origin per test.
+
+<CompareTable comparison={playwrightVsCypress} />
+
+## The same login test in both
+
+```ts title="login.spec.ts (Playwright)"
+import {test, expect} from '@playwright/test';
+
+test('signs in', async ({page}) => {
+  await page.goto('https://app.example.com/login');
+  await page.getByLabel('Email').fill('ada@example.com');
+  await page.getByLabel('Password').fill('correct-horse');
+  await page.getByRole('button', {name: 'Sign in'}).click();
+  await expect(page.getByRole('heading', {name: 'Dashboard'})).toBeVisible();
+});
+```
+
+```ts title="login.cy.ts (Cypress)"
+describe('login', () => {
+  it('signs in', () => {
+    cy.visit('https://app.example.com/login');
+    cy.get('input[name="email"]').type('ada@example.com');
+    cy.get('input[name="password"]').type('correct-horse');
+    cy.contains('button', 'Sign in').click();
+    cy.contains('h1', 'Dashboard').should('be.visible');
+  });
+});
+```
+
+Neither test sleeps. Both tools wait for elements to be ready and retry assertions until they pass or time out.
+
+## Pitfalls
+
+- **Treating Cypress commands as promises.** `const text = cy.get('h1')` does not give you the text. Chain `.then()` or `.should()` instead, and never mix `await` into a Cypress test.
+- **Fixed waits.** `page.waitForTimeout(2000)` and `cy.wait(2000)` make suites slow and still flaky. Wait for an element, a URL or a network response.
+- **Brittle selectors.** CSS classes change with every redesign. Prefer roles, labels or a dedicated `data-testid`.
+- **Shared state between tests.** Playwright gives each test a fresh browser context. In Cypress, keep test isolation on and seed data through an API, not through earlier tests.
+- **WebKit is not Safari.** Playwright's WebKit build is close to Safari's engine, but it is not the shipped browser. Check critical flows on real Safari too.
+
+## Related flows
+
+- [Vitest vs Jest](/learn/frontend/vitest-vs-jest) covers the unit tests underneath end-to-end tests.
+- [OAuth login with PKCE](/learn/frontend/oauth-pkce) is the kind of multi-origin flow where the tools differ most.
+- [GitHub Actions vs GitLab CI vs Jenkins](/learn/devops/github-actions-gitlab-jenkins) compares where these suites usually run.
+
+## Go deeper
+
+- [Frontend roadmap on roadmap.sh](https://roadmap.sh/frontend), under Testing
+- [Playwright: getting started](https://playwright.dev/docs/intro)
+- [Cypress: trade-offs](https://docs.cypress.io/app/references/trade-offs)
+- [Cypress 16.0.0 release notes](https://www.cypress.io/releases/16-0-0)

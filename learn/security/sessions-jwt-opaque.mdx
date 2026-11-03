@@ -1,0 +1,40 @@
+---
+title: Sessions vs JWT vs opaque tokens
+sidebar_label: Sessions vs JWT vs opaque
+sidebar_position: 4
+hide_table_of_contents: true
+description: Where login state lives in each approach, what each request checks, and how to revoke access.
+---
+
+import CompareTable from '@site/src/components/learn/CompareTable';
+import {sessionsJwtOpaque} from '@site/src/data/learn/comparisons/sessions-jwt-opaque';
+
+# Sessions vs JWT vs opaque tokens
+
+**The question:** where does state live, and how do you revoke each?
+
+**The short answer:** a session keeps state on the server and revokes by deleting it. A JWT carries its state inside a signed token, so it is hard to revoke before it expires. An opaque token keeps state with its issuer and revokes there.
+
+<CompareTable comparison={sessionsJwtOpaque} />
+
+## The trade-off in one line
+
+The more state the token carries, the less the server must look up, and the harder it is to take back. Sessions and opaque tokens trade a lookup for instant revocation. JWTs trade revocation for no lookup.
+
+## Common hybrids
+
+- **Short JWT, long refresh token.** The access token lives for minutes. The refresh token is stored server-side and can be revoked.
+- **Session at the edge, JWT inside.** A gateway checks the browser's session cookie, then passes a short internal JWT to backend services.
+- **Opaque outside, JWT inside.** Third parties get opaque tokens. A gateway introspects them and forwards a JWT.
+
+## Related flows
+
+- [JWT authentication](/learn/backend/jwt-authentication) shows a JWT being issued and verified step by step.
+- [OAuth login with PKCE](/learn/frontend/oauth-pkce) shows where access and refresh tokens come from.
+- [Password login with bcrypt](/learn/security/password-hashing) ends by starting a session.
+
+## Go deeper
+
+- [Security roadmap on roadmap.sh](https://roadmap.sh/devsecops), under Authentication
+- [OWASP Session Management Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html)
+- [RFC 7662: OAuth 2.0 Token Introspection](https://www.rfc-editor.org/rfc/rfc7662)

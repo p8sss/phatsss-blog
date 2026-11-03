@@ -1,0 +1,68 @@
+---
+title: XSS, and how CSP contains it
+sidebar_label: XSS and CSP
+sidebar_position: 8
+hide_table_of_contents: true
+description: How an attacker's script ends up running as your site, and how output encoding and a Content Security Policy stop it.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {xssCsp} from '@site/src/data/learn/flows/xss-csp';
+
+# XSS, and how CSP contains it
+
+**The question:** how does a script get into the page, and what does the browser block?
+
+**The short answer:** cross-site scripting happens when user-supplied text is written into a page as HTML, so the browser runs it as your site's code. Encoding output turns it back into text. A Content Security Policy is the safety net that blocks scripts you didn't send.
+
+<FlowPlayer flow={xssCsp} />
+
+## Three ways the script gets in
+
+| Type | Where the payload lives | Example |
+| --- | --- | --- |
+| Stored | In your database | A comment or profile field shown to other users, as in the flow |
+| Reflected | In the request | A search term echoed back into the results page |
+| DOM-based | Only in the browser | Client code writes `location.hash` into `innerHTML` |
+
+All three end the same way: text that should have been data is parsed as markup.
+
+## A nonce-based CSP in Express
+
+```ts title="csp.ts"
+import crypto from 'node:crypto';
+import type {NextFunction, Request, Response} from 'express';
+
+export function csp(req: Request, res: Response, next: NextFunction) {
+  const nonce = crypto.randomBytes(16).toString('base64');
+  res.locals.cspNonce = nonce;
+  res.setHeader(
+    'Content-Security-Policy',
+    `script-src 'nonce-${nonce}' 'strict-dynamic'; object-src 'none'; base-uri 'none'`,
+  );
+  next();
+}
+// in your templates: <script nonce="<%= cspNonce %>" src="/app.js"></script>
+```
+
+- **A fresh nonce on every response.** An attacker who sees a fixed nonce once can copy it into every injected script.
+- **`'strict-dynamic'`** passes trust from a nonced script to the scripts it adds, so you don't maintain a list of hosts. Browsers that support it ignore host lists in `script-src`.
+- **Roll out with `Content-Security-Policy-Report-Only`** first, and watch the reports before you enforce.
+
+## Pitfalls
+
+- **Encoding for the wrong context.** HTML-escaping a value doesn't make it safe inside a `<script>` block, an attribute without quotes, or a `javascript:` URL. Encode for where the value lands.
+- **`'unsafe-inline'` without a nonce** lets every inline script run, which switches off most of what CSP protects. Browsers ignore it once a nonce or hash is present.
+- **HttpOnly isn't a fix.** It keeps the cookie out of reach, but an injected script can still act as the user through the page.
+
+## Related flows
+
+- [CSRF and SameSite cookies](/learn/security/csrf-samesite) covers the attack that works without running script on your site.
+- [CORS and the preflight request](/learn/frontend/cors-preflight) explains a related browser rule about which origins may read responses.
+- [JWT authentication](/learn/backend/jwt-authentication) discusses where tokens are safest from injected scripts.
+
+## Go deeper
+
+- [Security roadmap on roadmap.sh](https://roadmap.sh/devsecops), under OWASP Top 10
+- [OWASP Cross Site Scripting Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html)
+- [Content Security Policy on MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CSP)

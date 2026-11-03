@@ -1,0 +1,64 @@
+---
+title: Tracing one agent run
+sidebar_label: Tracing an agent run
+sidebar_position: 15
+hide_table_of_contents: true
+description: The spans, token counts and cost that one agent request produces with OpenTelemetry.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {agentTracing} from '@site/src/data/learn/flows/agent-tracing';
+
+# Tracing one agent run
+
+**The question:** What do spans, token counts and cost look like for a single request?
+
+**The short answer:** One request becomes one trace: a root span for the agent run, with a child span for each model call and each tool call. Model spans carry token counts from the API response. Cost is computed from those counts and your price table.
+
+<FlowPlayer flow={agentTracing} />
+
+## The trace as a tree
+
+```text title="trace.txt"
+invoke_agent support                       2.90 s
+├─ chat claude-opus-5-5                    0.85 s   in 2,000   out 100   finish: tool use
+├─ execute_tool search_docs                0.18 s   3 results
+└─ chat claude-opus-5-5                    1.80 s   in 2,600   out 300   finish: end turn
+                                                    total in 4,600, out 400 ≈ $0.03
+```
+
+The second model call is the slow one. It reads more input and writes more output. That is typical: later turns carry more history, and the final answer is the longest output.
+
+## The attributes that matter
+
+These names come from the OpenTelemetry GenAI semantic conventions. They are still marked Development, so names can change between releases.
+
+| Attribute | On which span | What it holds |
+| --- | --- | --- |
+| `gen_ai.operation.name` | All | `invoke_agent`, `chat`, `execute_tool` and others |
+| `gen_ai.provider.name` | Model spans | Who served the call, such as `anthropic` or `openai` |
+| `gen_ai.request.model` | Model spans | The model you asked for |
+| `gen_ai.usage.input_tokens` | Model spans | Prompt tokens, including cached ones |
+| `gen_ai.usage.output_tokens` | Model spans | Generated tokens |
+| `gen_ai.usage.cache_read.input_tokens` | Model spans | Input tokens served from the provider's prompt cache |
+| `gen_ai.tool.name` | Tool spans | Which tool ran |
+| `gen_ai.input.messages` | Model spans, opt-in | The full prompt; off by default because it may hold user data |
+
+## Pitfalls
+
+- **Providers count input differently.** The conventions say `input_tokens` includes cached tokens. Anthropic's `usage.input_tokens` excludes cache reads and writes, so an instrumentation must add them. Check yours before you trust a cost dashboard.
+- **Logging prompts by default.** Prompts and outputs can contain personal data and secrets. Capture them only when you need them, and treat the trace store like a database of user data.
+- **Losing the trace across services.** If a tool runs in another service, propagate the `traceparent` header so its spans join the same trace. MCP also carries trace context in `_meta`.
+- **Averaging away the problem.** Look at the slowest and most expensive runs, not the mean. A few runaway loops can be most of the bill.
+
+## Related flows
+
+- [The agent loop](/learn/ai/agent-loop) is the code this trace describes.
+- [How prompt caching cuts cost](/learn/ai/prompt-caching) explains the cached token counts.
+- [Logs vs metrics vs traces](/learn/devops/logs-metrics-traces) places traces among the other signals.
+
+## Go deeper
+
+- [AI Engineer roadmap on roadmap.sh](https://roadmap.sh/ai-engineer), under LLM Observability
+- [OpenTelemetry GenAI agent and tool spans](https://github.com/open-telemetry/semantic-conventions-genai/blob/main/docs/gen-ai/gen-ai-agent-spans.md)
+- [OpenTelemetry GenAI attribute registry](https://github.com/open-telemetry/semantic-conventions-genai/blob/main/docs/registry/attributes/gen-ai.md)

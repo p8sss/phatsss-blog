@@ -1,0 +1,80 @@
+---
+title: How function calling works
+sidebar_label: Function calling
+sidebar_position: 12
+hide_table_of_contents: true
+description: What a model emits when it calls a function, and why your code is the one that runs it.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {functionCalling} from '@site/src/data/learn/flows/function-calling';
+
+# How function calling works
+
+**The question:** What does the model actually emit, and who runs the function?
+
+**The short answer:** The model emits a structured request: a call id, a function name and JSON arguments that match your schema. Your code runs the function and sends the result back with the same id. The model never executes anything itself.
+
+<FlowPlayer flow={functionCalling} />
+
+## What goes over the wire
+
+Here is the round trip in the Anthropic Messages API. The model's turn ends with a `tool_use` block, and your next request answers it with a `tool_result`.
+
+```json title="round-trip.json"
+[
+  {
+    "role": "assistant",
+    "content": [
+      {
+        "type": "tool_use",
+        "id": "toolu_01A09q90qw90lq917835lq9",
+        "name": "get_weather",
+        "input": { "city": "Paris", "unit": "c" }
+      }
+    ]
+  },
+  {
+    "role": "user",
+    "content": [
+      {
+        "type": "tool_result",
+        "tool_use_id": "toolu_01A09q90qw90lq917835lq9",
+        "content": "{\"temp\": 18, \"sky\": \"cloudy\"}"
+      }
+    ]
+  }
+]
+```
+
+## Same idea, different names
+
+| | Anthropic Messages API | OpenAI Responses API |
+| --- | --- | --- |
+| Function definition | `name`, `description`, `input_schema` | `type: "function"`, `name`, `description`, `parameters` |
+| What the model emits | A `tool_use` content block | A `function_call` output item |
+| Arguments | `input`, already a JSON object | `arguments`, a JSON string you must parse |
+| Call id | `id` | `call_id` |
+| How you answer | A `tool_result` block with `tool_use_id` | A `function_call_output` item with `call_id` |
+| Signal to run tools | `stop_reason: "tool_use"` | One or more `function_call` items in `output` |
+
+## Pitfalls
+
+- **Trusting the arguments.** The model can produce wrong or hostile values, especially after reading untrusted text. Validate them and check permissions before running anything.
+- **String-matching the arguments.** Parse the JSON. Escaping and key order can differ between models.
+- **Vague descriptions.** The model picks functions by their names and descriptions. Say what the function does, when to use it and what each parameter means.
+- **Hiding errors.** If the function fails, send the error back as the result and mark it as an error. The model can then retry or explain.
+- **Forgetting parallel calls.** One response can contain several calls. Answer every call id.
+- **Loose schemas.** Both APIs offer a strict mode that makes the arguments match your schema exactly. Use it when you can.
+
+## Related flows
+
+- [The agent loop](/learn/ai/agent-loop) repeats this round trip until the task is done.
+- [How an MCP server gets its tools into a chat](/learn/ai/mcp-tool-call) standardises where function definitions come from.
+- [Streaming a response](/learn/ai/llm-streaming) shows how a tool call arrives in pieces when you stream.
+
+## Go deeper
+
+- [AI Engineer roadmap on roadmap.sh](https://roadmap.sh/ai-engineer), under AI Agents
+- [Claude tool use documentation](https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview)
+- [OpenAI function calling guide](https://developers.openai.com/api/docs/guides/function-calling)

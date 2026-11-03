@@ -1,0 +1,82 @@
+---
+title: HTTP caching with ETag
+sidebar_label: HTTP caching with ETag
+sidebar_position: 5
+hide_table_of_contents: true
+description: How ETag and If-None-Match let a server answer 304 Not Modified instead of sending the same body again.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {httpCachingEtag} from '@site/src/data/learn/flows/http-caching-etag';
+
+# HTTP caching with ETag
+
+**The question:** How does a server say "nothing changed" without sending the body again?
+
+**The short answer:** the server labels each version of a response with an ETag. Next time, the client sends that label back in `If-None-Match`. If it still matches, the server replies `304 Not Modified` with no body, and the client reuses its stored copy.
+
+<FlowPlayer flow={httpCachingEtag} />
+
+## The headers involved
+
+| Header | Sent by | What it does |
+| --- | --- | --- |
+| `ETag: "p42-v7"` | Server | Labels this version of the response. `W/"p42-v7"` marks a weak ETag: equivalent content, not identical bytes. |
+| `If-None-Match: "p42-v7"` | Client | Send the body only if the current ETag is different. Otherwise reply 304. |
+| `Last-Modified` and `If-Modified-Since` | Server, then client | The same idea with a timestamp. It only has one-second precision. When both are sent, the server must ignore `If-Modified-Since` and use the ETag. |
+| `Cache-Control: no-cache` | Server | Store the response, but revalidate it before every reuse. |
+| `Cache-Control: max-age=60` | Server | Reuse without asking for 60 seconds, then revalidate. |
+| `If-Match: "p42-v7"` | Client, on a write | Apply this change only if nobody changed the resource since. Otherwise reply `412 Precondition Failed`. |
+
+## In code
+
+Most frameworks add ETags for you by hashing the body. Doing it by hand from a version column lets the server skip the expensive work too.
+
+```ts title="products-route.ts"
+import express from 'express';
+
+// `db` stands for your data layer
+const app = express();
+
+// If-None-Match may hold several ETags, or *. It uses weak comparison, so W/ is ignored.
+function matches(ifNoneMatch: string | undefined, etag: string): boolean {
+  if (!ifNoneMatch) return false;
+  if (ifNoneMatch.trim() === '*') return true;
+  return ifNoneMatch.split(',').some((tag) => tag.trim().replace(/^W\//, '') === etag);
+}
+
+app.get('/api/products/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  const version = await db.products.getVersion(id); // a cheap single-column read
+  if (version === null) return res.sendStatus(404);
+
+  const etag = `"p${id}-v${version}"`;
+  res.set({ETag: etag, 'Cache-Control': 'no-cache'});
+
+  if (matches(req.get('If-None-Match'), etag)) {
+    return res.status(304).end();
+  }
+  res.json(await db.products.findById(id));
+});
+```
+
+## Pitfalls
+
+- **A 304 still costs a round trip.** For files whose URL changes with every build, such as `app.3f9c1.js`, skip revalidation entirely with `Cache-Control: max-age=31536000, immutable`.
+- **ETags that differ per server.** An ETag built from server-local data, such as a file's inode, differs behind a load balancer. Every revalidation then misses and sends the full body.
+- **Compression can weaken an ETag.** Some proxies turn a strong ETag weak when they compress the body. `If-None-Match` uses weak comparison, so revalidation keeps working. Resuming a download with `If-Range` does not, because it needs a strong ETag.
+- **Personal data in shared caches.** Add `Cache-Control: private` to responses that depend on the user, so CDNs and proxies never store them.
+- **Forgetting Vary.** If the body depends on a request header such as `Accept-Language`, send `Vary` with that header name, or caches may serve the wrong variant.
+
+## Related flows
+
+- [Cache-aside with Redis](/learn/backend/cache-aside) caches on the server side, so the database is skipped even when the body is sent.
+- [Opening a URL](/learn/backend/open-a-url) shows the whole trip a request makes before any of these headers matter.
+- [REST vs GraphQL vs gRPC](/learn/backend/rest-graphql-grpc) explains why this kind of caching is easiest with REST.
+
+## Go deeper
+
+- [Backend roadmap on roadmap.sh](https://roadmap.sh/backend), under Learn about APIs
+- [RFC 9110, conditional requests](https://www.rfc-editor.org/rfc/rfc9110.html#section-13)
+- [HTTP caching on MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Caching)
+- [The ETag header on MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/ETag)

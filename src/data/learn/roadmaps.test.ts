@@ -7,10 +7,10 @@ import { LEARN_ROADMAPS } from "./roadmaps.ts";
 const LEARN_DIR = fileURLToPath(new URL("../../../learn/", import.meta.url));
 
 describe("LEARN_ROADMAPS", () => {
-  test("follows the site's learning order: backend, frontend, devops", () => {
+  test("follows the site's learning order: backend, frontend, devops, ai, security", () => {
     assert.deepEqual(
-      LEARN_ROADMAPS.map((r) => r.id).slice(0, 3),
-      ["backend", "frontend", "devops"],
+      LEARN_ROADMAPS.map((r) => r.id).slice(0, 5),
+      ["backend", "frontend", "devops", "ai", "security"],
     );
   });
 
@@ -24,10 +24,23 @@ describe("LEARN_ROADMAPS", () => {
     assert.equal(new Set(ids).size, ids.length);
   });
 
-  test("published topics live under their roadmap's folder", () => {
+  test("published topics live under their roadmap's folder, or the folder they are borrowed from", () => {
     for (const roadmap of LEARN_ROADMAPS) {
       for (const topic of roadmap.sections.flatMap((s) => s.topics)) {
-        if (topic.to) assert.ok(topic.to.startsWith(`/learn/${roadmap.id}/`), topic.to);
+        const home = topic.crossListFrom ?? roadmap.id;
+        if (topic.to) assert.ok(topic.to.startsWith(`/learn/${home}/`), topic.to);
+      }
+    }
+  });
+
+  test("cross-listed topics borrow a published page from another roadmap", () => {
+    const ids = new Set(LEARN_ROADMAPS.map((r) => r.id));
+    for (const roadmap of LEARN_ROADMAPS) {
+      for (const topic of roadmap.sections.flatMap((s) => s.topics)) {
+        if (!topic.crossListFrom) continue;
+        assert.ok(ids.has(topic.crossListFrom), `${topic.id}: unknown roadmap ${topic.crossListFrom}`);
+        assert.notEqual(topic.crossListFrom, roadmap.id, `${topic.id} cross-lists its own roadmap`);
+        assert.ok(topic.to, `${topic.id} is cross-listed but has no page`);
       }
     }
   });

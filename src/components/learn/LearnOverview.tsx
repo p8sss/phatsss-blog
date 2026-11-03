@@ -46,6 +46,7 @@ function RoadmapJumpNav({ roadmaps }: { readonly roadmaps: readonly Roadmap[] })
 
 /** The Learn overview: every roadmap in order, each as its own section path. */
 export default function LearnOverview({ roadmaps }: { readonly roadmaps: readonly Roadmap[] }): JSX.Element {
+  const roadmapTitles = Object.fromEntries(roadmaps.map((r) => [r.id, r.title]));
   return (
     <>
       <RoadmapJumpNav roadmaps={roadmaps} />
@@ -66,7 +67,7 @@ export default function LearnOverview({ roadmaps }: { readonly roadmaps: readonl
                 </Link>
               </span>
             </div>
-            <TopicIndex roadmap={roadmap} />
+            <TopicIndex roadmap={roadmap} roadmapTitles={roadmapTitles} />
           </section>
         );
       })}

@@ -1,0 +1,112 @@
+import type { FlowDefinition } from "../../../lib/flow/types";
+
+/** Security roadmap → OWASP Top 10. */
+export const sqlInjection: FlowDefinition = {
+  id: "sql-injection",
+  title: "One login form, built two ways",
+  actors: [
+    { id: "attacker", label: "Attacker", sublabel: "any visitor", kind: "attacker", col: 0, row: 0 },
+    { id: "app", label: "App server", sublabel: "builds the query", kind: "server", col: 1, row: 0 },
+    { id: "db", label: "Database", sublabel: "users table", kind: "database", col: 2, row: 0 },
+  ],
+  steps: [
+    {
+      id: "submit",
+      from: "attacker",
+      to: "app",
+      title: "Submit a crafted email",
+      payload: "email: ' OR '1'='1' --",
+      detail: "The textbook example. The quote is meant to end a string that the developer opened in their SQL.",
+    },
+    {
+      id: "concat",
+      from: "app",
+      title: "Glue the input into the SQL",
+      payload: "\"… '\" + email + \"' AND pw = …\"",
+      detail:
+        "The query checks the email and the password in one WHERE clause. Concatenation makes the input part of the query's code rather than a value. This is the actual bug.",
+    },
+    {
+      id: "query",
+      from: "app",
+      to: "db",
+      title: "Send the altered query",
+      payload: "WHERE email = '' OR '1'='1' --",
+      detail:
+        "The quote closed the string and OR '1'='1' is always true. The double dash comments out the rest, including the password check.",
+    },
+    {
+      id: "match",
+      from: "db",
+      title: "Match every row",
+      payload: "condition is always true",
+      detail: "The database runs exactly what it was given. It can't know which part came from the user.",
+    },
+    {
+      id: "rows",
+      from: "db",
+      to: "app",
+      title: "Return the first user",
+      payload: "{ id: 1, role: \"admin\" }",
+      variant: "response",
+      detail: "The first row is often the oldest account, which is often an admin.",
+    },
+    {
+      id: "in",
+      from: "app",
+      to: "attacker",
+      title: "Log the attacker in",
+      payload: "200 · Set-Cookie: session=…",
+      variant: "response",
+      detail: "No password was needed. The same bug can also read, change or delete other tables.",
+    },
+    {
+      id: "retry",
+      from: "attacker",
+      to: "app",
+      title: "Same input, fixed app",
+      payload: "email: ' OR '1'='1' --",
+      detail: "Now the same request reaches an app that uses a parameterised query.",
+    },
+    {
+      id: "bind",
+      from: "app",
+      title: "Bind it as a parameter",
+      payload: "WHERE email = $1",
+      detail: "The SQL text has a placeholder. The input never becomes part of the code.",
+    },
+    {
+      id: "apart",
+      from: "app",
+      to: "db",
+      title: "Send SQL and data separately",
+      payload: "text + params: [email]",
+      detail: "The driver sends the query and its values as separate fields, so the database parses the SQL first.",
+    },
+    {
+      id: "value",
+      from: "db",
+      title: "Treat the input as a value",
+      payload: "no user has that email",
+      detail: "The whole string, quotes and all, is compared as one email address.",
+    },
+    {
+      id: "none",
+      from: "db",
+      to: "app",
+      title: "No rows",
+      payload: "0 rows",
+      variant: "response",
+      detail: "Nothing matches, exactly as it should.",
+    },
+    {
+      id: "reject",
+      from: "app",
+      to: "attacker",
+      title: "Reject the login",
+      payload: "401 Unauthorized",
+      variant: "response",
+      detail: "The attack is now just a wrong email address.",
+    },
+  ],
+};

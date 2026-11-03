@@ -1,0 +1,92 @@
+---
+title: A service worker serves a page offline
+sidebar_label: Service worker offline
+sidebar_position: 13
+hide_table_of_contents: true
+description: How a service worker caches an app shell on the first visit and serves the page with no network.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {serviceWorkerOffline} from '@site/src/data/learn/flows/service-worker-offline';
+
+# A service worker serves a page offline
+
+**The question:** How does a page load with no network at all?
+
+**The short answer:** On the first visit, the page registers a service worker, and the worker saves the files it needs in Cache Storage. On later visits the browser routes every request in scope through the worker first. When the network fails, the worker answers from that cache.
+
+<FlowPlayer flow={serviceWorkerOffline} />
+
+## A small offline worker
+
+```js title="main.js"
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch((err) => {
+    console.error('Service worker registration failed', err);
+  });
+}
+```
+
+```js title="sw.js"
+const CACHE = 'shell-v1';
+const SHELL = ['/', '/app.css', '/app.js', '/offline.html'];
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)));
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches
+      .keys()
+      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key))))
+      .then(() => self.clients.claim()),
+  );
+});
+
+self.addEventListener('fetch', (event) => {
+  const {request} = event;
+  if (request.method !== 'GET') return; // let the browser handle writes
+
+  if (request.mode === 'navigate') {
+    // network first for pages, so online visitors get fresh HTML
+    event.respondWith(
+      fetch(request).catch(async () => (await caches.match(request)) ?? caches.match('/offline.html')),
+    );
+    return;
+  }
+
+  // cache first for the shell's static files
+  event.respondWith(caches.match(request).then((cached) => cached ?? fetch(request)));
+});
+```
+
+Change `CACHE` to `shell-v2` when the shell changes. The new worker installs a fresh cache, and its activate handler deletes the old one.
+
+## The lifecycle in one table
+
+| Event | Fires when | Use it to |
+| --- | --- | --- |
+| `install` | A new or changed sw.js is downloaded | Precache the files the app needs offline |
+| `activate` | The worker takes over from any old version | Delete old caches, optionally call `clients.claim()` |
+| `fetch` | A controlled page requests anything in scope | Answer from the cache, the network or both |
+
+## Pitfalls
+
+- **The new version waits.** An updated worker stays waiting while any tab still uses the old one. Call `skipWaiting()` only if old pages can cope with new cached files.
+- **The first visit is not controlled.** A page that registers the worker loads without it. Only later loads, or pages claimed with `clients.claim()`, go through it.
+- **Scope follows the script's path.** A worker at `/assets/sw.js` controls only `/assets/` by default. Serve sw.js from the root.
+- **Caching too much.** Cache Storage counts against the origin's storage quota, and the browser may evict it. Precache the shell, and cache other files on demand.
+- **Stale HTML forever.** A cache-first strategy for pages keeps serving the old version. Use network first for HTML, as above.
+
+## Related flows
+
+- [HTTP caching with ETag](/learn/backend/http-caching-etag) is the browser's other cache, which a service worker sits in front of.
+- [How a browser renders a page](/learn/frontend/browser-rendering) shows what happens once the cached HTML arrives.
+- [The event loop](/learn/frontend/event-loop) explains how the worker's events are queued on its own thread.
+
+## Go deeper
+
+- [Frontend roadmap on roadmap.sh](https://roadmap.sh/frontend), under PWAs
+- [MDN: Using service workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API/Using_Service_Workers)
+- [web.dev: The service worker lifecycle](https://web.dev/articles/service-worker-lifecycle)

@@ -1,0 +1,61 @@
+---
+title: What fills the context window
+sidebar_label: What fills the context window
+sidebar_position: 3
+hide_table_of_contents: true
+description: How instructions, tool definitions, history, retrieved text and tool results share one fixed token budget.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {contextWindow} from '@site/src/data/learn/flows/context-window';
+
+# What fills the context window
+
+**The question:** How do instructions, history, retrieved text and tool results compete for space?
+
+**The short answer:** Everything in a request shares one token budget: the system prompt, tool definitions, every past message, retrieved chunks, tool results and the reply itself. The API is stateless, so the app resends all of it on every call. Context engineering is choosing what earns a place.
+
+<FlowPlayer flow={contextWindow} />
+
+## Who takes the space
+
+| Part | Sent | Grows with | How to keep it lean |
+| --- | --- | --- | --- |
+| System prompt | Every call | Rules you add over time | Keep rules that fix observed failures. Cut the rest. |
+| Tool definitions | Every call | Each tool you register | Fewer, clearly separate tools. Load rarely used ones on demand. |
+| Conversation history | Every call | Every turn | Summarize or drop old turns past a threshold. |
+| Retrieved chunks | Per question | How many you fetch | Rerank and keep the few that matter. |
+| Tool results | After each call | Every tool call in an agent loop | Return only the needed fields. Clear stale results. |
+| The reply | Generated | `max_tokens`, plus any thinking | Reserve room for it before you fill the rest. |
+
+## Bigger is not automatically better
+
+A larger window lets you send more, but accuracy and recall drop as the context grows. Anthropic's docs call this context rot. Research has also shown models use information at the start and end of a long context better than in the middle.
+
+So treat tokens as a budget, not a bucket:
+
+- **Put long documents first and the question last.** Anthropic's prompting guide recommends this order for long inputs.
+- **Prefer references to dumps.** Give an agent a file path or a search tool, and let it load what it needs when it needs it.
+- **Summarize, then continue.** When a conversation runs long, replace old turns with a short summary that keeps decisions and open tasks.
+- **Split big jobs.** A sub-agent with a clean context can do a search and return a short report.
+
+## Pitfalls
+
+- **Forgetting the output.** Input plus `max_tokens` must fit. Depending on the API, overflow is a validation error or a reply cut off mid-sentence.
+- **Pasting whole API responses.** A 12 KB JSON blob where two fields matter costs tokens on every later call in the loop.
+- **Silent truncation by your own code.** Dropping the oldest messages can drop the system prompt or the tool call a later result depends on. Trim on purpose, by type.
+- **Assuming caching saves space.** Prompt caching lowers the price of a repeated prefix. Those tokens still count against the window.
+- **Counting characters, not tokens.** Use the provider's token counting endpoint or tokenizer. Characters per token vary by language and content.
+
+## Related flows
+
+- [A RAG request from question to cited answer](/learn/ai/rag-request) shows how the retrieved chunks are chosen.
+- [The agent loop](/learn/ai/agent-loop) is where tool results pile up fastest.
+- [How prompt caching cuts cost](/learn/ai/prompt-caching) makes the resent prefix cheaper, not smaller.
+
+## Go deeper
+
+- [AI Engineer roadmap on roadmap.sh](https://roadmap.sh/ai-engineer), under Context Engineering
+- [Context windows](https://platform.claude.com/docs/en/build-with-claude/context-windows), Anthropic docs
+- [Effective context engineering for AI agents](https://www.anthropic.com/research/effective-context-engineering-for-ai-agents), Anthropic engineering
+- [Lost in the Middle: How Language Models Use Long Contexts](https://arxiv.org/abs/2307.03172), Liu et al.

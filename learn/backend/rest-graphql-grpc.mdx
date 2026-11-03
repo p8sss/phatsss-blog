@@ -1,0 +1,98 @@
+---
+title: REST vs GraphQL vs gRPC
+sidebar_label: REST vs GraphQL vs gRPC
+sidebar_position: 4
+hide_table_of_contents: true
+description: Resources, a query language or typed procedure calls. Which API style fits which client and team.
+---
+
+import CompareTable from '@site/src/components/learn/CompareTable';
+import {restGraphqlGrpc} from '@site/src/data/learn/comparisons/rest-graphql-grpc';
+
+# REST vs GraphQL vs gRPC
+
+**The question:** Which API style fits which client and team?
+
+**The short answer:** REST fits public APIs and anything that benefits from HTTP caching. GraphQL fits product teams whose screens need flexible, nested data from one place. gRPC fits fast, strictly typed calls between your own services.
+
+<CompareTable comparison={restGraphqlGrpc} />
+
+## One screen, three ways
+
+A post page needs the post, its author's name and the first three comments.
+
+With **REST** that is often three requests: `GET /posts/42`, `GET /users/7` and `GET /posts/42/comments?limit=3`. Each one is simple and cacheable. The client stitches them together.
+
+With **GraphQL** the client sends one query that names the fields it wants:
+
+```graphql title="post-page.graphql"
+query PostPage($id: ID!) {
+  post(id: $id) {
+    title
+    author {
+      name
+    }
+    comments(first: 3) {
+      body
+    }
+  }
+}
+```
+
+With **gRPC** the server team defines methods and messages, and both sides generate code from the file:
+
+```protobuf title="posts.proto"
+syntax = "proto3";
+
+package posts.v1;
+
+service PostService {
+  rpc GetPostPage(GetPostPageRequest) returns (PostPage);
+  rpc WatchComments(WatchCommentsRequest) returns (stream Comment);
+}
+
+message GetPostPageRequest {
+  string post_id = 1;
+}
+
+message PostPage {
+  string title = 1;
+  string author_name = 2;
+  repeated Comment comments = 3;
+}
+
+message WatchCommentsRequest {
+  string post_id = 1;
+}
+
+message Comment {
+  string id = 1;
+  string body = 2;
+}
+```
+
+## Mixing them is normal
+
+Many systems use all three. A public REST API serves partners. A GraphQL layer serves the team's own web and mobile apps. gRPC connects the services behind both. Pick per boundary, not per company.
+
+## Pitfalls
+
+- **GraphQL without batching.** Each field resolver that loads its own data turns one query into hundreds of database calls. Batch loads per request.
+- **GraphQL without limits.** A deeply nested query can be very expensive. Set depth or cost limits, or allow only persisted queries from your own apps.
+- **gRPC without deadlines.** A call with no deadline can wait forever and hold resources the whole time. Set one on every call.
+- **REST as remote procedure calls.** Endpoints like `POST /doThing` lose the caching and clear semantics that make REST worth using.
+- **Breaking a contract by accident.** Renaming a JSON field, removing a GraphQL field or reusing a protobuf field number all break old clients.
+
+## Related flows
+
+- [HTTP caching with ETag](/learn/backend/http-caching-etag) shows the caching REST gets for free.
+- [The N+1 query problem](/learn/backend/n-plus-one) is the classic GraphQL performance trap.
+- [JWT authentication](/learn/backend/jwt-authentication) works the same way in front of all three styles.
+- [WebSockets vs SSE vs long polling](/learn/backend/websockets-sse-polling) covers the transports behind subscriptions and live updates.
+
+## Go deeper
+
+- [Backend roadmap on roadmap.sh](https://roadmap.sh/backend), under Learn about APIs
+- [GraphQL: performance and the N+1 problem](https://graphql.org/learn/performance/)
+- [gRPC core concepts](https://grpc.io/docs/what-is-grpc/core-concepts/)
+- [RFC 9110, HTTP Semantics](https://www.rfc-editor.org/rfc/rfc9110)

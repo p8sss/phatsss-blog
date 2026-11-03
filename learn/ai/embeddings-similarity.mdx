@@ -1,0 +1,94 @@
+---
+title: Text to vector to similarity
+sidebar_label: Text to vector to similarity
+sidebar_position: 6
+hide_table_of_contents: true
+description: How an embedding model turns text into a vector, and how cosine similarity tells you two texts mean the same thing.
+---
+
+import FlowPlayer from '@site/src/components/learn/flow-player';
+import {embeddingsSimilarity} from '@site/src/data/learn/flows/embeddings-similarity';
+
+# Text to vector to similarity
+
+**The question:** How does a number end up meaning "these two sentences say the same thing"?
+
+**The short answer:** An embedding model reads the whole text and outputs one fixed-length vector. It was trained so that texts with related meaning point in similar directions. Cosine similarity measures the angle between two vectors, so a score near 1 means "about the same thing", even when the words differ.
+
+<FlowPlayer flow={embeddingsSimilarity} />
+
+## Measuring closeness
+
+| Measure | What it compares | Notes |
+| --- | --- | --- |
+| Cosine similarity | The angle between vectors, ignoring length | The usual default for text embeddings |
+| Dot product | Angle and length together | Same ranking as cosine when vectors have length 1, and cheaper |
+| Euclidean distance | The straight-line gap between points | Same ranking as cosine for unit-length vectors |
+
+OpenAI's embeddings, for example, are normalized to length 1, so all three give the same order. Check your model's docs before mixing them.
+
+## Try it
+
+This compares one query with two stored sentences, using a local Ollama embedding model.
+
+```ts title="similar.ts"
+// Run first: ollama pull embeddinggemma
+interface EmbedResponse {
+  readonly embeddings: number[][];
+}
+
+async function embed(texts: readonly string[]): Promise<number[][]> {
+  const res = await fetch("http://localhost:11434/api/embed", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ model: "embeddinggemma", input: texts }),
+  });
+  if (!res.ok) throw new Error(`embedding failed: ${res.status} ${await res.text()}`);
+  const data = (await res.json()) as EmbedResponse;
+  return data.embeddings;
+}
+
+function cosine(a: readonly number[], b: readonly number[]): number {
+  let dot = 0;
+  let normA = 0;
+  let normB = 0;
+  for (let i = 0; i < a.length; i++) {
+    dot += a[i] * b[i];
+    normA += a[i] * a[i];
+    normB += b[i] * b[i];
+  }
+  return dot / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+
+const [query, password, holidays] = await embed([
+  "forgot my login",
+  "How do I reset my password?",
+  "Opening hours over the holidays",
+]);
+
+console.log("password:", cosine(query, password).toFixed(3)); // the higher score
+console.log("holidays:", cosine(query, holidays).toFixed(3));
+```
+
+The exact scores depend on the model. What matters is the order: the password sentence scores higher, though only "my" is shared.
+
+## Pitfalls
+
+- **One model per index.** Vectors from different models, or different versions of one model, are not comparable. Changing models means re-embedding everything.
+- **Some models expect a prefix.** Several embedding models want a task prefix, with one for queries and another for documents. Leaving it out quietly lowers quality.
+- **Long text blurs.** One vector for a whole document averages many topics into one direction. Embed chunks of a paragraph or a section instead.
+- **Similar is not the same as relevant.** "How do I cancel?" and "How do I not cancel?" can score close. Rerank or filter when precision matters.
+- **No universal threshold.** A score of 0.8 means different things for different models. Calibrate cut-offs on labelled examples from your own data.
+
+## Related flows
+
+- [A vector search, step by step](/learn/ai/hnsw-search) finds the nearest vectors without comparing all of them.
+- [A RAG request from question to cited answer](/learn/ai/rag-request) puts embeddings to work.
+- [pgvector vs Qdrant vs Pinecone](/learn/ai/vector-databases-compare) compares where to store the vectors.
+
+## Go deeper
+
+- [AI Engineer roadmap on roadmap.sh](https://roadmap.sh/ai-engineer), under What are Embeddings
+- [OpenAI embeddings guide](https://developers.openai.com/api/docs/guides/embeddings)
+- [Ollama embed API](https://docs.ollama.com/api/embed)
+- [Sentence Transformers documentation](https://www.sbert.net/)
